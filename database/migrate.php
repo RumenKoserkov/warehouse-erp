@@ -34,19 +34,13 @@ foreach ($migrationFiles as $migrationFile) {
     $sql = file_get_contents($migrationFile);
 
     try {
-        $pdo->beginTransaction();
-
         $pdo->exec($sql);
 
         $stmt = $pdo->prepare("INSERT INTO migrations (migration) VALUES (?)");
         $stmt->execute([$migrationName]);
 
-        $pdo->commit();
-
         echo "Executed: {$migrationName}" . PHP_EOL;
     } catch (Throwable $exception) {
-        $pdo->rollBack();
-
         echo "Migration failed: {$migrationName}" . PHP_EOL;
         echo $exception->getMessage() . PHP_EOL;
 
