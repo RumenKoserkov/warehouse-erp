@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Flash;
+use App\Core\Validator;
 use App\Services\AuthService;
 
 class AuthController extends Controller
@@ -18,7 +20,6 @@ class AuthController extends Controller
 
     public function showLogin(): void
     {
-
         $this->view('auth/login', [
             'title' => 'Login',
             'errors' => [],
@@ -30,23 +31,20 @@ class AuthController extends Controller
 
     public function login(): void
     {
-        $email = trim($_POST['email'] ?? '');
+        $email = trim((string)($_POST['email'] ?? ''));
         $password = (string)($_POST['password'] ?? '');
 
-        $errors = [];
+        $validator = new Validator($_POST);
 
-        if ($email === '') {
-            $errors[] = 'Email is required.';
-        }
+        $validator
+            ->required('email', 'Email is required.')
+            ->email('email', 'Email must be a valid email address.')
+            ->required('password', 'Password is required.');
 
-        if ($password === '') {
-            $errors[] = 'Password is required.';
-        }
-
-        if (!empty($errors)) {
+        if ($validator->fails()) {
             $this->view('auth/login', [
                 'title' => 'Login',
-                'errors' => $errors,
+                'errors' => $validator->all(),
                 'old' => [
                     'email' => $email
                 ]
@@ -71,12 +69,16 @@ class AuthController extends Controller
             return;
         }
 
+        Flash::success('Login successful.');
+
         $this->redirect('/dashboard');
     }
 
     public function logout(): void
     {
         $this->authService->logout();
+
+        Flash::success('Logged out successfully.');
 
         $this->redirect('/login');
     }

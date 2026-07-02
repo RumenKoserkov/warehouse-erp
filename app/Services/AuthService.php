@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Core\Session;
 use App\Models\User;
 
 class AuthService
@@ -31,9 +32,7 @@ class AuthService
             return false;
         }
 
-        $this->startSession();
-
-        $_SESSION['user'] = [
+        Session::set('user', [
             'id' => (int)$user['id'],
             'company_id' => (int)$user['company_id'],
             'role_id' => (int)$user['role_id'],
@@ -42,7 +41,7 @@ class AuthService
             'role_name' => $user['role_name'],
             'role_slug' => $user['role_slug'],
             'company_name' => $user['company_name'],
-        ];
+        ]);
 
         $this->userModel->updateLastLogin((int)$user['id']);
 
@@ -51,43 +50,23 @@ class AuthService
 
     public function logout(): void
     {
-        $this->startSession();
-
-        $_SESSION = [];
-
-        if (ini_get('session.use_cookies')) {
-            $params = session_get_cookie_params();
-
-            setcookie(
-                session_name(),
-                '',
-                time() - 42000,
-                $params['path'],
-                $params['domain'],
-                $params['secure'],
-                $params['httponly']
-            );
-        }
-
-        session_destroy();
+        Session::destroy();
     }
 
     public function check(): bool
     {
-        $this->startSession();
-
-        return isset($_SESSION['user']);
+        return Session::has('user');
     }
 
     public function user(): ?array
     {
-        $this->startSession();
+        $user = Session::get('user');
 
-        if (!isset($_SESSION['user'])) {
+        if ($user === null) {
             return null;
         }
 
-        return $_SESSION['user'];
+        return $user;
     }
 
     public function id(): ?int
@@ -127,12 +106,5 @@ class AuthService
         }
 
         return false;
-    }
-
-    private function startSession(): void
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
     }
 }

@@ -2,12 +2,15 @@
 
 declare(strict_types=1);
 
+use App\Core\Flash;
 use App\Services\AuthService;
 
 /** @var string $content */
 
 $authService = new AuthService();
 $currentUser = $authService->user();
+
+$flashMessages = Flash::all();
 
 $pageTitle = 'Warehouse ERP';
 
@@ -181,6 +184,21 @@ if (isset($title)) {
 </nav>
 
 <main class="container">
+
+    <?php foreach ($flashMessages as $type => $messages): ?>
+        <?php foreach ($messages as $message): ?>
+            <div class="alert alert-<?= htmlspecialchars($type) ?> alert-dismissible fade show" role="alert">
+                <?= htmlspecialchars($message) ?>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Close">
+                </button>
+            </div>
+        <?php endforeach; ?>
+    <?php endforeach; ?>
 
     <?= $content ?>
 
