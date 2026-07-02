@@ -7,34 +7,34 @@ return [
     [
         'method' => 'GET',
         'uri' => '/',
-        'action' => [DashboardController::class, 'index']
+        'action' => [DashboardController::class, 'index'],
+        'middleware' => ['auth'],
     ],
-
-    [ 
+    [
         'method' => 'GET',
         'uri' => '/dashboard',
-        'action' => [DashboardController::class, 'index']
+        'action' => [DashboardController::class, 'index'],
+        'middleware' => ['auth'],
     ],
-
     [
         'method' => 'GET',
         'uri' => '/login',
-        'action' => [AuthController::class, 'showLogin']
+        'action' => [AuthController::class, 'showLogin'],
+        'middleware' => ['guest'],
     ],
-
     [
         'method' => 'POST',
         'uri' => '/login',
-        'action' => [AuthController::class, 'login']
+        'action' => [AuthController::class, 'login'],
+        'middleware' => ['guest'],
     ],
-
     [
         'method' => 'POST',
         'uri' => '/logout',
-        'action' => [AuthController::class, 'logout']
+        'action' => [AuthController::class, 'logout'],
+        'middleware' => ['auth'],
     ],
 ];
-
 
 /*
 |--------------------------------------------------------------------------

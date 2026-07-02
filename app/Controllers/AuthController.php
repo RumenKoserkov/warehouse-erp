@@ -18,9 +18,6 @@ class AuthController extends Controller
 
     public function showLogin(): void
     {
-        if ($this->authService->check()) {
-            $this->redirect('/dashboard');
-        }
 
         $this->view('auth/login', [
             'title' => 'Login',

@@ -11,7 +11,12 @@ $router = new Router();
 $routes = require_once __DIR__ . '/../routes/web.php';
 
 foreach ($routes as $route) {
-    $router->add($route['method'], $route['uri'], $route['action']);
+    $router->add(
+        $route['method'],
+        $route['uri'],
+        $route['action'],
+        $route['middleware'] ?? []
+    );
 }
 
 $router->dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);
