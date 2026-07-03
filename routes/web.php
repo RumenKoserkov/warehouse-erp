@@ -2,6 +2,7 @@
 
 use App\Controllers\AuthController;
 use App\Controllers\DashboardController;
+use App\Controllers\UserController;
 
 return [
     [
@@ -33,6 +34,26 @@ return [
         'uri' => '/logout',
         'action' => [AuthController::class, 'logout'],
         'middleware' => ['auth'],
+    ],
+
+    // Users CRUD
+    [
+        'method' => 'GET',
+        'uri' => '/users',
+        'action' => [UserController::class, 'index'],
+        'middleware' => ['auth', 'role:administrator'],
+    ],
+    [
+        'method' => 'GET',
+        'uri' => '/users/create',
+        'action' => [UserController::class, 'create'],
+        'middleware' => ['auth', 'role:administrator'],
+    ],
+    [
+        'method' => 'POST',
+        'uri' => '/users/store',
+        'action' => [UserController::class, 'store'],
+        'middleware' => ['auth', 'role:administrator'],
     ],
 ];
 /*

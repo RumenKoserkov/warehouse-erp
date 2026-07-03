@@ -11,7 +11,7 @@ class User extends Model
     public function findByEmail(string $email): ?array
     {
         $stmt = $this->db->prepare("
-            SELECT 
+            SELECT
                 users.id,
                 users.company_id,
                 users.role_id,
@@ -44,7 +44,7 @@ class User extends Model
     public function findById(int $id): ?array
     {
         $stmt = $this->db->prepare("
-            SELECT 
+            SELECT
                 users.id,
                 users.company_id,
                 users.role_id,
@@ -71,6 +71,65 @@ class User extends Model
         }
 
         return $user;
+    }
+
+    public function allByCompany(int $companyId): array
+    {
+        $stmt = $this->db->prepare("
+            SELECT
+                users.id,
+                users.name,
+                users.email,
+                users.is_active,
+                users.last_login_at,
+                users.created_at,
+                roles.name AS role_name,
+                roles.slug AS role_slug
+            FROM users
+            INNER JOIN roles ON users.role_id = roles.id
+            WHERE users.company_id = ?
+            ORDER BY users.id DESC
+        ");
+
+        $stmt->execute([$companyId]);
+
+        return $stmt->fetchAll();
+    }
+
+    public function emailExistsInCompany(string $email, int $companyId): bool
+    {
+        $stmt = $this->db->prepare("
+            SELECT id
+            FROM users
+            WHERE email = ?
+            AND company_id = ?
+            LIMIT 1
+        ");
+
+        $stmt->execute([$email, $companyId]);
+
+        $user = $stmt->fetch();
+
+        return $user !== false;
+    }
+
+    public function create(array $data): bool
+    {
+        $stmt = $this->db->prepare("
+            INSERT INTO users
+                (company_id, role_id, name, email, password, is_active)
+            VALUES
+                (?, ?, ?, ?, ?, ?)
+        ");
+
+        return $stmt->execute([
+            $data['company_id'],
+            $data['role_id'],
+            $data['name'],
+            $data['email'],
+            $data['password'],
+            $data['is_active'],
+        ]);
     }
 
     public function updateLastLogin(int $id): void
