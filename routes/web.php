@@ -55,6 +55,27 @@ return [
         'action' => [UserController::class, 'store'],
         'middleware' => ['auth', 'role:administrator'],
     ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/users/edit',
+        'action' => [UserController::class, 'edit'],
+        'middleware' => ['auth', 'role:administrator'],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/users/update',
+        'action' => [UserController::class, 'update'],
+        'middleware' => ['auth', 'role:administrator'],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/users/deactivate',
+        'action' => [UserController::class, 'deactivate'],
+        'middleware' => ['auth', 'role:administrator'],
+    ],
 ];
 /*
 |--------------------------------------------------------------------------
