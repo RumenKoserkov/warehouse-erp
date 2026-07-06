@@ -6,6 +6,7 @@ use App\Controllers\UserController;
 use App\Controllers\ClientController;
 use App\Controllers\SupplierController;
 use App\Controllers\CategoryController;
+use App\Controllers\WarehouseController;
 
 return [
     [
@@ -193,6 +194,45 @@ return [
         'method' => 'POST',
         'uri' => '/categories/deactivate',
         'action' => [CategoryController::class, 'deactivate'],
+        'middleware' => ['auth', 'role:administrator,manager'],
+    ],
+
+    // Warehouse CRUD
+
+    [
+        'method' => 'GET',
+        'uri' => '/warehouses',
+        'action' => [WarehouseController::class, 'index'],
+        'middleware' => ['auth', 'role:administrator,manager,employee'],
+    ],
+    [
+        'method' => 'GET',
+        'uri' => '/warehouses/create',
+        'action' => [WarehouseController::class, 'create'],
+        'middleware' => ['auth', 'role:administrator,manager'],
+    ],
+    [
+        'method' => 'POST',
+        'uri' => '/warehouses/store',
+        'action' => [WarehouseController::class, 'store'],
+        'middleware' => ['auth', 'role:administrator,manager'],
+    ],
+    [
+        'method' => 'GET',
+        'uri' => '/warehouses/edit',
+        'action' => [WarehouseController::class, 'edit'],
+        'middleware' => ['auth', 'role:administrator,manager'],
+    ],
+    [
+        'method' => 'POST',
+        'uri' => '/warehouses/update',
+        'action' => [WarehouseController::class, 'update'],
+        'middleware' => ['auth', 'role:administrator,manager'],
+    ],
+    [
+        'method' => 'POST',
+        'uri' => '/warehouses/deactivate',
+        'action' => [WarehouseController::class, 'deactivate'],
         'middleware' => ['auth', 'role:administrator,manager'],
     ],
 ];
