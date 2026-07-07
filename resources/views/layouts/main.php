@@ -123,6 +123,12 @@ if (isset($title)) {
                             </li>
 
                             <li class="nav-item">
+                                <a href="/stock/transfer" class="nav-link">
+                                    Transfer Stock
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
                                 <a href="/sales" class="nav-link">
                                     Sales
                                 </a>

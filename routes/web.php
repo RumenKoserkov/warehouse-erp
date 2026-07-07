@@ -304,6 +304,18 @@ return [
         'action' => [StockController::class, 'storeOut'],
         'middleware' => ['auth', 'role:administrator,manager,employee'],
     ],
+    [
+        'method' => 'GET',
+        'uri' => '/stock/transfer',
+        'action' => [StockController::class, 'transfer'],
+        'middleware' => ['auth', 'role:administrator,manager,employee'],
+    ],
+    [
+        'method' => 'POST',
+        'uri' => '/stock/transfer/store',
+        'action' => [StockController::class, 'storeTransfer'],
+        'middleware' => ['auth', 'role:administrator,manager,employee'],
+    ],
 ];
 /*
 |--------------------------------------------------------------------------
