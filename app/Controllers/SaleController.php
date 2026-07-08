@@ -192,6 +192,35 @@ class SaleController extends Controller
         $this->redirect('/sales');
     }
 
+    public function cancel(): void
+    {
+        $currentUser = $this->authService->user();
+
+        $id = 0;
+
+        if (isset($_POST['id'])) {
+            $id = (int)$_POST['id'];
+        }
+
+        if ($id <= 0) {
+            $this->abort(404);
+        }
+
+        $result = $this->saleService->cancelSale(
+            $id,
+            (int)$currentUser['company_id'],
+            (int)$currentUser['id']
+        );
+
+        if (!$result['success']) {
+            Flash::danger($result['error']);
+            $this->redirect('/sales/show?id=' . $id);
+        }
+
+        Flash::success('Sale cancelled successfully.');
+
+        $this->redirect('/sales/show?id=' . $id);
+    }
 
     private function getItemsFromRequest(): array
     {
@@ -239,7 +268,6 @@ class SaleController extends Controller
         return $items;
     }
 
-
     private function paymentMethods(): array
     {
         return [
@@ -259,7 +287,6 @@ class SaleController extends Controller
             'note' => '',
         ];
     }
-
 
     public function index(): void
     {

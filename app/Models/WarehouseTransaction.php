@@ -195,6 +195,7 @@ class WarehouseTransaction extends Model
         return [
             'purchase',
             'sale',
+            'sale_cancel',
             'in',
             'out',
             'transfer',

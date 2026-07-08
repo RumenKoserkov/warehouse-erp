@@ -49,8 +49,8 @@
 
                         <?php foreach ($products as $product): ?>
                             <option
-                                value="<?= htmlspecialchars((string) $product['id']) ?>"
-                                <?php if ((string) $filters['product_id'] === (string) $product['id']): ?>
+                                value="<?= htmlspecialchars((string)$product['id']) ?>"
+                                <?php if ((string)$filters['product_id'] === (string)$product['id']): ?>
                                     selected
                                 <?php endif; ?>
                             >
@@ -68,8 +68,8 @@
 
                         <?php foreach ($warehouses as $warehouse): ?>
                             <option
-                                value="<?= htmlspecialchars((string) $warehouse['id']) ?>"
-                                <?php if ((string) $filters['warehouse_id'] === (string) $warehouse['id']): ?>
+                                value="<?= htmlspecialchars((string)$warehouse['id']) ?>"
+                                <?php if ((string)$filters['warehouse_id'] === (string)$warehouse['id']): ?>
                                     selected
                                 <?php endif; ?>
                             >
@@ -132,12 +132,16 @@
                                         <span class="badge text-bg-danger">
                                             <?= htmlspecialchars($transaction['type']) ?>
                                         </span>
+                                    <?php elseif ($transaction['type'] === 'sale_cancel'): ?>
+                                        <span class="badge text-bg-warning">
+                                            <?= htmlspecialchars($transaction['type']) ?>
+                                        </span>
                                     <?php elseif ($transaction['type'] === 'transfer'): ?>
                                         <span class="badge text-bg-primary">
                                             <?= htmlspecialchars($transaction['type']) ?>
                                         </span>
                                     <?php else: ?>
-                                        <span class="badge text-bg-warning">
+                                        <span class="badge text-bg-secondary">
                                             <?= htmlspecialchars($transaction['type']) ?>
                                         </span>
                                     <?php endif; ?>
@@ -171,7 +175,7 @@
 
                                 <td>
                                     <strong>
-                                        <?= htmlspecialchars((string) $transaction['quantity']) ?>
+                                        <?= htmlspecialchars((string)$transaction['quantity']) ?>
                                     </strong>
 
                                     <?= htmlspecialchars($transaction['unit']) ?>
@@ -190,7 +194,7 @@
                                         <?= htmlspecialchars($transaction['reference_type']) ?>
 
                                         <?php if (!empty($transaction['reference_id'])): ?>
-                                            #<?= htmlspecialchars((string) $transaction['reference_id']) ?>
+                                            #<?= htmlspecialchars((string)$transaction['reference_id']) ?>
                                         <?php endif; ?>
                                     <?php else: ?>
                                         <span class="text-muted">-</span>

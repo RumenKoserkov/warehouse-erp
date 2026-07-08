@@ -356,6 +356,12 @@ return [
         'action' => [SaleController::class, 'show'],
         'middleware' => ['auth', 'role:administrator,manager,employee'],
     ],
+    [
+        'method' => 'POST',
+        'uri' => '/sales/cancel',
+        'action' => [SaleController::class, 'cancel'],
+        'middleware' => ['auth', 'role:administrator,manager'],
+    ],
 ];
 /*
 |--------------------------------------------------------------------------

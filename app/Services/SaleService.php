@@ -124,6 +124,73 @@ class SaleService
         }
     }
 
+    public function cancelSale(int $saleId, int $companyId, int $userId): array
+    {
+        try {
+            $this->db->beginTransaction();
+
+            $sale = $this->saleModel->findByIdAndCompany($saleId, $companyId);
+
+            if ($sale === null) {
+                throw new Exception('Sale was not found.');
+            }
+
+            if ($sale['status'] === 'cancelled') {
+                throw new Exception('Sale is already cancelled.');
+            }
+
+            if ($sale['status'] !== 'completed') {
+                throw new Exception('Only completed sales can be cancelled.');
+            }
+
+            $items = $this->saleItemModel->allBySale($saleId, $companyId);
+
+            if (empty($items)) {
+                throw new Exception('Sale has no items.');
+            }
+
+            $warehouseId = (int)$sale['warehouse_id'];
+
+            foreach ($items as $item) {
+                $this->stockLevelModel->increase(
+                    $companyId,
+                    (int)$item['product_id'],
+                    $warehouseId,
+                    (float)$item['quantity']
+                );
+
+                $this->warehouseTransactionModel->create([
+                    'company_id' => $companyId,
+                    'product_id' => (int)$item['product_id'],
+                    'from_warehouse_id' => null,
+                    'to_warehouse_id' => $warehouseId,
+                    'user_id' => $userId,
+                    'type' => 'sale_cancel',
+                    'quantity' => (float)$item['quantity'],
+                    'reference_type' => 'sale',
+                    'reference_id' => $saleId,
+                    'note' => 'Cancel sale ' . $sale['sale_number'],
+                ]);
+            }
+
+            $this->saleModel->cancel($saleId, $companyId);
+
+            $this->db->commit();
+
+            return [
+                'success' => true,
+                'error' => null,
+            ];
+        } catch (Exception $exception) {
+            $this->db->rollBack();
+
+            return [
+                'success' => false,
+                'error' => $exception->getMessage(),
+            ];
+        }
+    }
+
     private function prepareItems(int $companyId, int $warehouseId, array $items): array
     {
         $preparedItems = [];

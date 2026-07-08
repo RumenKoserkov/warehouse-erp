@@ -118,7 +118,7 @@
 
                                 <td>
                                     <strong>
-                                        <?= htmlspecialchars((string) $sale['total_amount']) ?>
+                                        <?= htmlspecialchars((string)$sale['total_amount']) ?>
                                     </strong>
                                 </td>
 
@@ -127,11 +127,35 @@
                                 </td>
 
                                 <td>
-                                    <a
-                                        href="/sales/show?id=<?= htmlspecialchars((string) $sale['id']) ?>"
-                                        class="btn btn-sm btn-outline-primary">
-                                        View
-                                    </a>
+                                    <div class="d-flex gap-2">
+                                        <a
+                                            href="/sales/show?id=<?= htmlspecialchars((string)$sale['id']) ?>"
+                                            class="btn btn-sm btn-outline-primary"
+                                        >
+                                            View
+                                        </a>
+
+                                        <?php if ($sale['status'] === 'completed'): ?>
+                                            <form
+                                                action="/sales/cancel"
+                                                method="POST"
+                                                onsubmit="return confirm('Are you sure you want to cancel this sale and return the stock?');"
+                                            >
+                                                <input
+                                                    type="hidden"
+                                                    name="id"
+                                                    value="<?= htmlspecialchars((string)$sale['id']) ?>"
+                                                >
+
+                                                <button
+                                                    type="submit"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                >
+                                                    Cancel
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

@@ -3,9 +3,27 @@
         Sale <?= htmlspecialchars($sale['sale_number']) ?>
     </h1>
 
-    <a href="/sales" class="btn btn-outline-secondary">
-        Back to Sales
-    </a>
+    <div class="d-flex gap-2">
+        <?php if ($sale['status'] === 'completed'): ?>
+            <form
+                action="/sales/cancel"
+                method="POST"
+                onsubmit="return confirm('Are you sure you want to cancel this sale and return the stock?');">
+                <input
+                    type="hidden"
+                    name="id"
+                    value="<?= htmlspecialchars((string)$sale['id']) ?>">
+
+                <button type="submit" class="btn btn-danger">
+                    Cancel Sale
+                </button>
+            </form>
+        <?php endif; ?>
+
+        <a href="/sales" class="btn btn-outline-secondary">
+            Back to Sales
+        </a>
+    </div>
 </div>
 
 <div class="row mb-4">
@@ -174,12 +192,11 @@
                             <tr>
                                 <td>
                                     <?php if (!empty($item['image_path'])): ?>
-                                        <img 
-                                            src="<?= htmlspecialchars($item['image_path']) ?>" 
+                                        <img
+                                            src="<?= htmlspecialchars($item['image_path']) ?>"
                                             alt="Product image"
                                             style="width: 50px; height: 50px; object-fit: cover;"
-                                            class="rounded border"
-                                        >
+                                            class="rounded border">
                                     <?php else: ?>
                                         <span class="text-muted">No image</span>
                                     <?php endif; ?>
