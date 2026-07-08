@@ -334,11 +334,16 @@ return [
     // Sales CRUD
     [
         'method' => 'GET',
+        'uri' => '/sales',
+        'action' => [SaleController::class, 'index'],
+        'middleware' => ['auth', 'role:administrator,manager,employee'],
+    ],
+    [
+        'method' => 'GET',
         'uri' => '/sales/create',
         'action' => [SaleController::class, 'create'],
         'middleware' => ['auth', 'role:administrator,manager,employee'],
     ],
-    
     [
         'method' => 'POST',
         'uri' => '/sales/store',

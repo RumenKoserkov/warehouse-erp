@@ -256,4 +256,27 @@ class SaleController extends Controller
             'note' => '',
         ];
     }
+
+
+    public function index(): void
+    {
+        $currentUser = $this->authService->user();
+
+        $search = '';
+
+        if (isset($_GET['search'])) {
+            $search = trim((string)$_GET['search']);
+        }
+
+        $sales = $this->saleModel->allByCompany(
+            (int)$currentUser['company_id'],
+            $search
+        );
+
+        $this->view('sales/index', [
+            'title' => 'Sales',
+            'sales' => $sales,
+            'search' => $search,
+        ]);
+    }
 }

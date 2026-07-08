@@ -141,21 +141,15 @@ if (isset($title)) {
                             </li>
 
                             <li class="nav-item">
-                                <a href="/stock/history" class="nav-link">
-                                    Stock History
-                                </a>
+                                <a href="/stock/history" class="nav-link">Stock History</a>
                             </li>
 
                             <li class="nav-item">
-                                <a href="/sales" class="nav-link">
-                                    Sales
-                                </a>
+                                <a href="/sales" class="nav-link">Sales</a>
                             </li>
 
                             <li class="nav-item">
-                                <a href="/sales/create" class="nav-link">
-                                    Sales
-                                </a>
+                                <a href="/sales/create" class="nav-link">New Sale</a>
                             </li>
 
                         <?php endif; ?>
