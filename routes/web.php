@@ -338,6 +338,13 @@ return [
         'action' => [SaleController::class, 'create'],
         'middleware' => ['auth', 'role:administrator,manager,employee'],
     ],
+    
+    [
+        'method' => 'POST',
+        'uri' => '/sales/store',
+        'action' => [SaleController::class, 'store'],
+        'middleware' => ['auth', 'role:administrator,manager,employee'],
+    ],
 ];
 /*
 |--------------------------------------------------------------------------

@@ -27,24 +27,22 @@
                 <div class="col-md-3 mb-3">
                     <label class="form-label">Sale Number</label>
 
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         class="form-control"
                         value="<?= htmlspecialchars($saleNumber) ?>"
-                        readonly
-                    >
+                        readonly>
                 </div>
 
                 <div class="col-md-3 mb-3">
                     <label class="form-label">Sale Date *</label>
 
-                    <input 
-                        type="date" 
-                        name="sale_date" 
+                    <input
+                        type="date"
+                        name="sale_date"
                         class="form-control"
                         value="<?= htmlspecialchars($saleDate) ?>"
-                        required
-                    >
+                        required>
                 </div>
 
                 <div class="col-md-3 mb-3">
@@ -54,7 +52,11 @@
                         <option value="">No client</option>
 
                         <?php foreach ($clients as $client): ?>
-                            <option value="<?= htmlspecialchars((string)$client['id']) ?>">
+                            <option
+                                value="<?= htmlspecialchars((string)$client['id']) ?>"
+                                <?php if ((string)$old['client_id'] === (string)$client['id']): ?>
+                                selected
+                                <?php endif; ?>>
                                 <?php if (!empty($client['company_name'])): ?>
                                     <?= htmlspecialchars($client['name'] . ' - ' . $client['company_name']) ?>
                                 <?php else: ?>
@@ -72,8 +74,12 @@
                         <option value="">Select warehouse</option>
 
                         <?php foreach ($warehouses as $warehouse): ?>
-                            <option value="<?= htmlspecialchars((string)$warehouse['id']) ?>">
-                                <?= htmlspecialchars($warehouse['code'] . ' - ' . $warehouse['name']) ?>
+                            <option
+                                value="<?= htmlspecialchars((string)$warehouse['id']) ?>"
+                                <?php if ((string)$old['warehouse_id'] === (string)$warehouse['id']): ?>
+                                selected
+                                <?php endif; ?>>
+                                <?= htmlspecialchars($warehouse['name']) ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -86,12 +92,11 @@
 
                     <select name="payment_method" class="form-select">
                         <?php foreach ($paymentMethods as $paymentMethod): ?>
-                            <option 
+                            <option
                                 value="<?= htmlspecialchars($paymentMethod) ?>"
                                 <?php if ($old['payment_method'] === $paymentMethod): ?>
-                                    selected
-                                <?php endif; ?>
-                            >
+                                selected
+                                <?php endif; ?>>
                                 <?= htmlspecialchars($paymentMethod) ?>
                             </option>
                         <?php endforeach; ?>
@@ -101,13 +106,12 @@
                 <div class="col-md-9 mb-3">
                     <label class="form-label">Note</label>
 
-                    <input 
-                        type="text" 
-                        name="note" 
+                    <input
+                        type="text"
+                        name="note"
                         class="form-control"
                         value="<?= htmlspecialchars($old['note']) ?>"
-                        placeholder="Optional note..."
-                    >
+                        placeholder="Optional note...">
                 </div>
             </div>
         </div>
@@ -143,10 +147,9 @@
                                     <option value="">Select product</option>
 
                                     <?php foreach ($products as $product): ?>
-                                        <option 
+                                        <option
                                             value="<?= htmlspecialchars((string)$product['id']) ?>"
-                                            data-price="<?= htmlspecialchars((string)$product['selling_price']) ?>"
-                                        >
+                                            data-price="<?= htmlspecialchars((string)$product['selling_price']) ?>">
                                             <?= htmlspecialchars($product['internal_code'] . ' - ' . $product['name'] . ' (' . $product['unit'] . ')') ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -154,42 +157,38 @@
                             </td>
 
                             <td>
-                                <input 
-                                    type="number" 
-                                    step="0.001" 
-                                    name="quantity[]" 
+                                <input
+                                    type="number"
+                                    step="0.001"
+                                    name="quantity[]"
                                     class="form-control quantity-input"
-                                    value="1"
-                                >
+                                    value="1">
                             </td>
 
                             <td>
-                                <input 
-                                    type="number" 
-                                    step="0.01" 
-                                    name="unit_price[]" 
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    name="unit_price[]"
                                     class="form-control price-input"
-                                    value="0.00"
-                                >
+                                    value="0.00">
                             </td>
 
                             <td>
-                                <input 
-                                    type="number" 
-                                    step="0.01" 
-                                    name="discount_amount[]" 
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    name="discount_amount[]"
                                     class="form-control discount-input"
-                                    value="0.00"
-                                >
+                                    value="0.00">
                             </td>
 
                             <td>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     class="form-control total-input"
                                     value="0.00"
-                                    readonly
-                                >
+                                    readonly>
                             </td>
 
                             <td>
@@ -278,7 +277,7 @@
         let totalDiscount = 0;
         let total = 0;
 
-        rows.forEach(function (row) {
+        rows.forEach(function(row) {
             const quantityInput = row.querySelector('.quantity-input');
             const priceInput = row.querySelector('.price-input');
             const discountInput = row.querySelector('.discount-input');
@@ -322,7 +321,7 @@
         const discountInput = row.querySelector('.discount-input');
         const removeButton = row.querySelector('.remove-row-button');
 
-        productSelect.addEventListener('change', function () {
+        productSelect.addEventListener('change', function() {
             const selectedOption = productSelect.options[productSelect.selectedIndex];
             const price = selectedOption.getAttribute('data-price');
 
@@ -334,22 +333,22 @@
             calculateTotals();
         });
 
-        quantityInput.addEventListener('input', function () {
+        quantityInput.addEventListener('input', function() {
             calculateRow(row);
             calculateTotals();
         });
 
-        priceInput.addEventListener('input', function () {
+        priceInput.addEventListener('input', function() {
             calculateRow(row);
             calculateTotals();
         });
 
-        discountInput.addEventListener('input', function () {
+        discountInput.addEventListener('input', function() {
             calculateRow(row);
             calculateTotals();
         });
 
-        removeButton.addEventListener('click', function () {
+        removeButton.addEventListener('click', function() {
             const rows = tableBody.querySelectorAll('tr');
 
             if (rows.length <= 1) {
@@ -376,13 +375,13 @@
         bindRowEvents(newRow);
     }
 
-    addRowButton.addEventListener('click', function () {
+    addRowButton.addEventListener('click', function() {
         createNewRow();
     });
 
     const rows = tableBody.querySelectorAll('tr');
 
-    rows.forEach(function (row) {
+    rows.forEach(function(row) {
         bindRowEvents(row);
     });
 </script>
