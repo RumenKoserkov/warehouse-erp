@@ -13,6 +13,7 @@ use App\Services\AuthService;
 use App\Core\Flash;
 use App\Core\Validator;
 use App\Services\SaleService;
+use App\Models\SaleItem;
 
 class SaleController extends Controller
 {
@@ -22,10 +23,12 @@ class SaleController extends Controller
     private Warehouse $warehouseModel;
     private AuthService $authService;
     private SaleService $saleService;
+    private SaleItem $saleItemModel;
 
     public function __construct()
     {
         $this->saleModel = new Sale();
+        $this->saleItemModel = new SaleItem();
         $this->clientModel = new Client();
         $this->productModel = new Product();
         $this->warehouseModel = new Warehouse();
@@ -277,6 +280,41 @@ class SaleController extends Controller
             'title' => 'Sales',
             'sales' => $sales,
             'search' => $search,
+        ]);
+    }
+
+    public function show(): void
+    {
+        $currentUser = $this->authService->user();
+
+        $id = 0;
+
+        if (isset($_GET['id'])) {
+            $id = (int)$_GET['id'];
+        }
+
+        if ($id <= 0) {
+            $this->abort(404);
+        }
+
+        $sale = $this->saleModel->findByIdAndCompany(
+            $id,
+            (int)$currentUser['company_id']
+        );
+
+        if ($sale === null) {
+            $this->abort(404);
+        }
+
+        $items = $this->saleItemModel->allBySale(
+            $id,
+            (int)$currentUser['company_id']
+        );
+
+        $this->view('sales/show', [
+            'title' => 'Sale Details',
+            'sale' => $sale,
+            'items' => $items,
         ]);
     }
 }

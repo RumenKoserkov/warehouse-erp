@@ -350,6 +350,12 @@ return [
         'action' => [SaleController::class, 'store'],
         'middleware' => ['auth', 'role:administrator,manager,employee'],
     ],
+    [
+        'method' => 'GET',
+        'uri' => '/sales/show',
+        'action' => [SaleController::class, 'show'],
+        'middleware' => ['auth', 'role:administrator,manager,employee'],
+    ],
 ];
 /*
 |--------------------------------------------------------------------------

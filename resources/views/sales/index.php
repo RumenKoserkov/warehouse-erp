@@ -13,8 +13,7 @@
             name="search"
             class="form-control"
             placeholder="Search by sale number, client, warehouse, user..."
-            value="<?= htmlspecialchars($search) ?>"
-        >
+            value="<?= htmlspecialchars($search) ?>">
 
         <button type="submit" class="btn btn-outline-secondary">
             Search
@@ -42,6 +41,7 @@
                             <th>Status</th>
                             <th>Total</th>
                             <th>Created At</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
 
@@ -124,6 +124,14 @@
 
                                 <td>
                                     <?= htmlspecialchars($sale['created_at']) ?>
+                                </td>
+
+                                <td>
+                                    <a
+                                        href="/sales/show?id=<?= htmlspecialchars((string) $sale['id']) ?>"
+                                        class="btn btn-sm btn-outline-primary">
+                                        View
+                                    </a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
