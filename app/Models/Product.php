@@ -235,11 +235,7 @@ class Product extends Model
     public function activeByCompany(int $companyId): array
     {
         $stmt = $this->db->prepare("
-        SELECT
-            id,
-            internal_code,
-            name,
-            unit
+        SELECT id, internal_code, name, unit, selling_price
         FROM products
         WHERE company_id = ?
         AND is_active = 1

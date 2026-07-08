@@ -152,6 +152,12 @@ if (isset($title)) {
                                 </a>
                             </li>
 
+                            <li class="nav-item">
+                                <a href="/sales/create" class="nav-link">
+                                    Sales
+                                </a>
+                            </li>
+
                         <?php endif; ?>
 
                         <?php if ($authService->hasRole('administrator')): ?>

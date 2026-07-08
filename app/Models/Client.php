@@ -138,4 +138,19 @@ class Client extends Model
 
         return $stmt->execute([$id, $companyId]);
     }
+
+    public function activeByCompany(int $companyId): array
+    {
+        $stmt = $this->db->prepare("
+        SELECT id, name, company_name
+        FROM clients
+        WHERE company_id = ?
+        AND is_active = 1
+        ORDER BY name ASC
+    ");
+
+        $stmt->execute([$companyId]);
+
+        return $stmt->fetchAll();
+    }
 }

@@ -9,6 +9,7 @@ use App\Controllers\CategoryController;
 use App\Controllers\WarehouseController;
 use App\Controllers\ProductController;
 use App\Controllers\StockController;
+use App\Controllers\SaleController;
 
 return [
     [
@@ -327,6 +328,14 @@ return [
         'method' => 'POST',
         'uri' => '/stock/transfer/store',
         'action' => [StockController::class, 'storeTransfer'],
+        'middleware' => ['auth', 'role:administrator,manager,employee'],
+    ],
+
+    // Sales CRUD
+    [
+        'method' => 'GET',
+        'uri' => '/sales/create',
+        'action' => [SaleController::class, 'create'],
         'middleware' => ['auth', 'role:administrator,manager,employee'],
     ],
 ];
