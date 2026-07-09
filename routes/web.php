@@ -371,6 +371,12 @@ return [
         'action' => [PurchaseController::class, 'create'],
         'middleware' => ['auth', 'role:administrator,manager'],
     ],
+    [
+        'method' => 'POST',
+        'uri' => '/purchases/store',
+        'action' => [PurchaseController::class, 'store'],
+        'middleware' => ['auth', 'role:administrator,manager'],
+    ],
 ];
 /*
 |--------------------------------------------------------------------------

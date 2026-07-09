@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Flash;
+use App\Core\Validator;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Supplier;
 use App\Models\Warehouse;
 use App\Services\AuthService;
+use App\Services\PurchaseService;
 
 class PurchaseController extends Controller
 {
@@ -18,6 +21,7 @@ class PurchaseController extends Controller
     private Product $productModel;
     private Warehouse $warehouseModel;
     private AuthService $authService;
+    private PurchaseService $purchaseService;
 
     public function __construct()
     {
@@ -26,6 +30,7 @@ class PurchaseController extends Controller
         $this->productModel = new Product();
         $this->warehouseModel = new Warehouse();
         $this->authService = new AuthService();
+        $this->purchaseService = new PurchaseService();
     }
 
     public function create(): void
@@ -45,6 +50,187 @@ class PurchaseController extends Controller
             'errors' => [],
             'old' => $this->emptyOldData(),
         ]);
+    }
+
+    public function store(): void
+    {
+        $currentUser = $this->authService->user();
+
+        $companyId = (int)$currentUser['company_id'];
+
+        $supplierId = null;
+        $warehouseId = 0;
+        $purchaseDate = '';
+        $paymentMethod = '';
+        $note = '';
+
+        if (isset($_POST['supplier_id']) && (int)$_POST['supplier_id'] > 0) {
+            $supplierId = (int)$_POST['supplier_id'];
+        }
+
+        if (isset($_POST['warehouse_id'])) {
+            $warehouseId = (int)$_POST['warehouse_id'];
+        }
+
+        if (isset($_POST['purchase_date'])) {
+            $purchaseDate = trim((string)$_POST['purchase_date']);
+        }
+
+        if (isset($_POST['payment_method'])) {
+            $paymentMethod = trim((string)$_POST['payment_method']);
+        }
+
+        if (isset($_POST['note'])) {
+            $note = trim((string)$_POST['note']);
+        }
+
+        $validator = new Validator($_POST);
+
+        $validator
+            ->required('purchase_date', 'Purchase date is required.')
+            ->required('warehouse_id', 'Warehouse is required.')
+            ->required('payment_method', 'Payment method is required.');
+
+        $errors = $validator->all();
+
+        if ($warehouseId <= 0) {
+            $errors[] = 'Please select a valid warehouse.';
+        }
+
+        if (!in_array($paymentMethod, $this->paymentMethods(), true)) {
+            $errors[] = 'Invalid payment method.';
+        }
+
+        if ($warehouseId > 0) {
+            $warehouse = $this->warehouseModel->findByIdAndCompany(
+                $warehouseId,
+                $companyId
+            );
+
+            if ($warehouse === null) {
+                $errors[] = 'Selected warehouse was not found.';
+            }
+        }
+
+        if ($supplierId !== null) {
+            $supplier = $this->supplierModel->findByIdAndCompany(
+                $supplierId,
+                $companyId
+            );
+
+            if ($supplier === null) {
+                $errors[] = 'Selected supplier was not found.';
+            }
+        }
+
+        $items = $this->getItemsFromRequest();
+
+        if (empty($items)) {
+            $errors[] = 'Purchase must have at least one product.';
+        }
+
+        if (!empty($errors)) {
+            $this->view('purchases/create', [
+                'title' => 'Create Purchase',
+                'purchaseNumber' => $this->purchaseModel->generateNextPurchaseNumber($companyId),
+                'purchaseDate' => $purchaseDate,
+                'suppliers' => $this->supplierModel->activeByCompany($companyId),
+                'warehouses' => $this->warehouseModel->activeByCompany($companyId),
+                'products' => $this->productModel->activeByCompany($companyId),
+                'paymentMethods' => $this->paymentMethods(),
+                'errors' => $errors,
+                'old' => [
+                    'supplier_id' => (string)$supplierId,
+                    'warehouse_id' => (string)$warehouseId,
+                    'payment_method' => $paymentMethod,
+                    'note' => $note,
+                ],
+            ]);
+
+            return;
+        }
+
+        $result = $this->purchaseService->createPurchase([
+            'company_id' => $companyId,
+            'supplier_id' => $supplierId,
+            'warehouse_id' => $warehouseId,
+            'user_id' => (int)$currentUser['id'],
+            'purchase_date' => $purchaseDate,
+            'payment_method' => $paymentMethod,
+            'note' => $note,
+            'items' => $items,
+        ]);
+
+        if (!$result['success']) {
+            $this->view('purchases/create', [
+                'title' => 'Create Purchase',
+                'purchaseNumber' => $this->purchaseModel->generateNextPurchaseNumber($companyId),
+                'purchaseDate' => $purchaseDate,
+                'suppliers' => $this->supplierModel->activeByCompany($companyId),
+                'warehouses' => $this->warehouseModel->activeByCompany($companyId),
+                'products' => $this->productModel->activeByCompany($companyId),
+                'paymentMethods' => $this->paymentMethods(),
+                'errors' => [$result['error']],
+                'old' => [
+                    'supplier_id' => (string)$supplierId,
+                    'warehouse_id' => (string)$warehouseId,
+                    'payment_method' => $paymentMethod,
+                    'note' => $note,
+                ],
+            ]);
+
+            return;
+        }
+
+        Flash::success('Purchase created successfully.');
+
+        $this->redirect('/purchases');
+    }
+
+    private function getItemsFromRequest(): array
+    {
+        $items = [];
+
+        if (!isset($_POST['product_id'])) {
+            return $items;
+        }
+
+        if (!is_array($_POST['product_id'])) {
+            return $items;
+        }
+
+        $productIds = $_POST['product_id'];
+
+        foreach ($productIds as $index => $productId) {
+            $quantity = 0;
+            $unitCost = 0;
+            $discountAmount = 0;
+
+            if (isset($_POST['quantity'][$index])) {
+                $quantity = (float)$_POST['quantity'][$index];
+            }
+
+            if (isset($_POST['unit_cost'][$index])) {
+                $unitCost = (float)$_POST['unit_cost'][$index];
+            }
+
+            if (isset($_POST['discount_amount'][$index])) {
+                $discountAmount = (float)$_POST['discount_amount'][$index];
+            }
+
+            if ((int)$productId <= 0) {
+                continue;
+            }
+
+            $items[] = [
+                'product_id' => (int)$productId,
+                'quantity' => $quantity,
+                'unit_cost' => $unitCost,
+                'discount_amount' => $discountAmount,
+            ];
+        }
+
+        return $items;
     }
 
     private function paymentMethods(): array
