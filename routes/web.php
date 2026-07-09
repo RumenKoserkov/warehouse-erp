@@ -10,6 +10,7 @@ use App\Controllers\WarehouseController;
 use App\Controllers\ProductController;
 use App\Controllers\StockController;
 use App\Controllers\SaleController;
+use App\Controllers\PurchaseController;
 
 return [
     [
@@ -360,6 +361,14 @@ return [
         'method' => 'POST',
         'uri' => '/sales/cancel',
         'action' => [SaleController::class, 'cancel'],
+        'middleware' => ['auth', 'role:administrator,manager'],
+    ],
+
+    // Purchase CRUD
+    [
+        'method' => 'GET',
+        'uri' => '/purchases/create',
+        'action' => [PurchaseController::class, 'create'],
         'middleware' => ['auth', 'role:administrator,manager'],
     ],
 ];
