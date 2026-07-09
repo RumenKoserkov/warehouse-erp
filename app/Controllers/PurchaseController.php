@@ -13,6 +13,7 @@ use App\Models\Supplier;
 use App\Models\Warehouse;
 use App\Services\AuthService;
 use App\Services\PurchaseService;
+use App\Models\PurchaseItem;
 
 class PurchaseController extends Controller
 {
@@ -22,10 +23,12 @@ class PurchaseController extends Controller
     private Warehouse $warehouseModel;
     private AuthService $authService;
     private PurchaseService $purchaseService;
+    private PurchaseItem $purchaseItemModel;
 
     public function __construct()
     {
         $this->purchaseModel = new Purchase();
+        $this->purchaseItemModel = new PurchaseItem();
         $this->supplierModel = new Supplier();
         $this->productModel = new Product();
         $this->warehouseModel = new Warehouse();
@@ -185,6 +188,41 @@ class PurchaseController extends Controller
         Flash::success('Purchase created successfully.');
 
         $this->redirect('/purchases');
+    }
+
+    public function show(): void
+    {
+        $currentUser = $this->authService->user();
+
+        $id = 0;
+
+        if (isset($_GET['id'])) {
+            $id = (int)$_GET['id'];
+        }
+
+        if ($id <= 0) {
+            $this->abort(404);
+        }
+
+        $purchase = $this->purchaseModel->findByIdAndCompany(
+            $id,
+            (int)$currentUser['company_id']
+        );
+
+        if ($purchase === null) {
+            $this->abort(404);
+        }
+
+        $items = $this->purchaseItemModel->allByPurchase(
+            $id,
+            (int)$currentUser['company_id']
+        );
+
+        $this->view('purchases/show', [
+            'title' => 'Purchase Details',
+            'purchase' => $purchase,
+            'items' => $items,
+        ]);
     }
 
     private function getItemsFromRequest(): array

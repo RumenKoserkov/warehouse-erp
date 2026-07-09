@@ -383,6 +383,12 @@ return [
         'action' => [PurchaseController::class, 'store'],
         'middleware' => ['auth', 'role:administrator,manager'],
     ],
+    [
+        'method' => 'GET',
+        'uri' => '/purchases/show',
+        'action' => [PurchaseController::class, 'show'],
+        'middleware' => ['auth', 'role:administrator,manager'],
+    ],
 ];
 /*
 |--------------------------------------------------------------------------
