@@ -18,8 +18,7 @@
                         name="search"
                         class="form-control"
                         placeholder="Product, code, warehouse, user..."
-                        value="<?= htmlspecialchars($filters['search']) ?>"
-                    >
+                        value="<?= htmlspecialchars($filters['search']) ?>">
                 </div>
 
                 <div class="col-md-3 mb-3">
@@ -32,9 +31,8 @@
                             <option
                                 value="<?= htmlspecialchars($type) ?>"
                                 <?php if ($filters['type'] === $type): ?>
-                                    selected
-                                <?php endif; ?>
-                            >
+                                selected
+                                <?php endif; ?>>
                                 <?= htmlspecialchars($type) ?>
                             </option>
                         <?php endforeach; ?>
@@ -51,9 +49,8 @@
                             <option
                                 value="<?= htmlspecialchars((string)$product['id']) ?>"
                                 <?php if ((string)$filters['product_id'] === (string)$product['id']): ?>
-                                    selected
-                                <?php endif; ?>
-                            >
+                                selected
+                                <?php endif; ?>>
                                 <?= htmlspecialchars($product['internal_code'] . ' - ' . $product['name']) ?>
                             </option>
                         <?php endforeach; ?>
@@ -70,9 +67,8 @@
                             <option
                                 value="<?= htmlspecialchars((string)$warehouse['id']) ?>"
                                 <?php if ((string)$filters['warehouse_id'] === (string)$warehouse['id']): ?>
-                                    selected
-                                <?php endif; ?>
-                            >
+                                selected
+                                <?php endif; ?>>
                                 <?= htmlspecialchars($warehouse['code'] . ' - ' . $warehouse['name']) ?>
                             </option>
                         <?php endforeach; ?>
@@ -132,7 +128,7 @@
                                         <span class="badge text-bg-danger">
                                             <?= htmlspecialchars($transaction['type']) ?>
                                         </span>
-                                    <?php elseif ($transaction['type'] === 'sale_cancel'): ?>
+                                    <?php elseif ($transaction['type'] === 'sale_cancel' || $transaction['type'] === 'purchase_cancel'): ?>
                                         <span class="badge text-bg-warning">
                                             <?= htmlspecialchars($transaction['type']) ?>
                                         </span>

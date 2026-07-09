@@ -312,4 +312,35 @@ class PurchaseController extends Controller
             'search' => $search,
         ]);
     }
+
+
+    public function cancel(): void
+    {
+        $currentUser = $this->authService->user();
+
+        $id = 0;
+
+        if (isset($_POST['id'])) {
+            $id = (int)$_POST['id'];
+        }
+
+        if ($id <= 0) {
+            $this->abort(404);
+        }
+
+        $result = $this->purchaseService->cancelPurchase(
+            $id,
+            (int)$currentUser['company_id'],
+            (int)$currentUser['id']
+        );
+
+        if (!$result['success']) {
+            Flash::danger($result['error']);
+            $this->redirect('/purchases/show?id=' . $id);
+        }
+
+        Flash::success('Purchase cancelled successfully.');
+
+        $this->redirect('/purchases/show?id=' . $id);
+    }
 }

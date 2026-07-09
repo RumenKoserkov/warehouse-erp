@@ -119,6 +119,90 @@ class PurchaseService
         }
     }
 
+    public function cancelPurchase(int $purchaseId, int $companyId, int $userId): array
+    {
+        try {
+            $this->db->beginTransaction();
+
+            $purchase = $this->purchaseModel->findByIdAndCompany($purchaseId, $companyId);
+
+            if ($purchase === null) {
+                throw new Exception('Purchase was not found.');
+            }
+
+            if ($purchase['status'] === 'cancelled') {
+                throw new Exception('Purchase is already cancelled.');
+            }
+
+            if ($purchase['status'] !== 'completed') {
+                throw new Exception('Only completed purchases can be cancelled.');
+            }
+
+            $items = $this->purchaseItemModel->allByPurchase($purchaseId, $companyId);
+
+            if (empty($items)) {
+                throw new Exception('Purchase has no items.');
+            }
+
+            $warehouseId = (int)$purchase['warehouse_id'];
+
+            foreach ($items as $item) {
+                $hasEnoughStock = $this->stockLevelModel->hasEnoughStock(
+                    $companyId,
+                    (int)$item['product_id'],
+                    $warehouseId,
+                    (float)$item['quantity']
+                );
+
+                if (!$hasEnoughStock) {
+                    throw new Exception('Not enough stock to cancel purchase for product: ' . $item['product_name']);
+                }
+            }
+
+            foreach ($items as $item) {
+                $decreased = $this->stockLevelModel->decrease(
+                    $companyId,
+                    (int)$item['product_id'],
+                    $warehouseId,
+                    (float)$item['quantity']
+                );
+
+                if (!$decreased) {
+                    throw new Exception('Could not decrease stock for product: ' . $item['product_name']);
+                }
+
+                $this->warehouseTransactionModel->create([
+                    'company_id' => $companyId,
+                    'product_id' => (int)$item['product_id'],
+                    'from_warehouse_id' => $warehouseId,
+                    'to_warehouse_id' => null,
+                    'user_id' => $userId,
+                    'type' => 'purchase_cancel',
+                    'quantity' => (float)$item['quantity'],
+                    'reference_type' => 'purchase',
+                    'reference_id' => $purchaseId,
+                    'note' => 'Cancel purchase ' . $purchase['purchase_number'],
+                ]);
+            }
+
+            $this->purchaseModel->cancel($purchaseId, $companyId);
+
+            $this->db->commit();
+
+            return [
+                'success' => true,
+                'error' => null,
+            ];
+        } catch (Exception $exception) {
+            $this->db->rollBack();
+
+            return [
+                'success' => false,
+                'error' => $exception->getMessage(),
+            ];
+        }
+    }
+
     private function prepareItems(int $companyId, array $items): array
     {
         $preparedItems = [];

@@ -3,9 +3,27 @@
         Purchase <?= htmlspecialchars($purchase['purchase_number']) ?>
     </h1>
 
-    <a href="/purchases" class="btn btn-outline-secondary">
-        Back to Purchases
-    </a>
+    <div class="d-flex gap-2">
+        <?php if ($purchase['status'] === 'completed'): ?>
+            <form
+                action="/purchases/cancel"
+                method="POST"
+                onsubmit="return confirm('Are you sure you want to cancel this purchase and decrease the stock?');">
+                <input
+                    type="hidden"
+                    name="id"
+                    value="<?= htmlspecialchars((string)$purchase['id']) ?>">
+
+                <button type="submit" class="btn btn-danger">
+                    Cancel Purchase
+                </button>
+            </form>
+        <?php endif; ?>
+
+        <a href="/purchases" class="btn btn-outline-secondary">
+            Back to Purchases
+        </a>
+    </div>
 </div>
 
 <div class="row mb-4">
@@ -174,12 +192,11 @@
                             <tr>
                                 <td>
                                     <?php if (!empty($item['image_path'])): ?>
-                                        <img 
-                                            src="<?= htmlspecialchars($item['image_path']) ?>" 
+                                        <img
+                                            src="<?= htmlspecialchars($item['image_path']) ?>"
                                             alt="Product image"
                                             style="width: 50px; height: 50px; object-fit: cover;"
-                                            class="rounded border"
-                                        >
+                                            class="rounded border">
                                     <?php else: ?>
                                         <span class="text-muted">No image</span>
                                     <?php endif; ?>

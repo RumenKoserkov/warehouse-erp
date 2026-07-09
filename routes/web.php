@@ -389,6 +389,12 @@ return [
         'action' => [PurchaseController::class, 'show'],
         'middleware' => ['auth', 'role:administrator,manager'],
     ],
+    [
+        'method' => 'POST',
+        'uri' => '/purchases/cancel',
+        'action' => [PurchaseController::class, 'cancel'],
+        'middleware' => ['auth', 'role:administrator,manager'],
+    ],
 ];
 /*
 |--------------------------------------------------------------------------

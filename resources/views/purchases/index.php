@@ -8,13 +8,12 @@
 
 <form method="GET" action="/purchases" class="mb-3">
     <div class="input-group">
-        <input 
-            type="text" 
-            name="search" 
+        <input
+            type="text"
+            name="search"
             class="form-control"
             placeholder="Search by purchase number, supplier, warehouse, user..."
-            value="<?= htmlspecialchars($search) ?>"
-        >
+            value="<?= htmlspecialchars($search) ?>">
 
         <button type="submit" class="btn btn-outline-secondary">
             Search
@@ -121,12 +120,29 @@
                                 </td>
 
                                 <td>
-                                    <a 
-                                        href="/purchases/show?id=<?= htmlspecialchars((string)$purchase['id']) ?>" 
-                                        class="btn btn-sm btn-outline-primary"
-                                    >
-                                        View
-                                    </a>
+                                    <div class="d-flex gap-2">
+                                        <a
+                                            href="/purchases/show?id=<?= htmlspecialchars((string)$purchase['id']) ?>"
+                                            class="btn btn-sm btn-outline-primary">
+                                            View
+                                        </a>
+
+                                        <?php if ($purchase['status'] === 'completed'): ?>
+                                            <form
+                                                action="/purchases/cancel"
+                                                method="POST"
+                                                onsubmit="return confirm('Are you sure you want to cancel this purchase and decrease the stock?');">
+                                                <input
+                                                    type="hidden"
+                                                    name="id"
+                                                    value="<?= htmlspecialchars((string)$purchase['id']) ?>">
+
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    Cancel
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
