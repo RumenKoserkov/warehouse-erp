@@ -14,6 +14,7 @@ use App\Core\Flash;
 use App\Core\Validator;
 use App\Services\SaleService;
 use App\Models\SaleItem;
+use App\Services\SalesReportService;
 
 class SaleController extends Controller
 {
@@ -24,6 +25,7 @@ class SaleController extends Controller
     private AuthService $authService;
     private SaleService $saleService;
     private SaleItem $saleItemModel;
+    private SalesReportService $salesReportService;
 
     public function __construct()
     {
@@ -34,6 +36,7 @@ class SaleController extends Controller
         $this->warehouseModel = new Warehouse();
         $this->authService = new AuthService();
         $this->saleService = new SaleService();
+        $this->salesReportService = new SalesReportService();
     }
 
     public function create(): void
@@ -342,6 +345,40 @@ class SaleController extends Controller
             'title' => 'Sale Details',
             'sale' => $sale,
             'items' => $items,
+        ]);
+    }
+
+    public function report(): void
+    {
+        $currentUser = $this->authService->user();
+
+        $companyId = (int)$currentUser['company_id'];
+
+        $dateFrom = date('Y-m-01');
+        $dateTo = date('Y-m-d');
+
+        if (isset($_GET['date_from']) && trim((string)$_GET['date_from']) !== '') {
+            $dateFrom = trim((string)$_GET['date_from']);
+        }
+
+        if (isset($_GET['date_to']) && trim((string)$_GET['date_to']) !== '') {
+            $dateTo = trim((string)$_GET['date_to']);
+        }
+
+        if ($dateFrom > $dateTo) {
+            $temporaryDate = $dateFrom;
+            $dateFrom = $dateTo;
+            $dateTo = $temporaryDate;
+        }
+
+        $this->view('sales/report', [
+            'title' => 'Sales Report',
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'summary' => $this->salesReportService->getSummary($companyId, $dateFrom, $dateTo),
+            'topProducts' => $this->salesReportService->getTopProducts($companyId, $dateFrom, $dateTo, 10),
+            'salesByDay' => $this->salesReportService->getSalesByDay($companyId, $dateFrom, $dateTo),
+            'recentSales' => $this->salesReportService->getRecentSales($companyId, $dateFrom, $dateTo, 10),
         ]);
     }
 }

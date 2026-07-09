@@ -353,6 +353,12 @@ return [
     ],
     [
         'method' => 'GET',
+        'uri' => '/sales/report',
+        'action' => [SaleController::class, 'report'],
+        'middleware' => ['auth', 'role:administrator,manager'],
+    ],
+    [
+        'method' => 'GET',
         'uri' => '/sales/show',
         'action' => [SaleController::class, 'show'],
         'middleware' => ['auth', 'role:administrator,manager,employee'],
