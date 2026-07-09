@@ -252,4 +252,26 @@ class PurchaseController extends Controller
             'note' => '',
         ];
     }
+
+    public function index(): void
+    {
+        $currentUser = $this->authService->user();
+
+        $search = '';
+
+        if (isset($_GET['search'])) {
+            $search = trim((string)$_GET['search']);
+        }
+
+        $purchases = $this->purchaseModel->allByCompany(
+            (int)$currentUser['company_id'],
+            $search
+        );
+
+        $this->view('purchases/index', [
+            'title' => 'Purchases',
+            'purchases' => $purchases,
+            'search' => $search,
+        ]);
+    }
 }

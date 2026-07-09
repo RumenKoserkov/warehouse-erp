@@ -367,6 +367,12 @@ return [
     // Purchase CRUD
     [
         'method' => 'GET',
+        'uri' => '/purchases',
+        'action' => [PurchaseController::class, 'index'],
+        'middleware' => ['auth', 'role:administrator,manager'],
+    ],
+    [
+        'method' => 'GET',
         'uri' => '/purchases/create',
         'action' => [PurchaseController::class, 'create'],
         'middleware' => ['auth', 'role:administrator,manager'],

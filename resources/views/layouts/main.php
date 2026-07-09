@@ -153,6 +153,10 @@ if (isset($title)) {
                             </li>
 
                             <li class="nav-item">
+                                <a href="/purchases" class="nav-link">Purchases</a>
+                            </li>
+
+                            <li class="nav-item">
                                 <a href="/purchases/create" class="nav-link">New Purchase</a>
                             </li>
 
