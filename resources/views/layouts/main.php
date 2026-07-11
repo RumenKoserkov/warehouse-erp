@@ -71,6 +71,10 @@ if (isset($title)) {
                         <?php if ($authService->hasAnyRole(['administrator', 'manager'])): ?>
 
                             <li class="nav-item">
+                                <a href="/search" class="nav-link">Search</a>
+                            </li>
+
+                            <li class="nav-item">
                                 <a href="/products" class="nav-link">
                                     Products
                                 </a>

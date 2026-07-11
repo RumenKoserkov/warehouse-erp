@@ -11,6 +11,7 @@ use App\Controllers\ProductController;
 use App\Controllers\StockController;
 use App\Controllers\SaleController;
 use App\Controllers\PurchaseController;
+use App\Controllers\SearchController;
 
 return [
     [
@@ -413,6 +414,14 @@ return [
         'method' => 'GET',
         'uri' => '/product-movement/report',
         'action' => [StockController::class, 'productMovementReport'],
+        'middleware' => ['auth', 'role:administrator,manager'],
+    ],
+
+    // Search
+    [
+        'method' => 'GET',
+        'uri' => '/search',
+        'action' => [SearchController::class, 'index'],
         'middleware' => ['auth', 'role:administrator,manager'],
     ],
 ];
