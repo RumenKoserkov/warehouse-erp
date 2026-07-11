@@ -15,6 +15,7 @@ use App\Models\StockLevel;
 use App\Models\WarehouseTransaction;
 use App\Models\Category;
 use App\Services\StockReportService;
+use App\Services\ProductMovementReportService;
 
 class StockController extends Controller
 {
@@ -26,6 +27,7 @@ class StockController extends Controller
     private WarehouseTransaction $warehouseTransactionModel;
     private Category $categoryModel;
     private StockReportService $stockReportService;
+    private ProductMovementReportService $productMovementReportService;
 
     public function __construct()
     {
@@ -36,6 +38,7 @@ class StockController extends Controller
         $this->warehouseTransactionModel = new WarehouseTransaction();
         $this->stockService = new StockService();
         $this->stockReportService = new StockReportService();
+        $this->productMovementReportService = new ProductMovementReportService();
         $this->authService = new AuthService();
     }
 
@@ -518,6 +521,83 @@ class StockController extends Controller
             'lowStockItems' => $this->stockReportService->getLowStockItems($companyId, $filters, 20),
             'outOfStockItems' => $this->stockReportService->getOutOfStockItems($companyId, $filters, 20),
             'mostValuableStock' => $this->stockReportService->getMostValuableStock($companyId, $filters, 10),
+        ]);
+    }
+
+
+    public function productMovementReport(): void
+    {
+        $currentUser = $this->authService->user();
+
+        $companyId = (int)$currentUser['company_id'];
+
+        $productId = 0;
+        $dateFrom = date('Y-m-01');
+        $dateTo = date('Y-m-d');
+
+        if (isset($_GET['product_id'])) {
+            $productId = (int)$_GET['product_id'];
+        }
+
+        if (isset($_GET['date_from']) && trim((string)$_GET['date_from']) !== '') {
+            $dateFrom = trim((string)$_GET['date_from']);
+        }
+
+        if (isset($_GET['date_to']) && trim((string)$_GET['date_to']) !== '') {
+            $dateTo = trim((string)$_GET['date_to']);
+        }
+
+        if ($dateFrom > $dateTo) {
+            $temporaryDate = $dateFrom;
+            $dateFrom = $dateTo;
+            $dateTo = $temporaryDate;
+        }
+
+        $selectedProduct = null;
+        $summary = null;
+        $warehouseSummary = [];
+        $movements = [];
+
+        if ($productId > 0) {
+            $selectedProduct = $this->productModel->findByIdAndCompany(
+                $productId,
+                $companyId
+            );
+
+            if ($selectedProduct !== null) {
+                $summary = $this->productMovementReportService->getSummary(
+                    $companyId,
+                    $productId,
+                    $dateFrom,
+                    $dateTo
+                );
+
+                $warehouseSummary = $this->productMovementReportService->getWarehouseSummary(
+                    $companyId,
+                    $productId,
+                    $dateFrom,
+                    $dateTo
+                );
+
+                $movements = $this->productMovementReportService->getMovements(
+                    $companyId,
+                    $productId,
+                    $dateFrom,
+                    $dateTo
+                );
+            }
+        }
+
+        $this->view('stock/product_movement_report', [
+            'title' => 'Product Movement Report',
+            'products' => $this->productModel->activeByCompany($companyId),
+            'productId' => $productId,
+            'selectedProduct' => $selectedProduct,
+            'dateFrom' => $dateFrom,
+            'dateTo' => $dateTo,
+            'summary' => $summary,
+            'warehouseSummary' => $warehouseSummary,
+            'movements' => $movements,
         ]);
     }
 }

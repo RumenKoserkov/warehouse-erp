@@ -407,6 +407,14 @@ return [
         'action' => [PurchaseController::class, 'cancel'],
         'middleware' => ['auth', 'role:administrator,manager'],
     ],
+
+    // Product movement
+    [
+        'method' => 'GET',
+        'uri' => '/product-movement/report',
+        'action' => [StockController::class, 'productMovementReport'],
+        'middleware' => ['auth', 'role:administrator,manager'],
+    ],
 ];
 /*
 |--------------------------------------------------------------------------
