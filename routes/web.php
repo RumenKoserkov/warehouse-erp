@@ -331,6 +331,12 @@ return [
         'action' => [StockController::class, 'storeTransfer'],
         'middleware' => ['auth', 'role:administrator,manager,employee'],
     ],
+    [
+        'method' => 'GET',
+        'uri' => '/stock/report',
+        'action' => [StockController::class, 'report'],
+        'middleware' => ['auth', 'role:administrator,manager'],
+    ],
 
     // Sales CRUD
     [

@@ -101,6 +101,10 @@ if (isset($title)) {
                             </li>
 
                             <li class="nav-item">
+                                <a href="/stock/report" class="nav-link">Stock Report</a>
+                            </li>
+
+                            <li class="nav-item">
                                 <a href="/sales/report" class="nav-link">
                                     Sales Report
                                 </a>

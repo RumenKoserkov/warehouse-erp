@@ -13,6 +13,8 @@ use App\Services\AuthService;
 use App\Services\StockService;
 use App\Models\StockLevel;
 use App\Models\WarehouseTransaction;
+use App\Models\Category;
+use App\Services\StockReportService;
 
 class StockController extends Controller
 {
@@ -22,14 +24,18 @@ class StockController extends Controller
     private AuthService $authService;
     private StockLevel $stockLevelModel;
     private WarehouseTransaction $warehouseTransactionModel;
+    private Category $categoryModel;
+    private StockReportService $stockReportService;
 
     public function __construct()
     {
         $this->productModel = new Product();
         $this->warehouseModel = new Warehouse();
+        $this->categoryModel = new Category();
         $this->stockLevelModel = new StockLevel();
         $this->warehouseTransactionModel = new WarehouseTransaction();
         $this->stockService = new StockService();
+        $this->stockReportService = new StockReportService();
         $this->authService = new AuthService();
     }
 
@@ -476,6 +482,42 @@ class StockController extends Controller
             'warehouses' => $this->warehouseModel->activeByCompany((int)$currentUser['company_id']),
             'types' => $this->warehouseTransactionModel->types(),
             'filters' => $filters,
+        ]);
+    }
+
+    public function report(): void
+    {
+        $currentUser = $this->authService->user();
+
+        $companyId = (int)$currentUser['company_id'];
+
+        $warehouseId = '';
+        $categoryId = '';
+
+        if (isset($_GET['warehouse_id'])) {
+            $warehouseId = trim((string)$_GET['warehouse_id']);
+        }
+
+        if (isset($_GET['category_id'])) {
+            $categoryId = trim((string)$_GET['category_id']);
+        }
+
+        $filters = [
+            'warehouse_id' => $warehouseId,
+            'category_id' => $categoryId,
+        ];
+
+        $this->view('stock/report', [
+            'title' => 'Stock Report',
+            'filters' => $filters,
+            'warehouses' => $this->warehouseModel->activeByCompany($companyId),
+            'categories' => $this->categoryModel->activeByCompany($companyId),
+            'summary' => $this->stockReportService->getSummary($companyId, $filters),
+            'stockByWarehouse' => $this->stockReportService->getStockByWarehouse($companyId, $filters),
+            'stockByCategory' => $this->stockReportService->getStockByCategory($companyId, $filters),
+            'lowStockItems' => $this->stockReportService->getLowStockItems($companyId, $filters, 20),
+            'outOfStockItems' => $this->stockReportService->getOutOfStockItems($companyId, $filters, 20),
+            'mostValuableStock' => $this->stockReportService->getMostValuableStock($companyId, $filters, 10),
         ]);
     }
 }
