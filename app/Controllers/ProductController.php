@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Models\Supplier;
 use App\Services\AuthService;
 use App\Services\ProductImageService;
+use App\Services\AuditLogService;
 
 class ProductController extends Controller
 {
@@ -20,6 +21,7 @@ class ProductController extends Controller
     private Supplier $supplierModel;
     private AuthService $authService;
     private ProductImageService $productImageService;
+    private AuditLogService $auditLogService;
 
     public function __construct()
     {
@@ -28,6 +30,7 @@ class ProductController extends Controller
         $this->supplierModel = new Supplier();
         $this->authService = new AuthService();
         $this->productImageService = new ProductImageService();
+        $this->auditLogService = new AuditLogService();
     }
 
     public function index(): void
@@ -168,7 +171,22 @@ class ProductController extends Controller
 
         $data['image_path'] = $imageResult['path'];
 
-        $this->productModel->create($data);
+        $created = $this->productModel->create($data);
+
+        if (!$created) {
+            Flash::danger('Could not create product.');
+            $this->redirect('/products');
+            return;
+        }
+
+        $this->auditLogService->log(
+            (int)$currentUser['company_id'],
+            (int)$currentUser['id'],
+            'create',
+            'product',
+            null,
+            'Created product: ' . $data['name']
+        );
 
         Flash::success('Product created successfully.');
 
@@ -281,8 +299,12 @@ class ProductController extends Controller
             $this->view('products/edit', [
                 'title' => 'Edit Product',
                 'product' => $product,
-                'categories' => $this->categoryModel->activeByCompany((int)$currentUser['company_id']),
-                'suppliers' => $this->supplierModel->activeByCompany((int)$currentUser['company_id']),
+                'categories' => $this->categoryModel->activeByCompany(
+                    (int)$currentUser['company_id']
+                ),
+                'suppliers' => $this->supplierModel->activeByCompany(
+                    (int)$currentUser['company_id']
+                ),
                 'errors' => $errors,
                 'old' => $data,
                 'units' => $this->units(),
@@ -303,8 +325,12 @@ class ProductController extends Controller
             $this->view('products/edit', [
                 'title' => 'Edit Product',
                 'product' => $product,
-                'categories' => $this->categoryModel->activeByCompany((int)$currentUser['company_id']),
-                'suppliers' => $this->supplierModel->activeByCompany((int)$currentUser['company_id']),
+                'categories' => $this->categoryModel->activeByCompany(
+                    (int)$currentUser['company_id']
+                ),
+                'suppliers' => $this->supplierModel->activeByCompany(
+                    (int)$currentUser['company_id']
+                ),
                 'errors' => [$imageResult['error']],
                 'old' => $data,
                 'units' => $this->units(),
@@ -320,7 +346,22 @@ class ProductController extends Controller
             $data['image_path'] = $imageResult['path'];
         }
 
-        $this->productModel->update($id, $data);
+        $updated = $this->productModel->update($id, $data);
+
+        if (!$updated) {
+            Flash::danger('Could not update product.');
+            $this->redirect('/products');
+            return;
+        }
+
+        $this->auditLogService->log(
+            (int)$currentUser['company_id'],
+            (int)$currentUser['id'],
+            'update',
+            'product',
+            $id,
+            'Updated product: ' . $data['name']
+        );
 
         Flash::success('Product updated successfully.');
 
@@ -350,9 +391,24 @@ class ProductController extends Controller
             $this->abort(404);
         }
 
-        $this->productModel->deactivate(
+        $deactivated = $this->productModel->deactivate(
             $id,
             (int)$currentUser['company_id']
+        );
+
+        if (!$deactivated) {
+            Flash::danger('Could not deactivate product.');
+            $this->redirect('/products');
+            return;
+        }
+
+        $this->auditLogService->log(
+            (int)$currentUser['company_id'],
+            (int)$currentUser['id'],
+            'deactivate',
+            'product',
+            $id,
+            'Deactivated product ID: ' . $id
         );
 
         Flash::success('Product deactivated successfully.');

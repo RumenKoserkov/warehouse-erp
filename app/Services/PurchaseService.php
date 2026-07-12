@@ -10,6 +10,7 @@ use App\Models\Purchase;
 use App\Models\PurchaseItem;
 use App\Models\StockLevel;
 use App\Models\WarehouseTransaction;
+use App\Services\AuditLogService;
 use Exception;
 use PDO;
 
@@ -21,6 +22,7 @@ class PurchaseService
     private Product $productModel;
     private StockLevel $stockLevelModel;
     private WarehouseTransaction $warehouseTransactionModel;
+    private AuditLogService $auditLogService;
 
     public function __construct()
     {
@@ -30,6 +32,7 @@ class PurchaseService
         $this->productModel = new Product();
         $this->stockLevelModel = new StockLevel();
         $this->warehouseTransactionModel = new WarehouseTransaction();
+        $this->auditLogService = new AuditLogService();
     }
 
     public function createPurchase(array $data): array
@@ -101,6 +104,15 @@ class PurchaseService
                 ]);
             }
 
+            $this->auditLogService->log(
+                $companyId,
+                $userId,
+                'create',
+                'purchase',
+                $purchaseId,
+                'Created purchase ' . $purchaseNumber
+            );
+
             $this->db->commit();
 
             return [
@@ -155,7 +167,10 @@ class PurchaseService
                 );
 
                 if (!$hasEnoughStock) {
-                    throw new Exception('Not enough stock to cancel purchase for product: ' . $item['product_name']);
+                    throw new Exception(
+                        'Not enough stock to cancel purchase for product: ' .
+                            $item['product_name']
+                    );
                 }
             }
 
@@ -168,7 +183,10 @@ class PurchaseService
                 );
 
                 if (!$decreased) {
-                    throw new Exception('Could not decrease stock for product: ' . $item['product_name']);
+                    throw new Exception(
+                        'Could not decrease stock for product: ' .
+                            $item['product_name']
+                    );
                 }
 
                 $this->warehouseTransactionModel->create([
@@ -186,6 +204,15 @@ class PurchaseService
             }
 
             $this->purchaseModel->cancel($purchaseId, $companyId);
+
+            $this->auditLogService->log(
+                $companyId,
+                $userId,
+                'cancel',
+                'purchase',
+                $purchaseId,
+                'Cancelled purchase ' . $purchase['purchase_number']
+            );
 
             $this->db->commit();
 

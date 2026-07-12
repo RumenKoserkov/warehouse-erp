@@ -12,6 +12,7 @@ use App\Controllers\StockController;
 use App\Controllers\SaleController;
 use App\Controllers\PurchaseController;
 use App\Controllers\SearchController;
+use App\Controllers\AuditLogController;
 
 return [
     [
@@ -423,6 +424,14 @@ return [
         'uri' => '/search',
         'action' => [SearchController::class, 'index'],
         'middleware' => ['auth', 'role:administrator,manager'],
+    ],
+
+    // Audit
+    [
+        'method' => 'GET',
+        'uri' => '/audit-logs',
+        'action' => [AuditLogController::class, 'index'],
+        'middleware' => ['auth', 'role:administrator'],
     ],
 ];
 /*

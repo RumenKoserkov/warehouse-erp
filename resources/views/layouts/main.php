@@ -195,9 +195,7 @@ if (isset($title)) {
                             </li>
 
                             <li class="nav-item">
-                                <a href="/logs" class="nav-link">
-                                    Audit Log
-                                </a>
+                                <a href="/audit-logs" class="nav-link">Audit Logs</a>
                             </li>
 
                         <?php endif; ?>

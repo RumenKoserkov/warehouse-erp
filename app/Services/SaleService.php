@@ -10,6 +10,7 @@ use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\StockLevel;
 use App\Models\WarehouseTransaction;
+use App\Services\AuditLogService;
 use Exception;
 use PDO;
 
@@ -21,6 +22,7 @@ class SaleService
     private Product $productModel;
     private StockLevel $stockLevelModel;
     private WarehouseTransaction $warehouseTransactionModel;
+    private AuditLogService $auditLogService;
 
     public function __construct()
     {
@@ -30,6 +32,7 @@ class SaleService
         $this->productModel = new Product();
         $this->stockLevelModel = new StockLevel();
         $this->warehouseTransactionModel = new WarehouseTransaction();
+        $this->auditLogService = new AuditLogService();
     }
 
     public function createSale(array $data): array
@@ -106,6 +109,15 @@ class SaleService
                 ]);
             }
 
+            $this->auditLogService->log(
+                $companyId,
+                $userId,
+                'create',
+                'sale',
+                $saleId,
+                'Created sale ' . $saleNumber
+            );
+
             $this->db->commit();
 
             return [
@@ -174,6 +186,15 @@ class SaleService
             }
 
             $this->saleModel->cancel($saleId, $companyId);
+
+            $this->auditLogService->log(
+                $companyId,
+                $userId,
+                'cancel',
+                'sale',
+                $saleId,
+                'Cancelled sale ' . $sale['sale_number']
+            );
 
             $this->db->commit();
 

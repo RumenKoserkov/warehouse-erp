@@ -16,6 +16,7 @@ use App\Models\WarehouseTransaction;
 use App\Models\Category;
 use App\Services\StockReportService;
 use App\Services\ProductMovementReportService;
+use App\Services\AuditLogService;
 
 class StockController extends Controller
 {
@@ -28,6 +29,7 @@ class StockController extends Controller
     private Category $categoryModel;
     private StockReportService $stockReportService;
     private ProductMovementReportService $productMovementReportService;
+    private AuditLogService $auditLogService;
 
     public function __construct()
     {
@@ -40,6 +42,7 @@ class StockController extends Controller
         $this->stockReportService = new StockReportService();
         $this->productMovementReportService = new ProductMovementReportService();
         $this->authService = new AuthService();
+        $this->auditLogService = new AuditLogService();
     }
 
     public function index(): void
@@ -142,8 +145,12 @@ class StockController extends Controller
         if (!empty($errors)) {
             $this->view('stock/in', [
                 'title' => 'Stock In',
-                'products' => $this->productModel->activeByCompany((int)$currentUser['company_id']),
-                'warehouses' => $this->warehouseModel->activeByCompany((int)$currentUser['company_id']),
+                'products' => $this->productModel->activeByCompany(
+                    (int)$currentUser['company_id']
+                ),
+                'warehouses' => $this->warehouseModel->activeByCompany(
+                    (int)$currentUser['company_id']
+                ),
                 'errors' => $errors,
                 'old' => [
                     'product_id' => (string)$productId,
@@ -171,7 +178,19 @@ class StockController extends Controller
         if (!$success) {
             Flash::danger('Could not increase stock.');
             $this->redirect('/stock/in');
+            return;
         }
+
+        $this->auditLogService->log(
+            (int)$currentUser['company_id'],
+            (int)$currentUser['id'],
+            'stock_in',
+            'stock',
+            null,
+            'Manual stock in. Product ID: ' . $productId .
+                ', warehouse ID: ' . $warehouseId .
+                ', quantity: ' . $quantity
+        );
 
         Flash::success('Stock increased successfully.');
 
@@ -281,7 +300,19 @@ class StockController extends Controller
         if (!$success) {
             Flash::danger('Not enough stock or operation failed.');
             $this->redirect('/stock/out');
+            return;
         }
+
+        $this->auditLogService->log(
+            (int)$currentUser['company_id'],
+            (int)$currentUser['id'],
+            'stock_out',
+            'stock',
+            null,
+            'Manual stock out. Product ID: ' . $productId .
+                ', warehouse ID: ' . $warehouseId .
+                ', quantity: ' . $quantity
+        );
 
         Flash::success('Stock decreased successfully.');
 
@@ -360,7 +391,11 @@ class StockController extends Controller
             $errors[] = 'Please select a valid destination warehouse.';
         }
 
-        if ($fromWarehouseId > 0 && $toWarehouseId > 0 && $fromWarehouseId === $toWarehouseId) {
+        if (
+            $fromWarehouseId > 0 &&
+            $toWarehouseId > 0 &&
+            $fromWarehouseId === $toWarehouseId
+        ) {
             $errors[] = 'Source and destination warehouses must be different.';
         }
 
@@ -404,8 +439,12 @@ class StockController extends Controller
         if (!empty($errors)) {
             $this->view('stock/transfer', [
                 'title' => 'Transfer Stock',
-                'products' => $this->productModel->activeByCompany((int)$currentUser['company_id']),
-                'warehouses' => $this->warehouseModel->activeByCompany((int)$currentUser['company_id']),
+                'products' => $this->productModel->activeByCompany(
+                    (int)$currentUser['company_id']
+                ),
+                'warehouses' => $this->warehouseModel->activeByCompany(
+                    (int)$currentUser['company_id']
+                ),
                 'errors' => $errors,
                 'old' => [
                     'product_id' => (string)$productId,
@@ -434,7 +473,20 @@ class StockController extends Controller
         if (!$success) {
             Flash::danger('Not enough stock or transfer failed.');
             $this->redirect('/stock/transfer');
+            return;
         }
+
+        $this->auditLogService->log(
+            (int)$currentUser['company_id'],
+            (int)$currentUser['id'],
+            'stock_transfer',
+            'stock',
+            null,
+            'Manual stock transfer. Product ID: ' . $productId .
+                ', from warehouse ID: ' . $fromWarehouseId .
+                ', to warehouse ID: ' . $toWarehouseId .
+                ', quantity: ' . $quantity
+        );
 
         Flash::success('Stock transferred successfully.');
 
