@@ -10,6 +10,32 @@ use App\Services\AuthService;
 $authService = new AuthService();
 $currentUser = $authService->user();
 
+$currentPath = '/';
+
+if (isset($_SERVER['REQUEST_URI'])) {
+    $parsedPath = parse_url((string) $_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+    if (is_string($parsedPath) && $parsedPath !== '') {
+        $currentPath = rtrim($parsedPath, '/') ?: '/';
+    }
+}
+
+function navActive(string $currentPath, string $path): string
+{
+    return $currentPath === $path ? 'active' : '';
+}
+
+function navGroupActive(string $currentPath, array $paths): string
+{
+    foreach ($paths as $path) {
+        if ($currentPath === $path || str_starts_with($currentPath, $path . '/')) {
+            return 'active';
+        }
+    }
+
+    return '';
+}
+
 $flashMessages = Flash::all();
 
 $pageTitle = 'Warehouse ERP';
@@ -33,11 +59,34 @@ if (isset($title)) {
     <link
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
         rel="stylesheet">
+
+    <style>
+        .navbar .nav-link.active,
+        .navbar .dropdown-toggle.active {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .navbar .dropdown-item.active {
+            font-weight: 600;
+        }
+
+        .navbar-user {
+            line-height: 1.2;
+            white-space: nowrap;
+        }
+
+        @media (min-width: 1200px) {
+            .navbar-nav .nav-link {
+                white-space: nowrap;
+            }
+        }
+    </style>
 </head>
 
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+    <nav class="navbar navbar-expand-xl navbar-dark bg-dark mb-4">
 
         <div class="container-fluid">
 
@@ -60,10 +109,12 @@ if (isset($title)) {
 
                 <?php if ($currentUser !== null): ?>
 
-                    <ul class="navbar-nav me-auto">
+                    <ul class="navbar-nav me-auto mb-2 mb-xl-0">
 
                         <li class="nav-item">
-                            <a href="/dashboard" class="nav-link">
+                            <a
+                                href="/dashboard"
+                                class="nav-link <?= navActive($currentPath, '/dashboard') ?>">
                                 Dashboard
                             </a>
                         </li>
@@ -71,144 +122,284 @@ if (isset($title)) {
                         <?php if ($authService->hasAnyRole(['administrator', 'manager'])): ?>
 
                             <li class="nav-item">
-                                <a href="/search" class="nav-link">Search</a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a href="/products" class="nav-link">
-                                    Products
+                                <a
+                                    href="/search"
+                                    class="nav-link <?= navActive($currentPath, '/search') ?>">
+                                    Search
                                 </a>
                             </li>
 
-                            <li class="nav-item">
-                                <a href="/clients" class="nav-link">
-                                    Clients
+                            <li class="nav-item dropdown">
+                                <a
+                                    class="nav-link dropdown-toggle <?= navGroupActive($currentPath, ['/products', '/categories', '/clients', '/suppliers']) ?>"
+                                    href="#"
+                                    role="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                    Catalog
                                 </a>
-                            </li>
 
-                            <li class="nav-item">
-                                <a href="/suppliers" class="nav-link">
-                                    Suppliers
-                                </a>
-                            </li>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a
+                                            href="/products"
+                                            class="dropdown-item <?= navActive($currentPath, '/products') ?>">
+                                            Products
+                                        </a>
+                                    </li>
 
-                            <li class="nav-item">
-                                <a href="/categories" class="nav-link">
-                                    Categories
-                                </a>
-                            </li>
+                                    <li>
+                                        <a
+                                            href="/categories"
+                                            class="dropdown-item <?= navActive($currentPath, '/categories') ?>">
+                                            Categories
+                                        </a>
+                                    </li>
 
-                            <li class="nav-item">
-                                <a href="/purchases" class="nav-link">
-                                    Purchases
-                                </a>
-                            </li>
+                                    <li>
+                                        <a
+                                            href="/clients"
+                                            class="dropdown-item <?= navActive($currentPath, '/clients') ?>">
+                                            Clients
+                                        </a>
+                                    </li>
 
-                            <li class="nav-item">
-                                <a href="/stock/report" class="nav-link">Stock Report</a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a href="/product-movement/report" class="nav-link">Product Movement</a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a href="/sales/report" class="nav-link">
-                                    Sales Report
-                                </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a href="/reports" class="nav-link">
-                                    Reports
-                                </a>
+                                    <li>
+                                        <a
+                                            href="/suppliers"
+                                            class="dropdown-item <?= navActive($currentPath, '/suppliers') ?>">
+                                            Suppliers
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
 
                         <?php endif; ?>
 
                         <?php if ($authService->hasAnyRole(['administrator', 'manager', 'employee'])): ?>
 
-                            <li class="nav-item">
-                                <a href="/warehouses" class="nav-link">
-                                    Warehouses
+                            <li class="nav-item dropdown">
+                                <a
+                                    class="nav-link dropdown-toggle <?= navGroupActive($currentPath, ['/warehouses', '/stock']) ?>"
+                                    href="#"
+                                    role="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                    Inventory
                                 </a>
+
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a
+                                            href="/warehouses"
+                                            class="dropdown-item <?= navActive($currentPath, '/warehouses') ?>">
+                                            Warehouses
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a
+                                            href="/stock"
+                                            class="dropdown-item <?= navActive($currentPath, '/stock') ?>">
+                                            Current Stock
+                                        </a>
+                                    </li>
+
+                                    <li><hr class="dropdown-divider"></li>
+
+                                    <li>
+                                        <a
+                                            href="/stock/in"
+                                            class="dropdown-item <?= navActive($currentPath, '/stock/in') ?>">
+                                            Stock In
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a
+                                            href="/stock/out"
+                                            class="dropdown-item <?= navActive($currentPath, '/stock/out') ?>">
+                                            Stock Out
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a
+                                            href="/stock/transfer"
+                                            class="dropdown-item <?= navActive($currentPath, '/stock/transfer') ?>">
+                                            Transfer Stock
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a
+                                            href="/stock/history"
+                                            class="dropdown-item <?= navActive($currentPath, '/stock/history') ?>">
+                                            Stock History
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
 
-                            <li class="nav-item">
-                                <a href="/stock" class="nav-link">
-                                    Stock
+                            <li class="nav-item dropdown">
+                                <a
+                                    class="nav-link dropdown-toggle <?= navGroupActive($currentPath, ['/sales']) ?>"
+                                    href="#"
+                                    role="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                    Sales
                                 </a>
+
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a
+                                            href="/sales"
+                                            class="dropdown-item <?= navActive($currentPath, '/sales') ?>">
+                                            All Sales
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a
+                                            href="/sales/create"
+                                            class="dropdown-item <?= navActive($currentPath, '/sales/create') ?>">
+                                            New Sale
+                                        </a>
+                                    </li>
+
+                                    <?php if ($authService->hasAnyRole(['administrator', 'manager'])): ?>
+                                        <li><hr class="dropdown-divider"></li>
+
+                                        <li>
+                                            <a
+                                                href="/sales/report"
+                                                class="dropdown-item <?= navActive($currentPath, '/sales/report') ?>">
+                                                Sales Report
+                                            </a>
+                                        </li>
+                                    <?php endif; ?>
+                                </ul>
                             </li>
 
-                            <li class="nav-item">
-                                <a href="/stock/in" class="nav-link">
-                                    Stock In
+                        <?php endif; ?>
+
+                        <?php if ($authService->hasAnyRole(['administrator', 'manager'])): ?>
+
+                            <li class="nav-item dropdown">
+                                <a
+                                    class="nav-link dropdown-toggle <?= navGroupActive($currentPath, ['/purchases']) ?>"
+                                    href="#"
+                                    role="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                    Purchases
                                 </a>
+
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a
+                                            href="/purchases"
+                                            class="dropdown-item <?= navActive($currentPath, '/purchases') ?>">
+                                            All Purchases
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a
+                                            href="/purchases/create"
+                                            class="dropdown-item <?= navActive($currentPath, '/purchases/create') ?>">
+                                            New Purchase
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
 
-                            <li class="nav-item">
-                                <a href="/stock/out" class="nav-link">
-                                    Stock Out
+                            <li class="nav-item dropdown">
+                                <a
+                                    class="nav-link dropdown-toggle <?= navGroupActive($currentPath, ['/stock/report', '/product-movement/report']) ?>"
+                                    href="#"
+                                    role="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                    Reports
                                 </a>
-                            </li>
 
-                            <li class="nav-item">
-                                <a href="/stock/transfer" class="nav-link">
-                                    Transfer Stock
-                                </a>
-                            </li>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a
+                                            href="/stock/report"
+                                            class="dropdown-item <?= navActive($currentPath, '/stock/report') ?>">
+                                            Stock Report
+                                        </a>
+                                    </li>
 
-                            <li class="nav-item">
-                                <a href="/stock/history" class="nav-link">Stock History</a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a href="/sales" class="nav-link">Sales</a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a href="/sales/create" class="nav-link">New Sale</a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a href="/purchases" class="nav-link">Purchases</a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a href="/purchases/create" class="nav-link">New Purchase</a>
+                                    <li>
+                                        <a
+                                            href="/product-movement/report"
+                                            class="dropdown-item <?= navActive($currentPath, '/product-movement/report') ?>">
+                                            Product Movement
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
 
                         <?php endif; ?>
 
                         <?php if ($authService->hasRole('administrator')): ?>
 
-                            <li class="nav-item">
-                                <a href="/users" class="nav-link">
-                                    Users
+                            <li class="nav-item dropdown">
+                                <a
+                                    class="nav-link dropdown-toggle <?= navGroupActive($currentPath, ['/users', '/settings', '/audit-logs']) ?>"
+                                    href="#"
+                                    role="button"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false">
+                                    Administration
                                 </a>
-                            </li>
 
-                            <li class="nav-item">
-                                <a href="/settings" class="nav-link">
-                                    Settings
-                                </a>
-                            </li>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a
+                                            href="/users"
+                                            class="dropdown-item <?= navActive($currentPath, '/users') ?>">
+                                            Users
+                                        </a>
+                                    </li>
 
-                            <li class="nav-item">
-                                <a href="/audit-logs" class="nav-link">Audit Logs</a>
+                                    <li>
+                                        <a
+                                            href="/settings"
+                                            class="dropdown-item <?= navActive($currentPath, '/settings') ?>">
+                                            Settings
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a
+                                            href="/audit-logs"
+                                            class="dropdown-item <?= navActive($currentPath, '/audit-logs') ?>">
+                                            Audit Logs
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
 
                         <?php endif; ?>
 
                     </ul>
 
-                    <div class="d-flex align-items-center gap-3 mt-3 mt-lg-0">
+                    <div class="d-flex align-items-xl-center gap-3 mt-3 mt-xl-0">
 
-                        <span class="text-white">
-                            <?= htmlspecialchars($currentUser['name']) ?>
-                            |
-                            <?= htmlspecialchars($currentUser['role_name']) ?>
-                        </span>
+                        <div class="navbar-user text-white">
+                            <div class="fw-semibold">
+                                <?= htmlspecialchars($currentUser['name']) ?>
+                            </div>
+
+                            <small class="text-white-50">
+                                <?= htmlspecialchars($currentUser['role_name']) ?>
+                            </small>
+                        </div>
 
                         <form action="/logout" method="POST" class="mb-0">
 
@@ -227,7 +418,9 @@ if (isset($title)) {
                     <ul class="navbar-nav ms-auto">
 
                         <li class="nav-item">
-                            <a href="/login" class="nav-link">
+                            <a
+                                href="/login"
+                                class="nav-link <?= navActive($currentPath, '/login') ?>">
                                 Login
                             </a>
                         </li>
