@@ -142,6 +142,7 @@ class AuditLogService
             'category',
             'warehouse',
             'user',
+            'settings',
         ];
     }
 

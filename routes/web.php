@@ -13,6 +13,7 @@ use App\Controllers\SaleController;
 use App\Controllers\PurchaseController;
 use App\Controllers\SearchController;
 use App\Controllers\AuditLogController;
+use App\Controllers\SettingsController;
 
 return [
     [
@@ -431,6 +432,20 @@ return [
         'method' => 'GET',
         'uri' => '/audit-logs',
         'action' => [AuditLogController::class, 'index'],
+        'middleware' => ['auth', 'role:administrator'],
+    ],
+
+    // Settings
+    [
+        'method' => 'GET',
+        'uri' => '/settings',
+        'action' => [SettingsController::class, 'index'],
+        'middleware' => ['auth', 'role:administrator'],
+    ],
+    [
+        'method' => 'POST',
+        'uri' => '/settings/update',
+        'action' => [SettingsController::class, 'update'],
         'middleware' => ['auth', 'role:administrator'],
     ],
 ];
