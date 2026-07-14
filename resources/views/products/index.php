@@ -7,6 +7,24 @@
 </div>
 
 <form method="GET" action="/products" class="mb-3">
+    <input
+        type="hidden"
+        name="sort"
+        value="<?= htmlspecialchars(
+                    $sorter->key(),
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>">
+
+    <input
+        type="hidden"
+        name="direction"
+        value="<?= htmlspecialchars(
+                    $sorter->direction(),
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>">
+
     <div class="input-group">
         <input
             type="text"
@@ -22,6 +40,10 @@
         <button type="submit" class="btn btn-outline-secondary">
             Search
         </button>
+
+        <a href="/products" class="btn btn-outline-secondary">
+            Reset
+        </a>
     </div>
 </form>
 
@@ -37,16 +59,91 @@
                     <thead>
                         <tr>
                             <th>Image</th>
-                            <th>Code</th>
+
+                            <th>
+                                <?php
+                                $sortKey = 'code';
+                                $sortLabel = 'Code';
+
+                                require __DIR__
+                                    . '/../components/sort_link.php';
+                                ?>
+                            </th>
+
                             <th>Barcode</th>
-                            <th>Name</th>
-                            <th>Category</th>
-                            <th>Supplier</th>
+
+                            <th>
+                                <?php
+                                $sortKey = 'name';
+                                $sortLabel = 'Name';
+
+                                require __DIR__
+                                    . '/../components/sort_link.php';
+                                ?>
+                            </th>
+
+                            <th>
+                                <?php
+                                $sortKey = 'category';
+                                $sortLabel = 'Category';
+
+                                require __DIR__
+                                    . '/../components/sort_link.php';
+                                ?>
+                            </th>
+
+                            <th>
+                                <?php
+                                $sortKey = 'supplier';
+                                $sortLabel = 'Supplier';
+
+                                require __DIR__
+                                    . '/../components/sort_link.php';
+                                ?>
+                            </th>
+
                             <th>Unit</th>
-                            <th>Purchase</th>
-                            <th>Selling</th>
-                            <th>Min Stock</th>
-                            <th>Status</th>
+
+                            <th>
+                                <?php
+                                $sortKey = 'purchase_price';
+                                $sortLabel = 'Purchase';
+
+                                require __DIR__
+                                    . '/../components/sort_link.php';
+                                ?>
+                            </th>
+
+                            <th>
+                                <?php
+                                $sortKey = 'selling_price';
+                                $sortLabel = 'Selling';
+
+                                require __DIR__
+                                    . '/../components/sort_link.php';
+                                ?>
+                            </th>
+
+                            <th>
+                                <?php
+                                $sortKey = 'min_stock';
+                                $sortLabel = 'Min Stock';
+
+                                require __DIR__
+                                    . '/../components/sort_link.php';
+                                ?>
+                            </th>
+
+                            <th>
+                                <?php
+                                $sortKey = 'status';
+                                $sortLabel = 'Status';
+
+                                require __DIR__
+                                    . '/../components/sort_link.php';
+                                ?>
+                            </th>
+
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -104,7 +201,7 @@
 
                                 <td>
                                     <?= htmlspecialchars(
-                                        $product['category_name'],
+                                        $product['category_name'] ?? '',
                                         ENT_QUOTES,
                                         'UTF-8'
                                     ) ?>
@@ -209,7 +306,9 @@
                 </table>
             </div>
 
-            <?php require __DIR__ . '/../components/pagination.php'; ?>
+            <?php
+            require __DIR__ . '/../components/pagination.php';
+            ?>
         <?php endif; ?>
     </div>
 </div>

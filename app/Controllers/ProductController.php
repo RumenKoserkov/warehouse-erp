@@ -7,6 +7,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Flash;
 use App\Core\Paginator;
+use App\Core\Sorter;
 use App\Core\Validator;
 use App\Models\Category;
 use App\Models\Product;
@@ -40,8 +41,6 @@ class ProductController extends Controller
 
         if ($currentUser === null) {
             $this->redirect('/login');
-
-            return;
         }
 
         $search = '';
@@ -59,12 +58,48 @@ class ProductController extends Controller
             );
 
             if (
-                $requestedPage !== false
-                && $requestedPage > 0
+                $requestedPage !== false &&
+                $requestedPage > 0
             ) {
                 $page = $requestedPage;
             }
         }
+
+        $requestedSort = '';
+
+        if (isset($_GET['sort'])) {
+            $requestedSort = trim((string) $_GET['sort']);
+        }
+
+        $requestedDirection = '';
+
+        if (isset($_GET['direction'])) {
+            $requestedDirection = trim(
+                (string) $_GET['direction']
+            );
+        }
+
+        $sorter = new Sorter(
+            [
+                'id' => 'products.id',
+                'name' => 'products.name',
+                'code' => 'products.internal_code',
+                'category' => 'categories.name',
+                'supplier' => 'suppliers.name',
+                'purchase_price' => 'products.purchase_price',
+                'selling_price' => 'products.selling_price',
+                'min_stock' => 'products.min_stock',
+                'status' => 'products.is_active',
+            ],
+            $requestedSort,
+            $requestedDirection,
+            'id',
+            'desc',
+            '/products',
+            [
+                'search' => $search,
+            ]
+        );
 
         $perPage = 10;
 
@@ -82,6 +117,8 @@ class ProductController extends Controller
             '/products',
             [
                 'search' => $search,
+                'sort' => $sorter->key(),
+                'direction' => $sorter->direction(),
             ]
         );
 
@@ -89,7 +126,9 @@ class ProductController extends Controller
             $companyId,
             $search,
             $paginator->perPage(),
-            $paginator->offset()
+            $paginator->offset(),
+            $sorter->column(),
+            $sorter->sqlDirection()
         );
 
         $this->view('products/index', [
@@ -97,6 +136,7 @@ class ProductController extends Controller
             'products' => $products,
             'search' => $search,
             'paginator' => $paginator,
+            'sorter' => $sorter,
         ]);
     }
 

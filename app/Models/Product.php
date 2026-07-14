@@ -54,124 +54,154 @@ class Product extends Model
 
     public function countByCompany(
         int $companyId,
-        string $search = ''
+        string $search
     ): int {
         $sql = "
-        SELECT COUNT(*)
-        FROM products
-        INNER JOIN categories
-            ON products.category_id = categories.id
-        LEFT JOIN suppliers
-            ON products.supplier_id = suppliers.id
-        WHERE products.company_id = ?
+        SELECT COUNT(DISTINCT products.id)
+        FROM products AS products
+        LEFT JOIN categories AS categories
+            ON categories.id = products.category_id
+        LEFT JOIN suppliers AS suppliers
+            ON suppliers.id = products.supplier_id
+        WHERE products.company_id = :company_id
     ";
 
-        $params = [$companyId];
+        $parameters = [
+            'company_id' => $companyId,
+        ];
 
         if ($search !== '') {
             $sql .= "
             AND (
-                products.name LIKE ?
-                OR products.internal_code LIKE ?
-                OR products.barcode LIKE ?
-                OR categories.name LIKE ?
-                OR suppliers.name LIKE ?
+                products.name LIKE :search_name
+                OR products.internal_code LIKE :search_code
+                OR products.barcode LIKE :search_barcode
+                OR categories.name LIKE :search_category
+                OR suppliers.name LIKE :search_supplier
             )
         ";
 
-            $searchTerm = '%' . $search . '%';
+            $searchValue = '%' . $search . '%';
 
-            $params[] = $searchTerm;
-            $params[] = $searchTerm;
-            $params[] = $searchTerm;
-            $params[] = $searchTerm;
-            $params[] = $searchTerm;
+            $parameters['search_name'] = $searchValue;
+            $parameters['search_code'] = $searchValue;
+            $parameters['search_barcode'] = $searchValue;
+            $parameters['search_category'] = $searchValue;
+            $parameters['search_supplier'] = $searchValue;
         }
 
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
+        $statement = $this->db->prepare($sql);
 
-        return (int) $stmt->fetchColumn();
+        foreach ($parameters as $key => $value) {
+            $statement->bindValue(
+                ':' . $key,
+                $value
+            );
+        }
+
+        $statement->execute();
+
+        return (int) $statement->fetchColumn();
     }
 
     public function paginateByCompany(
         int $companyId,
         string $search,
         int $limit,
-        int $offset
+        int $offset,
+        string $sortColumn,
+        string $sortDirection
     ): array {
+        $allowedSortColumns = [
+            'products.id',
+            'products.name',
+            'products.internal_code',
+            'products.purchase_price',
+            'products.selling_price',
+            'products.min_stock',
+            'products.is_active',
+            'categories.name',
+            'suppliers.name',
+        ];
+
+        if (!in_array($sortColumn, $allowedSortColumns, true)) {
+            $sortColumn = 'products.id';
+        }
+
+        if (
+            $sortDirection !== 'ASC' &&
+            $sortDirection !== 'DESC'
+        ) {
+            $sortDirection = 'DESC';
+        }
+
         $sql = "
         SELECT
             products.*,
             categories.name AS category_name,
             suppliers.name AS supplier_name
-        FROM products
-        INNER JOIN categories
-            ON products.category_id = categories.id
-        LEFT JOIN suppliers
-            ON products.supplier_id = suppliers.id
-        WHERE products.company_id = ?
+        FROM products AS products
+        LEFT JOIN categories AS categories
+            ON categories.id = products.category_id
+        LEFT JOIN suppliers AS suppliers
+            ON suppliers.id = products.supplier_id
+        WHERE products.company_id = :company_id
     ";
 
-        $params = [$companyId];
+        $parameters = [
+            'company_id' => $companyId,
+        ];
 
         if ($search !== '') {
             $sql .= "
             AND (
-                products.name LIKE ?
-                OR products.internal_code LIKE ?
-                OR products.barcode LIKE ?
-                OR categories.name LIKE ?
-                OR suppliers.name LIKE ?
+                products.name LIKE :search_name
+                OR products.internal_code LIKE :search_code
+                OR products.barcode LIKE :search_barcode
+                OR categories.name LIKE :search_category
+                OR suppliers.name LIKE :search_supplier
             )
         ";
 
-            $searchTerm = '%' . $search . '%';
+            $searchValue = '%' . $search . '%';
 
-            $params[] = $searchTerm;
-            $params[] = $searchTerm;
-            $params[] = $searchTerm;
-            $params[] = $searchTerm;
-            $params[] = $searchTerm;
+            $parameters['search_name'] = $searchValue;
+            $parameters['search_code'] = $searchValue;
+            $parameters['search_barcode'] = $searchValue;
+            $parameters['search_category'] = $searchValue;
+            $parameters['search_supplier'] = $searchValue;
         }
 
         $sql .= "
-        ORDER BY products.id DESC
-        LIMIT ?
-        OFFSET ?
+        ORDER BY {$sortColumn} {$sortDirection}
+        LIMIT :limit
+        OFFSET :offset
     ";
 
-        $stmt = $this->db->prepare($sql);
+        $statement = $this->db->prepare($sql);
 
-        $position = 1;
-
-        foreach ($params as $value) {
-            $stmt->bindValue(
-                $position,
-                $value,
-                is_int($value) ? \PDO::PARAM_INT : \PDO::PARAM_STR
+        foreach ($parameters as $key => $value) {
+            $statement->bindValue(
+                ':' . $key,
+                $value
             );
-
-            $position++;
         }
 
-        $stmt->bindValue(
-            $position,
+        $statement->bindValue(
+            ':limit',
             $limit,
             \PDO::PARAM_INT
         );
 
-        $position++;
-
-        $stmt->bindValue(
-            $position,
+        $statement->bindValue(
+            ':offset',
             $offset,
             \PDO::PARAM_INT
         );
 
-        $stmt->execute();
+        $statement->execute();
 
-        return $stmt->fetchAll();
+        return $statement->fetchAll();
     }
 
     public function generateNextInternalCode(int $companyId): string
