@@ -457,6 +457,15 @@ return [
         'action' => [SettingsController::class, 'update'],
         'middleware' => ['auth', 'role:administrator'],
     ],
+    [
+        'method' => 'POST',
+        'uri' => '/settings/company/update',
+        'action' => [
+            SettingsController::class,
+            'updateCompanyBilling',
+        ],
+        'middleware' => ['auth', 'role:administrator'],
+    ],
 ];
 /*
 |--------------------------------------------------------------------------
