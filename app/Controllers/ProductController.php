@@ -79,56 +79,19 @@ class ProductController extends Controller
 
         $data = $this->getFormData();
 
-        $validator = new Validator($_POST);
-
-        $validator
-            ->required('name', 'Product name is required.')
-            ->max('name', 255, 'Product name must be maximum 255 characters.')
-            ->required('category_id', 'Category is required.')
-            ->required('unit', 'Unit is required.')
-            ->numeric('purchase_price', 'Purchase price must be numeric.')
-            ->numeric('selling_price', 'Selling price must be numeric.')
-            ->numeric('min_stock', 'Minimum stock must be numeric.');
-
-        $errors = $validator->all();
-
-        if (!in_array($data['unit'], $this->units(), true)) {
-            $errors[] = 'Invalid product unit.';
-        }
-
-        if ($data['category_id'] <= 0) {
-            $errors[] = 'Please select a valid category.';
-        }
-
-        if ($data['purchase_price'] < 0) {
-            $errors[] = 'Purchase price cannot be negative.';
-        }
-
-        if ($data['selling_price'] < 0) {
-            $errors[] = 'Selling price cannot be negative.';
-        }
-
-        if ($data['min_stock'] < 0) {
-            $errors[] = 'Minimum stock cannot be negative.';
-        }
-
-        if (
-            $this->productModel->barcodeExistsInCompany(
-                $data['barcode'],
-                (int)$currentUser['company_id']
-            )
-        ) {
-            $errors[] = 'Product with this barcode already exists.';
-        }
+        $errors = $this->validateProductData(
+            $data,
+            (int) $currentUser['company_id']
+        );
 
         if (!empty($errors)) {
             $this->view('products/create', [
                 'title' => 'Create Product',
                 'categories' => $this->categoryModel->activeByCompany(
-                    (int)$currentUser['company_id']
+                    (int) $currentUser['company_id']
                 ),
                 'suppliers' => $this->supplierModel->activeByCompany(
-                    (int)$currentUser['company_id']
+                    (int) $currentUser['company_id']
                 ),
                 'errors' => $errors,
                 'old' => $data,
@@ -150,10 +113,10 @@ class ProductController extends Controller
             $this->view('products/create', [
                 'title' => 'Create Product',
                 'categories' => $this->categoryModel->activeByCompany(
-                    (int)$currentUser['company_id']
+                    (int) $currentUser['company_id']
                 ),
                 'suppliers' => $this->supplierModel->activeByCompany(
-                    (int)$currentUser['company_id']
+                    (int) $currentUser['company_id']
                 ),
                 'errors' => [$imageResult['error']],
                 'old' => $data,
@@ -163,11 +126,12 @@ class ProductController extends Controller
             return;
         }
 
-        $data['company_id'] = (int)$currentUser['company_id'];
+        $data['company_id'] = (int) $currentUser['company_id'];
 
-        $data['internal_code'] = $this->productModel->generateNextInternalCode(
-            (int)$currentUser['company_id']
-        );
+        $data['internal_code'] =
+            $this->productModel->generateNextInternalCode(
+                (int) $currentUser['company_id']
+            );
 
         $data['image_path'] = $imageResult['path'];
 
@@ -175,13 +139,15 @@ class ProductController extends Controller
 
         if (!$created) {
             Flash::danger('Could not create product.');
+
             $this->redirect('/products');
+
             return;
         }
 
         $this->auditLogService->log(
-            (int)$currentUser['company_id'],
-            (int)$currentUser['id'],
+            (int) $currentUser['company_id'],
+            (int) $currentUser['id'],
             'create',
             'product',
             null,
@@ -234,7 +200,7 @@ class ProductController extends Controller
         $id = 0;
 
         if (isset($_POST['id'])) {
-            $id = (int)$_POST['id'];
+            $id = (int) $_POST['id'];
         }
 
         if ($id <= 0) {
@@ -243,7 +209,7 @@ class ProductController extends Controller
 
         $product = $this->productModel->findByIdAndCompany(
             $id,
-            (int)$currentUser['company_id']
+            (int) $currentUser['company_id']
         );
 
         if ($product === null) {
@@ -252,58 +218,21 @@ class ProductController extends Controller
 
         $data = $this->getFormData();
 
-        $validator = new Validator($_POST);
-
-        $validator
-            ->required('name', 'Product name is required.')
-            ->max('name', 255, 'Product name must be maximum 255 characters.')
-            ->required('category_id', 'Category is required.')
-            ->required('unit', 'Unit is required.')
-            ->numeric('purchase_price', 'Purchase price must be numeric.')
-            ->numeric('selling_price', 'Selling price must be numeric.')
-            ->numeric('min_stock', 'Minimum stock must be numeric.');
-
-        $errors = $validator->all();
-
-        if (!in_array($data['unit'], $this->units(), true)) {
-            $errors[] = 'Invalid product unit.';
-        }
-
-        if ($data['category_id'] <= 0) {
-            $errors[] = 'Please select a valid category.';
-        }
-
-        if ($data['purchase_price'] < 0) {
-            $errors[] = 'Purchase price cannot be negative.';
-        }
-
-        if ($data['selling_price'] < 0) {
-            $errors[] = 'Selling price cannot be negative.';
-        }
-
-        if ($data['min_stock'] < 0) {
-            $errors[] = 'Minimum stock cannot be negative.';
-        }
-
-        if (
-            $this->productModel->barcodeExistsInCompanyExceptProduct(
-                $data['barcode'],
-                (int)$currentUser['company_id'],
-                $id
-            )
-        ) {
-            $errors[] = 'Product with this barcode already exists.';
-        }
+        $errors = $this->validateProductData(
+            $data,
+            (int) $currentUser['company_id'],
+            $id
+        );
 
         if (!empty($errors)) {
             $this->view('products/edit', [
                 'title' => 'Edit Product',
                 'product' => $product,
                 'categories' => $this->categoryModel->activeByCompany(
-                    (int)$currentUser['company_id']
+                    (int) $currentUser['company_id']
                 ),
                 'suppliers' => $this->supplierModel->activeByCompany(
-                    (int)$currentUser['company_id']
+                    (int) $currentUser['company_id']
                 ),
                 'errors' => $errors,
                 'old' => $data,
@@ -326,10 +255,10 @@ class ProductController extends Controller
                 'title' => 'Edit Product',
                 'product' => $product,
                 'categories' => $this->categoryModel->activeByCompany(
-                    (int)$currentUser['company_id']
+                    (int) $currentUser['company_id']
                 ),
                 'suppliers' => $this->supplierModel->activeByCompany(
-                    (int)$currentUser['company_id']
+                    (int) $currentUser['company_id']
                 ),
                 'errors' => [$imageResult['error']],
                 'old' => $data,
@@ -339,7 +268,7 @@ class ProductController extends Controller
             return;
         }
 
-        $data['company_id'] = (int)$currentUser['company_id'];
+        $data['company_id'] = (int) $currentUser['company_id'];
         $data['image_path'] = $product['image_path'];
 
         if ($imageResult['path'] !== null) {
@@ -350,13 +279,15 @@ class ProductController extends Controller
 
         if (!$updated) {
             Flash::danger('Could not update product.');
+
             $this->redirect('/products');
+
             return;
         }
 
         $this->auditLogService->log(
-            (int)$currentUser['company_id'],
-            (int)$currentUser['id'],
+            (int) $currentUser['company_id'],
+            (int) $currentUser['id'],
             'update',
             'product',
             $id,
@@ -414,6 +345,134 @@ class ProductController extends Controller
         Flash::success('Product deactivated successfully.');
 
         $this->redirect('/products');
+    }
+
+
+    private function validateProductData(
+        array $data,
+        int $companyId,
+        int $productId = 0
+    ): array {
+        $validator = new Validator($_POST);
+
+        $validator
+            ->required(
+                'name',
+                'Product name is required.'
+            )
+            ->max(
+                'name',
+                255,
+                'Product name must be maximum 255 characters.'
+            )
+            ->max(
+                'barcode',
+                100,
+                'Barcode must be maximum 100 characters.'
+            )
+            ->required(
+                'category_id',
+                'Category is required.'
+            )
+            ->integer(
+                'category_id',
+                'Category must be valid.'
+            )
+            ->positive(
+                'category_id',
+                'Please select a valid category.'
+            )
+            ->integer(
+                'supplier_id',
+                'Supplier must be valid.'
+            )
+            ->positive(
+                'supplier_id',
+                'Supplier must be valid.'
+            )
+            ->required(
+                'unit',
+                'Unit is required.'
+            )
+            ->max(
+                'unit',
+                30,
+                'Unit must be maximum 30 characters.'
+            )
+            ->in(
+                'unit',
+                $this->units(),
+                'Invalid product unit.'
+            )
+            ->required(
+                'purchase_price',
+                'Purchase price is required.'
+            )
+            ->decimal(
+                'purchase_price',
+                2,
+                'Purchase price must contain maximum 2 decimal places.'
+            )
+            ->nonNegative(
+                'purchase_price',
+                'Purchase price cannot be negative.'
+            )
+            ->required(
+                'selling_price',
+                'Selling price is required.'
+            )
+            ->decimal(
+                'selling_price',
+                2,
+                'Selling price must contain maximum 2 decimal places.'
+            )
+            ->nonNegative(
+                'selling_price',
+                'Selling price cannot be negative.'
+            )
+            ->required(
+                'min_stock',
+                'Minimum stock is required.'
+            )
+            ->decimal(
+                'min_stock',
+                3,
+                'Minimum stock must contain maximum 3 decimal places.'
+            )
+            ->nonNegative(
+                'min_stock',
+                'Minimum stock cannot be negative.'
+            );
+
+        if ($data['barcode'] !== null) {
+            $barcodeExists = false;
+
+            if ($productId > 0) {
+                $barcodeExists =
+                    $this->productModel
+                    ->barcodeExistsInCompanyExceptProduct(
+                        $data['barcode'],
+                        $companyId,
+                        $productId
+                    );
+            } else {
+                $barcodeExists =
+                    $this->productModel
+                    ->barcodeExistsInCompany(
+                        $data['barcode'],
+                        $companyId
+                    );
+            }
+
+            if ($barcodeExists) {
+                $validator->add(
+                    'barcode',
+                    'Product with this barcode already exists.'
+                );
+            }
+        }
+
+        return $validator->all();
     }
 
     private function getFormData(): array
