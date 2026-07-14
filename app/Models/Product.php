@@ -8,16 +8,20 @@ use App\Core\Model;
 
 class Product extends Model
 {
-    public function allByCompany(int $companyId, string $search = ''): array
-    {
+    public function allByCompany(
+        int $companyId,
+        string $search = ''
+    ): array {
         $sql = "
             SELECT
                 products.*,
                 categories.name AS category_name,
                 suppliers.name AS supplier_name
             FROM products
-            INNER JOIN categories ON products.category_id = categories.id
-            LEFT JOIN suppliers ON products.supplier_id = suppliers.id
+            INNER JOIN categories
+                ON products.category_id = categories.id
+            LEFT JOIN suppliers
+                ON products.supplier_id = suppliers.id
             WHERE products.company_id = ?
         ";
 
@@ -51,44 +55,31 @@ class Product extends Model
         return $stmt->fetchAll();
     }
 
-
     public function countByCompany(
         int $companyId,
-        string $search
+        string $search = '',
+        array $filters = []
     ): int {
         $sql = "
-        SELECT COUNT(DISTINCT products.id)
-        FROM products AS products
-        LEFT JOIN categories AS categories
-            ON categories.id = products.category_id
-        LEFT JOIN suppliers AS suppliers
-            ON suppliers.id = products.supplier_id
-        WHERE products.company_id = :company_id
-    ";
+            SELECT COUNT(DISTINCT products.id)
+            FROM products AS products
+            LEFT JOIN categories AS categories
+                ON categories.id = products.category_id
+            LEFT JOIN suppliers AS suppliers
+                ON suppliers.id = products.supplier_id
+            WHERE products.company_id = :company_id
+        ";
 
         $parameters = [
             'company_id' => $companyId,
         ];
 
-        if ($search !== '') {
-            $sql .= "
-            AND (
-                products.name LIKE :search_name
-                OR products.internal_code LIKE :search_code
-                OR products.barcode LIKE :search_barcode
-                OR categories.name LIKE :search_category
-                OR suppliers.name LIKE :search_supplier
-            )
-        ";
-
-            $searchValue = '%' . $search . '%';
-
-            $parameters['search_name'] = $searchValue;
-            $parameters['search_code'] = $searchValue;
-            $parameters['search_barcode'] = $searchValue;
-            $parameters['search_category'] = $searchValue;
-            $parameters['search_supplier'] = $searchValue;
-        }
+        $this->applyListFilters(
+            $sql,
+            $parameters,
+            $search,
+            $filters
+        );
 
         $statement = $this->db->prepare($sql);
 
@@ -110,7 +101,8 @@ class Product extends Model
         int $limit,
         int $offset,
         string $sortColumn,
-        string $sortDirection
+        string $sortDirection,
+        array $filters = []
     ): array {
         $allowedSortColumns = [
             'products.id',
@@ -136,47 +128,34 @@ class Product extends Model
         }
 
         $sql = "
-        SELECT
-            products.*,
-            categories.name AS category_name,
-            suppliers.name AS supplier_name
-        FROM products AS products
-        LEFT JOIN categories AS categories
-            ON categories.id = products.category_id
-        LEFT JOIN suppliers AS suppliers
-            ON suppliers.id = products.supplier_id
-        WHERE products.company_id = :company_id
-    ";
+            SELECT
+                products.*,
+                categories.name AS category_name,
+                suppliers.name AS supplier_name
+            FROM products AS products
+            LEFT JOIN categories AS categories
+                ON categories.id = products.category_id
+            LEFT JOIN suppliers AS suppliers
+                ON suppliers.id = products.supplier_id
+            WHERE products.company_id = :company_id
+        ";
 
         $parameters = [
             'company_id' => $companyId,
         ];
 
-        if ($search !== '') {
-            $sql .= "
-            AND (
-                products.name LIKE :search_name
-                OR products.internal_code LIKE :search_code
-                OR products.barcode LIKE :search_barcode
-                OR categories.name LIKE :search_category
-                OR suppliers.name LIKE :search_supplier
-            )
-        ";
-
-            $searchValue = '%' . $search . '%';
-
-            $parameters['search_name'] = $searchValue;
-            $parameters['search_code'] = $searchValue;
-            $parameters['search_barcode'] = $searchValue;
-            $parameters['search_category'] = $searchValue;
-            $parameters['search_supplier'] = $searchValue;
-        }
+        $this->applyListFilters(
+            $sql,
+            $parameters,
+            $search,
+            $filters
+        );
 
         $sql .= "
-        ORDER BY {$sortColumn} {$sortDirection}
-        LIMIT :limit
-        OFFSET :offset
-    ";
+            ORDER BY {$sortColumn} {$sortDirection}
+            LIMIT :limit
+            OFFSET :offset
+        ";
 
         $statement = $this->db->prepare($sql);
 
@@ -204,8 +183,9 @@ class Product extends Model
         return $statement->fetchAll();
     }
 
-    public function generateNextInternalCode(int $companyId): string
-    {
+    public function generateNextInternalCode(
+        int $companyId
+    ): string {
         $stmt = $this->db->prepare("
             SELECT internal_code
             FROM products
@@ -223,14 +203,27 @@ class Product extends Model
         }
 
         $lastCode = $lastProduct['internal_code'];
-        $number = (int)str_replace('PRD-', '', $lastCode);
+
+        $number = (int) str_replace(
+            'PRD-',
+            '',
+            $lastCode
+        );
+
         $nextNumber = $number + 1;
 
-        return 'PRD-' . str_pad((string)$nextNumber, 6, '0', STR_PAD_LEFT);
+        return 'PRD-' . str_pad(
+            (string) $nextNumber,
+            6,
+            '0',
+            STR_PAD_LEFT
+        );
     }
 
-    public function barcodeExistsInCompany(?string $barcode, int $companyId): bool
-    {
+    public function barcodeExistsInCompany(
+        ?string $barcode,
+        int $companyId
+    ): bool {
         if ($barcode === null || $barcode === '') {
             return false;
         }
@@ -243,13 +236,18 @@ class Product extends Model
             LIMIT 1
         ");
 
-        $stmt->execute([$barcode, $companyId]);
+        $stmt->execute([
+            $barcode,
+            $companyId,
+        ]);
 
         return $stmt->fetch() !== false;
     }
 
-    public function findByIdAndCompany(int $id, int $companyId): ?array
-    {
+    public function findByIdAndCompany(
+        int $id,
+        int $companyId
+    ): ?array {
         $stmt = $this->db->prepare("
             SELECT *
             FROM products
@@ -258,7 +256,10 @@ class Product extends Model
             LIMIT 1
         ");
 
-        $stmt->execute([$id, $companyId]);
+        $stmt->execute([
+            $id,
+            $companyId,
+        ]);
 
         $product = $stmt->fetch();
 
@@ -269,8 +270,11 @@ class Product extends Model
         return $product;
     }
 
-    public function barcodeExistsInCompanyExceptProduct(?string $barcode, int $companyId, int $productId): bool
-    {
+    public function barcodeExistsInCompanyExceptProduct(
+        ?string $barcode,
+        int $companyId,
+        int $productId
+    ): bool {
         if ($barcode === null || $barcode === '') {
             return false;
         }
@@ -333,8 +337,10 @@ class Product extends Model
         ]);
     }
 
-    public function update(int $id, array $data): bool
-    {
+    public function update(
+        int $id,
+        array $data
+    ): bool {
         $stmt = $this->db->prepare("
             UPDATE products
             SET
@@ -370,8 +376,10 @@ class Product extends Model
         ]);
     }
 
-    public function deactivate(int $id, int $companyId): bool
-    {
+    public function deactivate(
+        int $id,
+        int $companyId
+    ): bool {
         $stmt = $this->db->prepare("
             UPDATE products
             SET is_active = 0
@@ -385,24 +393,134 @@ class Product extends Model
         ]);
     }
 
-    public function activeByCompany(int $companyId): array
-    {
+    public function activeByCompany(
+        int $companyId
+    ): array {
         $stmt = $this->db->prepare("
-        SELECT 
-            id, 
-            internal_code, 
-            name, 
-            unit, 
-            purchase_price,
-            selling_price
-        FROM products
-        WHERE company_id = ?
-        AND is_active = 1
-        ORDER BY name ASC
-    ");
+            SELECT
+                id,
+                internal_code,
+                name,
+                unit,
+                purchase_price,
+                selling_price
+            FROM products
+            WHERE company_id = ?
+            AND is_active = 1
+            ORDER BY name ASC
+        ");
 
         $stmt->execute([$companyId]);
 
         return $stmt->fetchAll();
+    }
+
+    private function applyListFilters(
+        string &$sql,
+        array &$parameters,
+        string $search,
+        array $filters
+    ): void {
+        if ($search !== '') {
+            $sql .= "
+                AND (
+                    products.name LIKE :search_name
+                    OR products.internal_code LIKE :search_code
+                    OR products.barcode LIKE :search_barcode
+                    OR categories.name LIKE :search_category
+                    OR suppliers.name LIKE :search_supplier
+                )
+            ";
+
+            $searchValue = '%' . $search . '%';
+
+            $parameters['search_name'] = $searchValue;
+            $parameters['search_code'] = $searchValue;
+            $parameters['search_barcode'] = $searchValue;
+            $parameters['search_category'] = $searchValue;
+            $parameters['search_supplier'] = $searchValue;
+        }
+
+        if (
+            isset($filters['category_id']) &&
+            is_int($filters['category_id']) &&
+            $filters['category_id'] > 0
+        ) {
+            $sql .= "
+                AND products.category_id = :category_id
+            ";
+
+            $parameters['category_id'] =
+                $filters['category_id'];
+        }
+
+        if (
+            isset($filters['supplier_id']) &&
+            is_int($filters['supplier_id']) &&
+            $filters['supplier_id'] > 0
+        ) {
+            $sql .= "
+                AND products.supplier_id = :supplier_id
+            ";
+
+            $parameters['supplier_id'] =
+                $filters['supplier_id'];
+        }
+
+        if (
+            isset($filters['unit']) &&
+            is_string($filters['unit']) &&
+            $filters['unit'] !== ''
+        ) {
+            $sql .= "
+                AND products.unit = :unit
+            ";
+
+            $parameters['unit'] = $filters['unit'];
+        }
+
+        if (
+            isset($filters['status']) &&
+            $filters['status'] === 'active'
+        ) {
+            $sql .= "
+                AND products.is_active = 1
+            ";
+        }
+
+        if (
+            isset($filters['status']) &&
+            $filters['status'] === 'inactive'
+        ) {
+            $sql .= "
+                AND products.is_active = 0
+            ";
+        }
+
+        if (
+            isset($filters['min_price']) &&
+            $filters['min_price'] !== '' &&
+            is_numeric($filters['min_price'])
+        ) {
+            $sql .= "
+                AND products.selling_price >= :min_price
+            ";
+
+            $parameters['min_price'] =
+                (float) $filters['min_price'];
+        }
+
+        if (
+            isset($filters['max_price']) &&
+            $filters['max_price'] !== '' &&
+            is_numeric($filters['max_price'])
+        ) {
+            $sql .= "
+                AND products.selling_price <= :max_price
+            ";
+
+            $parameters['max_price'] =
+                (float) $filters['max_price'];
+        }
     }
 }

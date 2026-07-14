@@ -41,6 +41,8 @@ class ProductController extends Controller
 
         if ($currentUser === null) {
             $this->redirect('/login');
+
+            return;
         }
 
         $search = '';
@@ -48,6 +50,8 @@ class ProductController extends Controller
         if (isset($_GET['search'])) {
             $search = trim((string) $_GET['search']);
         }
+
+        $filters = $this->getProductFilters();
 
         $page = 1;
 
@@ -68,7 +72,9 @@ class ProductController extends Controller
         $requestedSort = '';
 
         if (isset($_GET['sort'])) {
-            $requestedSort = trim((string) $_GET['sort']);
+            $requestedSort = trim(
+                (string) $_GET['sort']
+            );
         }
 
         $requestedDirection = '';
@@ -78,6 +84,16 @@ class ProductController extends Controller
                 (string) $_GET['direction']
             );
         }
+
+        $filterParameters = [
+            'search' => $search,
+            'category_id' => $filters['category_id'],
+            'supplier_id' => $filters['supplier_id'],
+            'unit' => $filters['unit'],
+            'status' => $filters['status'],
+            'min_price' => $filters['min_price'],
+            'max_price' => $filters['max_price'],
+        ];
 
         $sorter = new Sorter(
             [
@@ -96,9 +112,7 @@ class ProductController extends Controller
             'id',
             'desc',
             '/products',
-            [
-                'search' => $search,
-            ]
+            $filterParameters
         );
 
         $perPage = 10;
@@ -107,19 +121,22 @@ class ProductController extends Controller
 
         $totalProducts = $this->productModel->countByCompany(
             $companyId,
-            $search
+            $search,
+            $filters
         );
+
+        $paginationParameters = $filterParameters;
+
+        $paginationParameters['sort'] = $sorter->key();
+        $paginationParameters['direction'] =
+            $sorter->direction();
 
         $paginator = new Paginator(
             $totalProducts,
             $page,
             $perPage,
             '/products',
-            [
-                'search' => $search,
-                'sort' => $sorter->key(),
-                'direction' => $sorter->direction(),
-            ]
+            $paginationParameters
         );
 
         $products = $this->productModel->paginateByCompany(
@@ -128,13 +145,26 @@ class ProductController extends Controller
             $paginator->perPage(),
             $paginator->offset(),
             $sorter->column(),
-            $sorter->sqlDirection()
+            $sorter->sqlDirection(),
+            $filters
+        );
+
+        $categories = $this->categoryModel->allByCompany(
+            $companyId
+        );
+
+        $suppliers = $this->supplierModel->allByCompany(
+            $companyId
         );
 
         $this->view('products/index', [
             'title' => 'Products',
             'products' => $products,
             'search' => $search,
+            'filters' => $filters,
+            'categories' => $categories,
+            'suppliers' => $suppliers,
+            'units' => $this->units(),
             'paginator' => $paginator,
             'sorter' => $sorter,
         ]);
@@ -632,6 +662,123 @@ class ProductController extends Controller
             'description' => $description,
             'is_active' => isset($_POST['is_active']) ? 1 : 0,
         ];
+    }
+
+    private function getProductFilters(): array
+    {
+        $filters = [
+            'category_id' => '',
+            'supplier_id' => '',
+            'unit' => '',
+            'status' => '',
+            'min_price' => '',
+            'max_price' => '',
+        ];
+
+        if (isset($_GET['category_id'])) {
+            $categoryId = filter_var(
+                $_GET['category_id'],
+                FILTER_VALIDATE_INT
+            );
+
+            if (
+                $categoryId !== false &&
+                $categoryId > 0
+            ) {
+                $filters['category_id'] = $categoryId;
+            }
+        }
+
+        if (isset($_GET['supplier_id'])) {
+            $supplierId = filter_var(
+                $_GET['supplier_id'],
+                FILTER_VALIDATE_INT
+            );
+
+            if (
+                $supplierId !== false &&
+                $supplierId > 0
+            ) {
+                $filters['supplier_id'] = $supplierId;
+            }
+        }
+
+        if (isset($_GET['unit'])) {
+            $unit = trim((string) $_GET['unit']);
+
+            if (in_array($unit, $this->units(), true)) {
+                $filters['unit'] = $unit;
+            }
+        }
+
+        if (isset($_GET['status'])) {
+            $status = trim((string) $_GET['status']);
+
+            $allowedStatuses = [
+                'active',
+                'inactive',
+            ];
+
+            if (in_array($status, $allowedStatuses, true)) {
+                $filters['status'] = $status;
+            }
+        }
+
+        if (isset($_GET['min_price'])) {
+            $minPrice = trim(
+                (string) $_GET['min_price']
+            );
+
+            $minPrice = str_replace(
+                ',',
+                '.',
+                $minPrice
+            );
+
+            if (
+                is_numeric($minPrice) &&
+                (float) $minPrice >= 0
+            ) {
+                $filters['min_price'] = $minPrice;
+            }
+        }
+
+        if (isset($_GET['max_price'])) {
+            $maxPrice = trim(
+                (string) $_GET['max_price']
+            );
+
+            $maxPrice = str_replace(
+                ',',
+                '.',
+                $maxPrice
+            );
+
+            if (
+                is_numeric($maxPrice) &&
+                (float) $maxPrice >= 0
+            ) {
+                $filters['max_price'] = $maxPrice;
+            }
+        }
+
+        if (
+            $filters['min_price'] !== '' &&
+            $filters['max_price'] !== ''
+        ) {
+            $minPrice = (float) $filters['min_price'];
+            $maxPrice = (float) $filters['max_price'];
+
+            if ($minPrice > $maxPrice) {
+                $filters['min_price'] =
+                    (string) $maxPrice;
+
+                $filters['max_price'] =
+                    (string) $minPrice;
+            }
+        }
+
+        return $filters;
     }
 
     private function emptyOldData(): array
