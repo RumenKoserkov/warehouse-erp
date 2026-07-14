@@ -11,22 +11,27 @@ class PurchaseItem extends Model
     public function create(array $data): bool
     {
         $stmt = $this->db->prepare("
-            INSERT INTO purchase_items
-            (
-                purchase_id,
-                company_id,
-                product_id,
-                product_name,
-                product_internal_code,
-                quantity,
-                unit,
-                unit_cost,
-                discount_amount,
-                total_price
-            )
-            VALUES
-            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
+        INSERT INTO purchase_items
+        (
+            purchase_id,
+            company_id,
+            product_id,
+            product_name,
+            product_internal_code,
+            quantity,
+            unit,
+            unit_cost,
+            discount_amount,
+            vat_rate,
+            net_amount,
+            tax_amount,
+            total_price
+        )
+        VALUES
+        (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    ");
 
         return $stmt->execute([
             $data['purchase_id'],
@@ -38,6 +43,9 @@ class PurchaseItem extends Model
             $data['unit'],
             $data['unit_cost'],
             $data['discount_amount'],
+            $data['vat_rate'],
+            $data['net_amount'],
+            $data['tax_amount'],
             $data['total_price'],
         ]);
     }

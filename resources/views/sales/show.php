@@ -1,6 +1,10 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">
-        Sale <?= htmlspecialchars($sale['sale_number']) ?>
+        Sale <?= htmlspecialchars(
+                    (string) $sale['sale_number'],
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>
     </h1>
 
     <div class="d-flex gap-2">
@@ -8,20 +12,31 @@
             <form
                 action="/sales/cancel"
                 method="POST"
-                onsubmit="return confirm('Are you sure you want to cancel this sale and return the stock?');">
+                onsubmit="return confirm(
+                    'Are you sure you want to cancel this sale and return the stock?'
+                );">
                 <?= \App\Core\Csrf::field() ?>
+
                 <input
                     type="hidden"
                     name="id"
-                    value="<?= htmlspecialchars((string)$sale['id']) ?>">
+                    value="<?= htmlspecialchars(
+                                (string) $sale['id'],
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>">
 
-                <button type="submit" class="btn btn-danger">
+                <button
+                    type="submit"
+                    class="btn btn-danger">
                     Cancel Sale
                 </button>
             </form>
         <?php endif; ?>
 
-        <a href="/sales" class="btn btn-outline-secondary">
+        <a
+            href="/sales"
+            class="btn btn-outline-secondary">
             Back to Sales
         </a>
     </div>
@@ -38,24 +53,56 @@
                 <table class="table table-borderless mb-0">
                     <tr>
                         <th>Sale Number</th>
-                        <td><?= htmlspecialchars($sale['sale_number']) ?></td>
+
+                        <td>
+                            <?= htmlspecialchars(
+                                (string) $sale['sale_number'],
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>
+                        </td>
                     </tr>
 
                     <tr>
                         <th>Sale Date</th>
-                        <td><?= htmlspecialchars($sale['sale_date']) ?></td>
+
+                        <td>
+                            <?= htmlspecialchars(
+                                (string) $sale['sale_date'],
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>
+                        </td>
                     </tr>
 
                     <tr>
                         <th>Status</th>
+
                         <td>
-                            <?php if ($sale['status'] === 'completed'): ?>
-                                <span class="badge text-bg-success">Completed</span>
-                            <?php elseif ($sale['status'] === 'cancelled'): ?>
-                                <span class="badge text-bg-danger">Cancelled</span>
+                            <?php if (
+                                $sale['status'] ===
+                                'completed'
+                            ): ?>
+                                <span
+                                    class="badge text-bg-success">
+                                    Completed
+                                </span>
+                            <?php elseif (
+                                $sale['status'] ===
+                                'cancelled'
+                            ): ?>
+                                <span
+                                    class="badge text-bg-danger">
+                                    Cancelled
+                                </span>
                             <?php else: ?>
-                                <span class="badge text-bg-secondary">
-                                    <?= htmlspecialchars($sale['status']) ?>
+                                <span
+                                    class="badge text-bg-secondary">
+                                    <?= htmlspecialchars(
+                                        (string) $sale['status'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
                                 </span>
                             <?php endif; ?>
                         </td>
@@ -63,29 +110,97 @@
 
                     <tr>
                         <th>Payment Method</th>
+
                         <td>
-                            <?php if (!empty($sale['payment_method'])): ?>
-                                <?= htmlspecialchars($sale['payment_method']) ?>
+                            <?php if (
+                                !empty($sale['payment_method'])
+                            ): ?>
+                                <?= htmlspecialchars(
+                                    (string) $sale['payment_method'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
                             <?php else: ?>
-                                <span class="text-muted">-</span>
+                                <span class="text-muted">
+                                    -
+                                </span>
                             <?php endif; ?>
                         </td>
                     </tr>
 
                     <tr>
-                        <th>Created By</th>
+                        <th>VAT Registered</th>
+
                         <td>
-                            <?php if (!empty($sale['user_name'])): ?>
-                                <?= htmlspecialchars($sale['user_name']) ?>
+                            <?php if (
+                                (int) $sale['vat_registered'] === 1
+                            ): ?>
+                                Yes
                             <?php else: ?>
-                                <span class="text-muted">System</span>
+                                No
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th>Price Mode</th>
+
+                        <td>
+                            <?php if (
+                                (int) $sale['vat_registered'] !== 1
+                            ): ?>
+                                VAT not charged
+                            <?php elseif (
+                                (int) $sale['prices_include_vat'] === 1
+                            ): ?>
+                                VAT included
+                            <?php else: ?>
+                                VAT excluded
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th>Default VAT Rate</th>
+
+                        <td>
+                            <?= number_format(
+                                (float) $sale['default_vat_rate'],
+                                2
+                            ) ?>%
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <th>Created By</th>
+
+                        <td>
+                            <?php if (
+                                !empty($sale['user_name'])
+                            ): ?>
+                                <?= htmlspecialchars(
+                                    (string) $sale['user_name'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            <?php else: ?>
+                                <span class="text-muted">
+                                    System
+                                </span>
                             <?php endif; ?>
                         </td>
                     </tr>
 
                     <tr>
                         <th>Created At</th>
-                        <td><?= htmlspecialchars($sale['created_at']) ?></td>
+
+                        <td>
+                            <?= htmlspecialchars(
+                                (string) $sale['created_at'],
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>
+                        </td>
                     </tr>
                 </table>
             </div>
@@ -102,59 +217,109 @@
                 <table class="table table-borderless mb-0">
                     <tr>
                         <th>Client</th>
-                        <td>
-                            <?php if (!empty($sale['client_name'])): ?>
-                                <?= htmlspecialchars($sale['client_name']) ?>
 
-                                <?php if (!empty($sale['client_company_name'])): ?>
+                        <td>
+                            <?php if (
+                                !empty($sale['client_name'])
+                            ): ?>
+                                <?= htmlspecialchars(
+                                    (string) $sale['client_name'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+
+                                <?php if (
+                                    !empty($sale['client_company_name'])
+                                ): ?>
                                     <br>
+
                                     <small class="text-muted">
-                                        <?= htmlspecialchars($sale['client_company_name']) ?>
+                                        <?= htmlspecialchars(
+                                            (string) $sale['client_company_name'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>
                                     </small>
                                 <?php endif; ?>
                             <?php else: ?>
-                                <span class="text-muted">No client</span>
+                                <span class="text-muted">
+                                    No client
+                                </span>
                             <?php endif; ?>
                         </td>
                     </tr>
 
                     <tr>
                         <th>Client Phone</th>
+
                         <td>
-                            <?php if (!empty($sale['client_phone'])): ?>
-                                <?= htmlspecialchars($sale['client_phone']) ?>
+                            <?php if (
+                                !empty($sale['client_phone'])
+                            ): ?>
+                                <?= htmlspecialchars(
+                                    (string) $sale['client_phone'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
                             <?php else: ?>
-                                <span class="text-muted">-</span>
+                                <span class="text-muted">
+                                    -
+                                </span>
                             <?php endif; ?>
                         </td>
                     </tr>
 
                     <tr>
                         <th>Client Email</th>
+
                         <td>
-                            <?php if (!empty($sale['client_email'])): ?>
-                                <?= htmlspecialchars($sale['client_email']) ?>
+                            <?php if (
+                                !empty($sale['client_email'])
+                            ): ?>
+                                <?= htmlspecialchars(
+                                    (string) $sale['client_email'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
                             <?php else: ?>
-                                <span class="text-muted">-</span>
+                                <span class="text-muted">
+                                    -
+                                </span>
                             <?php endif; ?>
                         </td>
                     </tr>
 
                     <tr>
                         <th>Client EIK</th>
+
                         <td>
-                            <?php if (!empty($sale['client_eik'])): ?>
-                                <?= htmlspecialchars($sale['client_eik']) ?>
+                            <?php if (
+                                !empty($sale['client_eik'])
+                            ): ?>
+                                <?= htmlspecialchars(
+                                    (string) $sale['client_eik'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
                             <?php else: ?>
-                                <span class="text-muted">-</span>
+                                <span class="text-muted">
+                                    -
+                                </span>
                             <?php endif; ?>
                         </td>
                     </tr>
 
                     <tr>
                         <th>Warehouse</th>
+
                         <td>
-                            <?= htmlspecialchars($sale['warehouse_code'] . ' - ' . $sale['warehouse_name']) ?>
+                            <?= htmlspecialchars(
+                                (string) $sale['warehouse_code'] .
+                                    ' - ' .
+                                    (string) $sale['warehouse_name'],
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>
                         </td>
                     </tr>
                 </table>
@@ -170,10 +335,13 @@
 
     <div class="card-body">
         <?php if (empty($items)): ?>
-            <p class="text-muted mb-0">No sale items found.</p>
+            <p class="text-muted mb-0">
+                No sale items found.
+            </p>
         <?php else: ?>
             <div class="table-responsive">
-                <table class="table table-striped table-hover align-middle mb-0">
+                <table
+                    class="table table-striped table-hover align-middle mb-0">
                     <thead>
                         <tr>
                             <th>Image</th>
@@ -184,62 +352,130 @@
                             <th>Unit</th>
                             <th>Unit Price</th>
                             <th>Discount</th>
+                            <th>Net</th>
+                            <th>VAT %</th>
+                            <th>VAT</th>
                             <th>Total</th>
                         </tr>
                     </thead>
 
                     <tbody>
-                        <?php foreach ($items as $item): ?>
+                        <?php foreach (
+                            $items as $item
+                        ): ?>
                             <tr>
                                 <td>
-                                    <?php if (!empty($item['image_path'])): ?>
+                                    <?php if (
+                                        !empty($item['image_path'])
+                                    ): ?>
                                         <img
-                                            src="<?= htmlspecialchars($item['image_path']) ?>"
+                                            src="<?= htmlspecialchars(
+                                                        (string) $item['image_path'],
+                                                        ENT_QUOTES,
+                                                        'UTF-8'
+                                                    ) ?>"
                                             alt="Product image"
                                             style="width: 50px; height: 50px; object-fit: cover;"
                                             class="rounded border">
                                     <?php else: ?>
-                                        <span class="text-muted">No image</span>
+                                        <span class="text-muted">
+                                            No image
+                                        </span>
                                     <?php endif; ?>
                                 </td>
 
                                 <td>
-                                    <span class="badge text-bg-secondary">
-                                        <?= htmlspecialchars($item['product_internal_code']) ?>
+                                    <span
+                                        class="badge text-bg-secondary">
+                                        <?= htmlspecialchars(
+                                            (string) $item['product_internal_code'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>
                                     </span>
                                 </td>
 
                                 <td>
-                                    <?= htmlspecialchars($item['product_name']) ?>
+                                    <?= htmlspecialchars(
+                                        (string) $item['product_name'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
                                 </td>
 
                                 <td>
-                                    <?php if (!empty($item['barcode'])): ?>
-                                        <?= htmlspecialchars($item['barcode']) ?>
+                                    <?php if (
+                                        !empty($item['barcode'])
+                                    ): ?>
+                                        <?= htmlspecialchars(
+                                            (string) $item['barcode'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>
                                     <?php else: ?>
-                                        <span class="text-muted">-</span>
+                                        <span class="text-muted">
+                                            -
+                                        </span>
                                     <?php endif; ?>
                                 </td>
 
                                 <td>
-                                    <?= htmlspecialchars((string)$item['quantity']) ?>
+                                    <?= htmlspecialchars(
+                                        (string) $item['quantity'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
                                 </td>
 
                                 <td>
-                                    <?= htmlspecialchars($item['unit']) ?>
+                                    <?= htmlspecialchars(
+                                        (string) $item['unit'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
                                 </td>
 
                                 <td>
-                                    <?= htmlspecialchars((string)$item['unit_price']) ?>
+                                    <?= number_format(
+                                        (float) $item['unit_price'],
+                                        2
+                                    ) ?>
                                 </td>
 
                                 <td>
-                                    <?= htmlspecialchars((string)$item['discount_amount']) ?>
+                                    <?= number_format(
+                                        (float) $item['discount_amount'],
+                                        2
+                                    ) ?>
+                                </td>
+
+                                <td>
+                                    <?= number_format(
+                                        (float) $item['net_amount'],
+                                        2
+                                    ) ?>
+                                </td>
+
+                                <td>
+                                    <?= number_format(
+                                        (float) $item['vat_rate'],
+                                        2
+                                    ) ?>%
+                                </td>
+
+                                <td>
+                                    <?= number_format(
+                                        (float) $item['tax_amount'],
+                                        2
+                                    ) ?>
                                 </td>
 
                                 <td>
                                     <strong>
-                                        <?= htmlspecialchars((string)$item['total_price']) ?>
+                                        <?= number_format(
+                                            (float) $item['total_price'],
+                                            2
+                                        ) ?>
                                     </strong>
                                 </td>
                             </tr>
@@ -252,7 +488,7 @@
 </div>
 
 <div class="row justify-content-end">
-    <div class="col-md-4">
+    <div class="col-md-5 col-lg-4">
         <div class="card shadow-sm">
             <div class="card-header">
                 Totals
@@ -261,31 +497,47 @@
             <div class="card-body">
                 <table class="table mb-0">
                     <tr>
-                        <th>Subtotal</th>
+                        <th>Net Subtotal</th>
+
                         <td class="text-end">
-                            <?= htmlspecialchars((string)$sale['subtotal']) ?>
+                            <?= number_format(
+                                (float) $sale['subtotal'],
+                                2
+                            ) ?>
                         </td>
                     </tr>
 
                     <tr>
-                        <th>Discount</th>
+                        <th>Net Discount</th>
+
                         <td class="text-end">
-                            <?= htmlspecialchars((string)$sale['discount_amount']) ?>
+                            <?= number_format(
+                                (float) $sale['discount_amount'],
+                                2
+                            ) ?>
                         </td>
                     </tr>
 
                     <tr>
-                        <th>Tax</th>
+                        <th>VAT</th>
+
                         <td class="text-end">
-                            <?= htmlspecialchars((string)$sale['tax_amount']) ?>
+                            <?= number_format(
+                                (float) $sale['tax_amount'],
+                                2
+                            ) ?>
                         </td>
                     </tr>
 
                     <tr>
-                        <th>Total</th>
+                        <th>Total with VAT</th>
+
                         <td class="text-end">
                             <strong>
-                                <?= htmlspecialchars((string)$sale['total_amount']) ?>
+                                <?= number_format(
+                                    (float) $sale['total_amount'],
+                                    2
+                                ) ?>
                             </strong>
                         </td>
                     </tr>
@@ -302,7 +554,13 @@
         </div>
 
         <div class="card-body">
-            <?= nl2br(htmlspecialchars($sale['note'])) ?>
+            <?= nl2br(
+                htmlspecialchars(
+                    (string) $sale['note'],
+                    ENT_QUOTES,
+                    'UTF-8'
+                )
+            ) ?>
         </div>
     </div>
 <?php endif; ?>

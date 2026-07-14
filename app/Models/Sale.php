@@ -36,25 +36,31 @@ class Sale extends Model
     public function create(array $data): int
     {
         $stmt = $this->db->prepare("
-            INSERT INTO sales
-                (
-                    company_id,
-                    client_id,
-                    warehouse_id,
-                    user_id,
-                    sale_number,
-                    sale_date,
-                    status,
-                    subtotal,
-                    discount_amount,
-                    tax_amount,
-                    total_amount,
-                    payment_method,
-                    note
-                )
-            VALUES
-                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
+        INSERT INTO sales
+        (
+            company_id,
+            client_id,
+            warehouse_id,
+            user_id,
+            sale_number,
+            sale_date,
+            status,
+            vat_registered,
+            prices_include_vat,
+            default_vat_rate,
+            subtotal,
+            discount_amount,
+            tax_amount,
+            total_amount,
+            payment_method,
+            note
+        )
+        VALUES
+        (
+            ?, ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    ");
 
         $stmt->execute([
             $data['company_id'],
@@ -64,6 +70,9 @@ class Sale extends Model
             $data['sale_number'],
             $data['sale_date'],
             $data['status'],
+            $data['vat_registered'],
+            $data['prices_include_vat'],
+            $data['default_vat_rate'],
             $data['subtotal'],
             $data['discount_amount'],
             $data['tax_amount'],
@@ -72,7 +81,7 @@ class Sale extends Model
             $data['note'],
         ]);
 
-        return (int)$this->db->lastInsertId();
+        return (int) $this->db->lastInsertId();
     }
 
     public function allByCompany(int $companyId, string $search = ''): array

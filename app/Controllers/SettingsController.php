@@ -40,9 +40,13 @@ class SettingsController extends Controller
 
         $companyId = (int) $currentUser['company_id'];
 
-        $settings = $this->settingModel->allByCompany($companyId);
+        $settings = $this->settingModel->allByCompany(
+            $companyId
+        );
 
-        $company = $this->companyModel->findById($companyId);
+        $company = $this->companyModel->findById(
+            $companyId
+        );
 
         if ($company === null) {
             $this->abort(404);
@@ -65,7 +69,9 @@ class SettingsController extends Controller
 
         $this->view('settings/index', [
             'title' => 'Settings',
-            'settings' => $this->withDefaults($settings),
+            'settings' => $this->withDefaults(
+                $settings
+            ),
             'currencies' => $this->currencies(),
             'dateFormats' => $this->dateFormats(),
             'errors' => [],
@@ -85,7 +91,9 @@ class SettingsController extends Controller
 
         $companyId = (int) $currentUser['company_id'];
 
-        $company = $this->companyModel->findById($companyId);
+        $company = $this->companyModel->findById(
+            $companyId
+        );
 
         if ($company === null) {
             $this->abort(404);
@@ -96,8 +104,26 @@ class SettingsController extends Controller
         $companyName = $this->input('company_name');
         $currency = $this->input('currency');
         $vatRate = $this->input('vat_rate');
-        $invoicePrefix = $this->input('invoice_prefix');
-        $dateFormat = $this->input('date_format');
+
+        $vatRegistered = isset(
+            $_POST['vat_registered']
+        ) ? '1' : '0';
+
+        $salesPricesIncludeVat = isset(
+            $_POST['sales_prices_include_vat']
+        ) ? '1' : '0';
+
+        $purchasePricesIncludeVat = isset(
+            $_POST['purchase_prices_include_vat']
+        ) ? '1' : '0';
+
+        $invoicePrefix = $this->input(
+            'invoice_prefix'
+        );
+
+        $dateFormat = $this->input(
+            'date_format'
+        );
 
         $errors = [];
 
@@ -109,7 +135,11 @@ class SettingsController extends Controller
             $errors[] = 'Currency is required.';
         }
 
-        if (!in_array($currency, $this->currencies(), true)) {
+        if (!in_array(
+            $currency,
+            $this->currencies(),
+            true
+        )) {
             $errors[] = 'Invalid currency.';
         }
 
@@ -121,26 +151,56 @@ class SettingsController extends Controller
             $errors[] = 'VAT rate must be a number.';
         }
 
-        if (is_numeric($vatRate) && (float) $vatRate < 0) {
-            $errors[] = 'VAT rate cannot be negative.';
+        if (
+            is_numeric($vatRate) &&
+            (float) $vatRate < 0
+        ) {
+            $errors[] =
+                'VAT rate cannot be negative.';
+        }
+
+        if (
+            is_numeric($vatRate) &&
+            (float) $vatRate > 100
+        ) {
+            $errors[] =
+                'VAT rate cannot be greater than 100%.';
+        }
+
+        if (
+            $vatRegistered === '1' &&
+            trim((string) $company['vat_number']) === ''
+        ) {
+            $errors[] =
+                'Company VAT number is required when VAT registration is enabled.';
         }
 
         if ($invoicePrefix === '') {
-            $errors[] = 'Invoice prefix is required.';
+            $errors[] =
+                'Invoice prefix is required.';
         }
 
         if ($dateFormat === '') {
-            $errors[] = 'Date format is required.';
+            $errors[] =
+                'Date format is required.';
         }
 
-        if (!array_key_exists($dateFormat, $this->dateFormats())) {
+        if (!array_key_exists(
+            $dateFormat,
+            $this->dateFormats()
+        )) {
             $errors[] = 'Invalid date format.';
         }
 
         $settings = [
             'company_name' => $companyName,
             'currency' => $currency,
+            'vat_registered' => $vatRegistered,
             'vat_rate' => $vatRate,
+            'sales_prices_include_vat' =>
+                $salesPricesIncludeVat,
+            'purchase_prices_include_vat' =>
+                $purchasePricesIncludeVat,
             'invoice_prefix' => $invoicePrefix,
             'date_format' => $dateFormat,
         ];
@@ -365,40 +425,49 @@ class SettingsController extends Controller
     private function getCompanyBillingData(): array
     {
         $data = [
-            'legal_name' => $this->input('legal_name'),
-            'eik' => $this->input('eik'),
-            'vat_number' => $this->input('vat_number'),
-            'manager_name' => $this->input('manager_name'),
+            'legal_name' =>
+                $this->input('legal_name'),
+
+            'eik' =>
+                $this->input('eik'),
+
+            'vat_number' =>
+                $this->input('vat_number'),
+
+            'manager_name' =>
+                $this->input('manager_name'),
 
             'billing_address' =>
-            $this->input('billing_address'),
+                $this->input('billing_address'),
 
             'billing_city' =>
-            $this->input('billing_city'),
+                $this->input('billing_city'),
 
             'billing_postal_code' =>
-            $this->input('billing_postal_code'),
+                $this->input(
+                    'billing_postal_code'
+                ),
 
             'billing_country' =>
-            $this->input('billing_country'),
+                $this->input('billing_country'),
 
             'billing_phone' =>
-            $this->input('billing_phone'),
+                $this->input('billing_phone'),
 
             'billing_email' =>
-            $this->input('billing_email'),
+                $this->input('billing_email'),
 
             'billing_website' =>
-            $this->input('billing_website'),
+                $this->input('billing_website'),
 
             'bank_name' =>
-            $this->input('bank_name'),
+                $this->input('bank_name'),
 
             'iban' =>
-            $this->input('iban'),
+                $this->input('iban'),
 
             'bic' =>
-            $this->input('bic'),
+                $this->input('bic'),
         ];
 
         $data['vat_number'] = strtoupper(
@@ -451,8 +520,28 @@ class SettingsController extends Controller
             $settings['currency'] = 'BGN';
         }
 
+        if (!isset($settings['vat_registered'])) {
+            $settings['vat_registered'] = '0';
+        }
+
         if (!isset($settings['vat_rate'])) {
             $settings['vat_rate'] = '20';
+        }
+
+        if (!isset(
+            $settings['sales_prices_include_vat']
+        )) {
+            $settings[
+                'sales_prices_include_vat'
+            ] = '0';
+        }
+
+        if (!isset(
+            $settings['purchase_prices_include_vat']
+        )) {
+            $settings[
+                'purchase_prices_include_vat'
+            ] = '0';
         }
 
         if (!isset($settings['invoice_prefix'])) {

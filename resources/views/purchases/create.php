@@ -10,11 +10,32 @@
     <div class="alert alert-danger">
         <ul class="mb-0">
             <?php foreach ($errors as $error): ?>
-                <li><?= htmlspecialchars($error) ?></li>
+                <li>
+                    <?= htmlspecialchars(
+                        (string) $error,
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ) ?>
+                </li>
             <?php endforeach; ?>
         </ul>
     </div>
 <?php endif; ?>
+
+<div class="alert alert-light border">
+    <?php if (
+        !$taxConfiguration['vat_registered']
+    ): ?>
+        Company is not VAT registered.
+        VAT will not be charged.
+    <?php elseif (
+        $taxConfiguration['prices_include_vat']
+    ): ?>
+        Entered purchase prices include VAT.
+    <?php else: ?>
+        VAT will be added to the entered purchase prices.
+    <?php endif; ?>
+</div>
 
 <form
     action="/purchases/store"
@@ -38,7 +59,9 @@
                         type="text"
                         class="form-control"
                         value="<?= htmlspecialchars(
-                                    $purchaseNumber
+                                    $purchaseNumber,
+                                    ENT_QUOTES,
+                                    'UTF-8'
                                 ) ?>"
                         readonly>
                 </div>
@@ -53,7 +76,9 @@
                         name="purchase_date"
                         class="form-control"
                         value="<?= htmlspecialchars(
-                                    $purchaseDate
+                                    $purchaseDate,
+                                    ENT_QUOTES,
+                                    'UTF-8'
                                 ) ?>"
                         required>
                 </div>
@@ -75,7 +100,9 @@
                         ): ?>
                             <option
                                 value="<?= htmlspecialchars(
-                                            (string) $supplier['id']
+                                            (string) $supplier['id'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
                                         ) ?>"
                                 <?php if (
                                     (string) $old['supplier_id'] ===
@@ -89,11 +116,15 @@
                                     <?= htmlspecialchars(
                                         $supplier['name'] .
                                             ' - ' .
-                                            $supplier['company_name']
+                                            $supplier['company_name'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
                                     ) ?>
                                 <?php else: ?>
                                     <?= htmlspecialchars(
-                                        $supplier['name']
+                                        $supplier['name'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
                                     ) ?>
                                 <?php endif; ?>
                             </option>
@@ -122,7 +153,9 @@
                         ): ?>
                             <option
                                 value="<?= htmlspecialchars(
-                                            (string) $warehouse['id']
+                                            (string) $warehouse['id'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
                                         ) ?>"
                                 <?php if (
                                     (string) $old['warehouse_id'] ===
@@ -133,7 +166,9 @@
                                 <?= htmlspecialchars(
                                     $warehouse['code'] .
                                         ' - ' .
-                                        $warehouse['name']
+                                        $warehouse['name'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
                                 ) ?>
                             </option>
                         <?php endforeach; ?>
@@ -151,20 +186,24 @@
                         name="payment_method"
                         class="form-select">
                         <?php foreach (
-                            $paymentMethods as $paymentMethod
+                            $paymentMethods
+                            as $paymentMethod
                         ): ?>
                             <option
                                 value="<?= htmlspecialchars(
-                                            $paymentMethod
+                                            $paymentMethod,
+                                            ENT_QUOTES,
+                                            'UTF-8'
                                         ) ?>"
                                 <?php if (
-                                    $old['payment_method'] ===
-                                    $paymentMethod
+                                    $old['payment_method'] === $paymentMethod
                                 ): ?>
                                 selected
                                 <?php endif; ?>>
                                 <?= htmlspecialchars(
-                                    $paymentMethod
+                                    $paymentMethod,
+                                    ENT_QUOTES,
+                                    'UTF-8'
                                 ) ?>
                             </option>
                         <?php endforeach; ?>
@@ -181,7 +220,9 @@
                         name="note"
                         class="form-control"
                         value="<?= htmlspecialchars(
-                                    $old['note']
+                                    $old['note'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
                                 ) ?>"
                         placeholder="Optional note...">
                 </div>
@@ -192,7 +233,8 @@
     <?php
     $lookupContext = 'purchase';
 
-    require __DIR__ . '/../components/product_lookup.php';
+    require __DIR__ .
+        '/../components/product_lookup.php';
     ?>
 
     <div class="card shadow-sm mb-4">
@@ -215,11 +257,11 @@
                     id="purchaseItemsTable">
                     <thead>
                         <tr>
-                            <th style="width: 40%;">
+                            <th style="width: 36%;">
                                 Product
                             </th>
 
-                            <th style="width: 15%;">
+                            <th style="width: 14%;">
                                 Quantity
                             </th>
 
@@ -235,7 +277,7 @@
                                 Total
                             </th>
 
-                            <th></th>
+                            <th style="width: 5%;"></th>
                         </tr>
                     </thead>
 
@@ -254,10 +296,14 @@
                                     ): ?>
                                         <option
                                             value="<?= htmlspecialchars(
-                                                        (string) $product['id']
+                                                        (string) $product['id'],
+                                                        ENT_QUOTES,
+                                                        'UTF-8'
                                                     ) ?>"
                                             data-cost="<?= htmlspecialchars(
-                                                            (string) $product['purchase_price']
+                                                            (string) $product['purchase_price'],
+                                                            ENT_QUOTES,
+                                                            'UTF-8'
                                                         ) ?>">
                                             <?= htmlspecialchars(
                                                 $product['internal_code'] .
@@ -265,7 +311,9 @@
                                                     $product['name'] .
                                                     ' (' .
                                                     $product['unit'] .
-                                                    ')'
+                                                    ')',
+                                                ENT_QUOTES,
+                                                'UTF-8'
                                             ) ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -285,6 +333,7 @@
                             <td>
                                 <input
                                     type="number"
+                                    min="0"
                                     step="0.01"
                                     name="unit_cost[]"
                                     class="form-control cost-input"
@@ -294,6 +343,7 @@
                             <td>
                                 <input
                                     type="number"
+                                    min="0"
                                     step="0.01"
                                     name="discount_amount[]"
                                     class="form-control discount-input"
@@ -321,38 +371,46 @@
             </div>
 
             <div class="row justify-content-end">
-                <div class="col-md-4">
-                    <table class="table">
-                        <tr>
-                            <th>Subtotal</th>
+                <div class="col-md-5 col-lg-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Net Subtotal</span>
 
-                            <td class="text-end">
-                                <span id="subtotalText">
-                                    0.00
-                                </span>
-                            </td>
-                        </tr>
+                        <strong id="net-subtotal">
+                            0.00
+                        </strong>
+                    </div>
 
-                        <tr>
-                            <th>Total Discount</th>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Net Discount</span>
 
-                            <td class="text-end">
-                                <span id="discountText">
-                                    0.00
-                                </span>
-                            </td>
-                        </tr>
+                        <strong id="total-discount">
+                            0.00
+                        </strong>
+                    </div>
 
-                        <tr>
-                            <th>Total</th>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>
+                            VAT
+                            (<?= number_format(
+                                    (float) $taxConfiguration['vat_rate'],
+                                    2
+                                ) ?>%)
+                        </span>
 
-                            <td class="text-end">
-                                <strong id="totalText">
-                                    0.00
-                                </strong>
-                            </td>
-                        </tr>
-                    </table>
+                        <strong id="tax-total">
+                            0.00
+                        </strong>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between">
+                        <span>Total</span>
+
+                        <strong id="grand-total">
+                            0.00
+                        </strong>
+                    </div>
                 </div>
             </div>
         </div>
@@ -366,6 +424,26 @@
 </form>
 
 <script>
+    const vatRegistered =
+        <?= $taxConfiguration['vat_registered']
+            ? 'true'
+            : 'false' ?>;
+
+    const pricesIncludeVat =
+        <?= $taxConfiguration['prices_include_vat']
+            ? 'true'
+            : 'false' ?>;
+
+    const configuredVatRate =
+        <?= json_encode(
+            (float) $taxConfiguration['vat_rate']
+        ) ?>;
+
+    const effectiveVatRate =
+        vatRegistered ?
+        configuredVatRate :
+        0;
+
     const tableBody = document.querySelector(
         '#purchaseItemsTable tbody'
     );
@@ -373,6 +451,104 @@
     const addRowButton = document.querySelector(
         '#addRowButton'
     );
+
+    function money(amount) {
+        return Math.round(
+            (amount + Number.EPSILON) * 100
+        ) / 100;
+    }
+
+    function numberValue(input) {
+        const value = parseFloat(input.value);
+
+        if (!Number.isFinite(value)) {
+            return 0;
+        }
+
+        return value;
+    }
+
+    function calculateLine(
+        quantity,
+        unitCost,
+        discountAmount
+    ) {
+        const lineAmount = money(
+            quantity * unitCost
+        );
+
+        const safeDiscount = Math.max(
+            discountAmount,
+            0
+        );
+
+        const discountedAmount = Math.max(
+            money(lineAmount - safeDiscount),
+            0
+        );
+
+        if (
+            pricesIncludeVat &&
+            effectiveVatRate > 0
+        ) {
+            const divisor =
+                1 + effectiveVatRate / 100;
+
+            const netAmount = money(
+                discountedAmount / divisor
+            );
+
+            const taxAmount = money(
+                discountedAmount - netAmount
+            );
+
+            const netDiscount = money(
+                safeDiscount / divisor
+            );
+
+            const netSubtotal = money(
+                netAmount + netDiscount
+            );
+
+            return {
+                subtotal: netSubtotal,
+                discount: netDiscount,
+                net: netAmount,
+                tax: taxAmount,
+                total: discountedAmount
+            };
+        }
+
+        const netSubtotal = lineAmount;
+
+        const netDiscount = money(
+            safeDiscount
+        );
+
+        const netAmount = money(
+            Math.max(
+                netSubtotal - netDiscount,
+                0
+            )
+        );
+
+        const taxAmount = money(
+            netAmount *
+            (effectiveVatRate / 100)
+        );
+
+        const totalAmount = money(
+            netAmount + taxAmount
+        );
+
+        return {
+            subtotal: netSubtotal,
+            discount: netDiscount,
+            net: netAmount,
+            tax: taxAmount,
+            total: totalAmount
+        };
+    }
 
     function calculateRow(row) {
         const quantityInput = row.querySelector(
@@ -391,37 +567,26 @@
             '.total-input'
         );
 
-        let quantity = parseFloat(
-            quantityInput.value
+        const result = calculateLine(
+            numberValue(quantityInput),
+            numberValue(costInput),
+            numberValue(discountInput)
         );
 
-        let cost = parseFloat(
-            costInput.value
-        );
+        row.dataset.netSubtotal =
+            String(result.subtotal);
 
-        let discount = parseFloat(
-            discountInput.value
-        );
+        row.dataset.netDiscount =
+            String(result.discount);
 
-        if (isNaN(quantity)) {
-            quantity = 0;
-        }
+        row.dataset.taxAmount =
+            String(result.tax);
 
-        if (isNaN(cost)) {
-            cost = 0;
-        }
+        row.dataset.totalAmount =
+            String(result.total);
 
-        if (isNaN(discount)) {
-            discount = 0;
-        }
-
-        let rowTotal = quantity * cost - discount;
-
-        if (rowTotal < 0) {
-            rowTotal = 0;
-        }
-
-        totalInput.value = rowTotal.toFixed(2);
+        totalInput.value =
+            result.total.toFixed(2);
     }
 
     function calculateTotals() {
@@ -429,75 +594,54 @@
             '[data-item-row]'
         );
 
-        let subtotal = 0;
-        let totalDiscount = 0;
-        let total = 0;
+        let netSubtotal = 0;
+        let netDiscount = 0;
+        let taxTotal = 0;
+        let grandTotal = 0;
 
         rows.forEach(function(row) {
-            const quantityInput = row.querySelector(
-                '.quantity-input'
+            calculateRow(row);
+
+            netSubtotal += Number(
+                row.dataset.netSubtotal || 0
             );
 
-            const costInput = row.querySelector(
-                '.cost-input'
+            netDiscount += Number(
+                row.dataset.netDiscount || 0
             );
 
-            const discountInput = row.querySelector(
-                '.discount-input'
+            taxTotal += Number(
+                row.dataset.taxAmount || 0
             );
 
-            const totalInput = row.querySelector(
-                '.total-input'
+            grandTotal += Number(
+                row.dataset.totalAmount || 0
             );
-
-            let quantity = parseFloat(
-                quantityInput.value
-            );
-
-            let cost = parseFloat(
-                costInput.value
-            );
-
-            let discount = parseFloat(
-                discountInput.value
-            );
-
-            let rowTotal = parseFloat(
-                totalInput.value
-            );
-
-            if (isNaN(quantity)) {
-                quantity = 0;
-            }
-
-            if (isNaN(cost)) {
-                cost = 0;
-            }
-
-            if (isNaN(discount)) {
-                discount = 0;
-            }
-
-            if (isNaN(rowTotal)) {
-                rowTotal = 0;
-            }
-
-            subtotal += quantity * cost;
-            totalDiscount += discount;
-            total += rowTotal;
         });
 
         document.querySelector(
-            '#subtotalText'
-        ).textContent = subtotal.toFixed(2);
+            '#net-subtotal'
+        ).textContent = money(
+            netSubtotal
+        ).toFixed(2);
 
         document.querySelector(
-            '#discountText'
-        ).textContent = totalDiscount.toFixed(2);
+            '#total-discount'
+        ).textContent = money(
+            netDiscount
+        ).toFixed(2);
 
         document.querySelector(
-            '#totalText'
-        ).textContent = total.toFixed(2);
+            '#tax-total'
+        ).textContent = money(
+            taxTotal
+        ).toFixed(2);
+
+        document.querySelector(
+            '#grand-total'
+        ).textContent = money(
+            grandTotal
+        ).toFixed(2);
     }
 
     function bindRowEvents(row) {
@@ -529,52 +673,49 @@
                         productSelect.selectedIndex
                     ];
 
-                const cost = selectedOption.getAttribute(
-                    'data-cost'
-                );
+                const cost =
+                    selectedOption.getAttribute(
+                        'data-cost'
+                    );
 
                 if (cost !== null) {
+                    const parsedCost =
+                        parseFloat(cost);
+
                     costInput.value =
-                        parseFloat(cost).toFixed(2);
+                        Number.isFinite(parsedCost) ?
+                        parsedCost.toFixed(2) :
+                        '0.00';
                 } else {
                     costInput.value = '0.00';
                 }
 
-                calculateRow(row);
                 calculateTotals();
             }
         );
 
         quantityInput.addEventListener(
             'input',
-            function() {
-                calculateRow(row);
-                calculateTotals();
-            }
+            calculateTotals
         );
 
         costInput.addEventListener(
             'input',
-            function() {
-                calculateRow(row);
-                calculateTotals();
-            }
+            calculateTotals
         );
 
         discountInput.addEventListener(
             'input',
-            function() {
-                calculateRow(row);
-                calculateTotals();
-            }
+            calculateTotals
         );
 
         removeButton.addEventListener(
             'click',
             function() {
-                const rows = tableBody.querySelectorAll(
-                    '[data-item-row]'
-                );
+                const rows =
+                    tableBody.querySelectorAll(
+                        '[data-item-row]'
+                    );
 
                 if (rows.length <= 1) {
                     return;
@@ -587,11 +728,13 @@
     }
 
     function createNewRow() {
-        const firstRow = tableBody.querySelector(
-            '[data-item-row]'
-        );
+        const firstRow =
+            tableBody.querySelector(
+                '[data-item-row]'
+            );
 
-        const newRow = firstRow.cloneNode(true);
+        const newRow =
+            firstRow.cloneNode(true);
 
         newRow.querySelector(
             '.product-select'
@@ -613,38 +756,62 @@
             '.total-input'
         ).value = '0.00';
 
+        newRow.removeAttribute(
+            'data-net-subtotal'
+        );
+
+        newRow.removeAttribute(
+            'data-net-discount'
+        );
+
+        newRow.removeAttribute(
+            'data-tax-amount'
+        );
+
+        newRow.removeAttribute(
+            'data-total-amount'
+        );
+
         tableBody.appendChild(newRow);
 
         bindRowEvents(newRow);
+        calculateTotals();
     }
 
     addRowButton.addEventListener(
         'click',
-        function() {
-            createNewRow();
-        }
+        createNewRow
     );
 
-    const initialRows = tableBody.querySelectorAll(
-        '[data-item-row]'
-    );
+    const initialRows =
+        tableBody.querySelectorAll(
+            '[data-item-row]'
+        );
 
     initialRows.forEach(function(row) {
         bindRowEvents(row);
     });
+
+    calculateTotals();
 </script>
 
 <script>
     document.addEventListener(
         'productLookup:selected',
         function(event) {
-            if (event.detail.context !== 'purchase') {
+            if (
+                event.detail.context !==
+                'purchase'
+            ) {
                 return;
             }
 
-            const product = event.detail.product;
+            const product =
+                event.detail.product;
 
-            addLookupProductToPurchase(product);
+            addLookupProductToPurchase(
+                product
+            );
         }
     );
 
@@ -654,13 +821,15 @@
         );
 
         for (const row of rows) {
-            const productSelect = row.querySelector(
-                'select[name="product_id[]"]'
-            );
+            const productSelect =
+                row.querySelector(
+                    'select[name="product_id[]"]'
+                );
 
-            const quantityInput = row.querySelector(
-                'input[name="quantity[]"]'
-            );
+            const quantityInput =
+                row.querySelector(
+                    'input[name="quantity[]"]'
+                );
 
             if (
                 productSelect === null ||
@@ -676,12 +845,18 @@
                 let currentQuantity =
                     Number(quantityInput.value);
 
-                if (!Number.isFinite(currentQuantity)) {
+                if (
+                    !Number.isFinite(
+                        currentQuantity
+                    )
+                ) {
                     currentQuantity = 0;
                 }
 
                 quantityInput.value =
-                    String(currentQuantity + 1);
+                    String(
+                        currentQuantity + 1
+                    );
 
                 quantityInput.dispatchEvent(
                     new Event(
@@ -698,15 +873,17 @@
         let emptyProductSelect = null;
 
         for (const row of rows) {
-            const productSelect = row.querySelector(
-                'select[name="product_id[]"]'
-            );
+            const productSelect =
+                row.querySelector(
+                    'select[name="product_id[]"]'
+                );
 
             if (
                 productSelect !== null &&
                 productSelect.value === ''
             ) {
-                emptyProductSelect = productSelect;
+                emptyProductSelect =
+                    productSelect;
 
                 break;
             }
@@ -732,7 +909,8 @@
                 '[data-item-row]'
             );
 
-            const lastRow = rows[rows.length - 1];
+            const lastRow =
+                rows[rows.length - 1];
 
             if (lastRow !== undefined) {
                 emptyProductSelect =
@@ -757,17 +935,19 @@
             )
         );
 
-        const row = emptyProductSelect.closest(
-            '[data-item-row]'
-        );
+        const row =
+            emptyProductSelect.closest(
+                '[data-item-row]'
+            );
 
         if (row === null) {
             return;
         }
 
-        const quantityInput = row.querySelector(
-            'input[name="quantity[]"]'
-        );
+        const quantityInput =
+            row.querySelector(
+                'input[name="quantity[]"]'
+            );
 
         if (quantityInput !== null) {
             quantityInput.value = '1';

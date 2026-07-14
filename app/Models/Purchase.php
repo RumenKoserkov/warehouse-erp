@@ -36,25 +36,31 @@ class Purchase extends Model
     public function create(array $data): int
     {
         $stmt = $this->db->prepare("
-            INSERT INTO purchases
-            (
-                company_id,
-                supplier_id,
-                warehouse_id,
-                user_id,
-                purchase_number,
-                purchase_date,
-                status,
-                subtotal,
-                discount_amount,
-                tax_amount,
-                total_amount,
-                payment_method,
-                note
-            )
-            VALUES
-            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
+        INSERT INTO purchases
+        (
+            company_id,
+            supplier_id,
+            warehouse_id,
+            user_id,
+            purchase_number,
+            purchase_date,
+            status,
+            vat_registered,
+            prices_include_vat,
+            default_vat_rate,
+            subtotal,
+            discount_amount,
+            tax_amount,
+            total_amount,
+            payment_method,
+            note
+        )
+        VALUES
+        (
+            ?, ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    ");
 
         $stmt->execute([
             $data['company_id'],
@@ -64,6 +70,9 @@ class Purchase extends Model
             $data['purchase_number'],
             $data['purchase_date'],
             $data['status'],
+            $data['vat_registered'],
+            $data['prices_include_vat'],
+            $data['default_vat_rate'],
             $data['subtotal'],
             $data['discount_amount'],
             $data['tax_amount'],

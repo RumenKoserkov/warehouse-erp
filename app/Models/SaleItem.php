@@ -11,22 +11,27 @@ class SaleItem extends Model
     public function create(array $data): bool
     {
         $stmt = $this->db->prepare("
-            INSERT INTO sale_items
-                (
-                    sale_id,
-                    company_id,
-                    product_id,
-                    product_name,
-                    product_internal_code,
-                    quantity,
-                    unit,
-                    unit_price,
-                    discount_amount,
-                    total_price
-                )
-            VALUES
-                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
+        INSERT INTO sale_items
+        (
+            sale_id,
+            company_id,
+            product_id,
+            product_name,
+            product_internal_code,
+            quantity,
+            unit,
+            unit_price,
+            discount_amount,
+            vat_rate,
+            net_amount,
+            tax_amount,
+            total_price
+        )
+        VALUES
+        (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )
+    ");
 
         return $stmt->execute([
             $data['sale_id'],
@@ -38,6 +43,9 @@ class SaleItem extends Model
             $data['unit'],
             $data['unit_price'],
             $data['discount_amount'],
+            $data['vat_rate'],
+            $data['net_amount'],
+            $data['tax_amount'],
             $data['total_price'],
         ]);
     }
