@@ -170,6 +170,117 @@ class ProductController extends Controller
         ]);
     }
 
+    public function lookup(): void
+    {
+        $currentUser = $this->authService->user();
+
+        if ($currentUser === null) {
+            $this->json(
+                [
+                    'error' => 'Authentication required.',
+                ],
+                401
+            );
+
+            return;
+        }
+
+        $query = '';
+
+        if (isset($_GET['q'])) {
+            $query = trim((string) $_GET['q']);
+        }
+
+        if ($query === '') {
+            $this->json([
+                'items' => [],
+            ]);
+
+            return;
+        }
+
+        if (mb_strlen($query) > 100) {
+            $query = mb_substr($query, 0, 100);
+        }
+
+        $warehouseId = 0;
+
+        if (isset($_GET['warehouse_id'])) {
+            $validatedWarehouseId = filter_var(
+                $_GET['warehouse_id'],
+                FILTER_VALIDATE_INT
+            );
+
+            if (
+                $validatedWarehouseId !== false &&
+                $validatedWarehouseId > 0
+            ) {
+                $warehouseId = $validatedWarehouseId;
+            }
+        }
+
+        $products = $this->productModel->quickLookup(
+            (int) $currentUser['company_id'],
+            $query,
+            $warehouseId
+        );
+
+        $items = [];
+
+        foreach ($products as $product) {
+            $barcode = '';
+
+            if (isset($product['barcode'])) {
+                $barcode = (string) $product['barcode'];
+            }
+
+            $internalCode = '';
+
+            if (isset($product['internal_code'])) {
+                $internalCode =
+                    (string) $product['internal_code'];
+            }
+
+            $exactMatch = false;
+
+            if ($barcode !== '' && $barcode === $query) {
+                $exactMatch = true;
+            }
+
+            if (
+                $internalCode !== '' &&
+                strcasecmp($internalCode, $query) === 0
+            ) {
+                $exactMatch = true;
+            }
+
+            $items[] = [
+                'id' => (int) $product['id'],
+                'internal_code' => $internalCode,
+                'barcode' => $barcode,
+                'name' => (string) $product['name'],
+                'unit' => (string) $product['unit'],
+                'purchase_price' =>
+                (float) $product['purchase_price'],
+                'selling_price' =>
+                (float) $product['selling_price'],
+                'stock_quantity' =>
+                (float) $product['stock_quantity'],
+                'category_name' =>
+                (string) ($product['category_name'] ?? ''),
+                'supplier_name' =>
+                (string) ($product['supplier_name'] ?? ''),
+                'image_path' =>
+                (string) ($product['image_path'] ?? ''),
+                'exact_match' => $exactMatch,
+            ];
+        }
+
+        $this->json([
+            'items' => $items,
+        ]);
+    }
+
     public function create(): void
     {
         $currentUser = $this->authService->user();

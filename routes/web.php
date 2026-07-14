@@ -252,6 +252,15 @@ return [
     ],
     [
         'method' => 'GET',
+        'uri' => '/products/lookup',
+        'action' => [ProductController::class, 'lookup'],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
+    ],
+    [
+        'method' => 'GET',
         'uri' => '/products/create',
         'action' => [ProductController::class, 'create'],
         'middleware' => ['auth', 'role:administrator,manager'],

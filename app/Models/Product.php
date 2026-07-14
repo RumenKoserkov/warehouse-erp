@@ -393,6 +393,156 @@ class Product extends Model
         ]);
     }
 
+    public function quickLookup(
+        int $companyId,
+        string $query,
+        int $warehouseId = 0,
+        int $limit = 10
+    ): array {
+        if ($limit < 1) {
+            $limit = 10;
+        }
+
+        if ($limit > 20) {
+            $limit = 20;
+        }
+
+        $sql = "
+        SELECT
+            products.id,
+            products.internal_code,
+            products.barcode,
+            products.name,
+            products.unit,
+            products.purchase_price,
+            products.selling_price,
+            products.image_path,
+            categories.name AS category_name,
+            suppliers.name AS supplier_name,
+            COALESCE(stock_levels.quantity, 0) AS stock_quantity,
+
+            CASE
+                WHEN products.barcode = :exact_barcode THEN 1
+                WHEN products.internal_code = :exact_code THEN 2
+                WHEN products.name = :exact_name THEN 3
+                WHEN products.barcode LIKE :barcode_prefix THEN 4
+                WHEN products.internal_code LIKE :code_prefix THEN 5
+                WHEN products.name LIKE :name_prefix THEN 6
+                ELSE 7
+            END AS match_priority
+
+        FROM products AS products
+
+        LEFT JOIN categories AS categories
+            ON categories.id = products.category_id
+
+        LEFT JOIN suppliers AS suppliers
+            ON suppliers.id = products.supplier_id
+
+        LEFT JOIN stock_levels AS stock_levels
+            ON stock_levels.company_id = products.company_id
+            AND stock_levels.product_id = products.id
+            AND stock_levels.warehouse_id = :warehouse_id
+
+        WHERE products.company_id = :company_id
+            AND products.is_active = 1
+            AND (
+                products.barcode = :where_exact_barcode
+                OR products.internal_code = :where_exact_code
+                OR products.barcode LIKE :barcode_search
+                OR products.internal_code LIKE :code_search
+                OR products.name LIKE :name_search
+            )
+
+        ORDER BY
+            match_priority ASC,
+            products.name ASC
+
+        LIMIT :limit
+    ";
+
+        $statement = $this->db->prepare($sql);
+
+        $statement->bindValue(
+            ':company_id',
+            $companyId,
+            \PDO::PARAM_INT
+        );
+
+        $statement->bindValue(
+            ':warehouse_id',
+            $warehouseId,
+            \PDO::PARAM_INT
+        );
+
+        $statement->bindValue(
+            ':exact_barcode',
+            $query
+        );
+
+        $statement->bindValue(
+            ':exact_code',
+            $query
+        );
+
+        $statement->bindValue(
+            ':exact_name',
+            $query
+        );
+
+        $statement->bindValue(
+            ':barcode_prefix',
+            $query . '%'
+        );
+
+        $statement->bindValue(
+            ':code_prefix',
+            $query . '%'
+        );
+
+        $statement->bindValue(
+            ':name_prefix',
+            $query . '%'
+        );
+
+        $statement->bindValue(
+            ':where_exact_barcode',
+            $query
+        );
+
+        $statement->bindValue(
+            ':where_exact_code',
+            $query
+        );
+
+        $search = '%' . $query . '%';
+
+        $statement->bindValue(
+            ':barcode_search',
+            $search
+        );
+
+        $statement->bindValue(
+            ':code_search',
+            $search
+        );
+
+        $statement->bindValue(
+            ':name_search',
+            $search
+        );
+
+        $statement->bindValue(
+            ':limit',
+            $limit,
+            \PDO::PARAM_INT
+        );
+
+        $statement->execute();
+
+        return $statement->fetchAll();
+    }
+
     public function activeByCompany(
         int $companyId
     ): array {
