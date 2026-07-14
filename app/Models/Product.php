@@ -51,6 +51,129 @@ class Product extends Model
         return $stmt->fetchAll();
     }
 
+
+    public function countByCompany(
+        int $companyId,
+        string $search = ''
+    ): int {
+        $sql = "
+        SELECT COUNT(*)
+        FROM products
+        INNER JOIN categories
+            ON products.category_id = categories.id
+        LEFT JOIN suppliers
+            ON products.supplier_id = suppliers.id
+        WHERE products.company_id = ?
+    ";
+
+        $params = [$companyId];
+
+        if ($search !== '') {
+            $sql .= "
+            AND (
+                products.name LIKE ?
+                OR products.internal_code LIKE ?
+                OR products.barcode LIKE ?
+                OR categories.name LIKE ?
+                OR suppliers.name LIKE ?
+            )
+        ";
+
+            $searchTerm = '%' . $search . '%';
+
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function paginateByCompany(
+        int $companyId,
+        string $search,
+        int $limit,
+        int $offset
+    ): array {
+        $sql = "
+        SELECT
+            products.*,
+            categories.name AS category_name,
+            suppliers.name AS supplier_name
+        FROM products
+        INNER JOIN categories
+            ON products.category_id = categories.id
+        LEFT JOIN suppliers
+            ON products.supplier_id = suppliers.id
+        WHERE products.company_id = ?
+    ";
+
+        $params = [$companyId];
+
+        if ($search !== '') {
+            $sql .= "
+            AND (
+                products.name LIKE ?
+                OR products.internal_code LIKE ?
+                OR products.barcode LIKE ?
+                OR categories.name LIKE ?
+                OR suppliers.name LIKE ?
+            )
+        ";
+
+            $searchTerm = '%' . $search . '%';
+
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+        }
+
+        $sql .= "
+        ORDER BY products.id DESC
+        LIMIT ?
+        OFFSET ?
+    ";
+
+        $stmt = $this->db->prepare($sql);
+
+        $position = 1;
+
+        foreach ($params as $value) {
+            $stmt->bindValue(
+                $position,
+                $value,
+                is_int($value) ? \PDO::PARAM_INT : \PDO::PARAM_STR
+            );
+
+            $position++;
+        }
+
+        $stmt->bindValue(
+            $position,
+            $limit,
+            \PDO::PARAM_INT
+        );
+
+        $position++;
+
+        $stmt->bindValue(
+            $position,
+            $offset,
+            \PDO::PARAM_INT
+        );
+
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
     public function generateNextInternalCode(int $companyId): string
     {
         $stmt = $this->db->prepare("

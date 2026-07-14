@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Flash;
+use App\Core\Paginator;
 use App\Core\Validator;
 use App\Models\Category;
 use App\Models\Product;
@@ -37,21 +38,65 @@ class ProductController extends Controller
     {
         $currentUser = $this->authService->user();
 
+        if ($currentUser === null) {
+            $this->redirect('/login');
+
+            return;
+        }
+
         $search = '';
 
         if (isset($_GET['search'])) {
-            $search = trim((string)$_GET['search']);
+            $search = trim((string) $_GET['search']);
         }
 
-        $products = $this->productModel->allByCompany(
-            (int)$currentUser['company_id'],
+        $page = 1;
+
+        if (isset($_GET['page'])) {
+            $requestedPage = filter_var(
+                $_GET['page'],
+                FILTER_VALIDATE_INT
+            );
+
+            if (
+                $requestedPage !== false
+                && $requestedPage > 0
+            ) {
+                $page = $requestedPage;
+            }
+        }
+
+        $perPage = 10;
+
+        $companyId = (int) $currentUser['company_id'];
+
+        $totalProducts = $this->productModel->countByCompany(
+            $companyId,
             $search
+        );
+
+        $paginator = new Paginator(
+            $totalProducts,
+            $page,
+            $perPage,
+            '/products',
+            [
+                'search' => $search,
+            ]
+        );
+
+        $products = $this->productModel->paginateByCompany(
+            $companyId,
+            $search,
+            $paginator->perPage(),
+            $paginator->offset()
         );
 
         $this->view('products/index', [
             'title' => 'Products',
             'products' => $products,
             'search' => $search,
+            'paginator' => $paginator,
         ]);
     }
 

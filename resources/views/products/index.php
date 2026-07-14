@@ -13,8 +13,11 @@
             name="search"
             class="form-control"
             placeholder="Search by name, code, barcode, category, supplier..."
-            value="<?= htmlspecialchars($search) ?>"
-        >
+            value="<?= htmlspecialchars(
+                        $search,
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ) ?>">
 
         <button type="submit" class="btn btn-outline-secondary">
             Search
@@ -25,9 +28,10 @@
 <div class="card shadow-sm">
     <div class="card-body">
         <?php if (empty($products)): ?>
-            <p class="text-muted mb-0">No products found.</p>
+            <p class="text-muted mb-0">
+                No products found.
+            </p>
         <?php else: ?>
-
             <div class="table-responsive">
                 <table class="table table-striped table-hover align-middle mb-0">
                     <thead>
@@ -50,36 +54,104 @@
                     <tbody>
                         <?php foreach ($products as $product): ?>
                             <tr>
-
                                 <td>
                                     <?php if (!empty($product['image_path'])): ?>
                                         <img
-                                            src="<?= htmlspecialchars($product['image_path']) ?>"
+                                            src="<?= htmlspecialchars(
+                                                        $product['image_path'],
+                                                        ENT_QUOTES,
+                                                        'UTF-8'
+                                                    ) ?>"
                                             alt="Product image"
-                                            style="width: 50px; height: 50px; object-fit: cover;"
+                                            style="
+                                                width: 50px;
+                                                height: 50px;
+                                                object-fit: cover;
+                                            "
                                             class="rounded border">
                                     <?php else: ?>
-                                        <span class="text-muted">No image</span>
+                                        <span class="text-muted">
+                                            No image
+                                        </span>
                                     <?php endif; ?>
                                 </td>
 
                                 <td>
                                     <span class="badge text-bg-secondary">
-                                        <?= htmlspecialchars($product['internal_code']) ?>
+                                        <?= htmlspecialchars(
+                                            $product['internal_code'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>
                                     </span>
                                 </td>
 
-                                <td><?= htmlspecialchars($product['barcode'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($product['name']) ?></td>
-                                <td><?= htmlspecialchars($product['category_name']) ?></td>
-                                <td><?= htmlspecialchars($product['supplier_name'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($product['unit']) ?></td>
-                                <td><?= htmlspecialchars((string)$product['purchase_price']) ?></td>
-                                <td><?= htmlspecialchars((string)$product['selling_price']) ?></td>
-                                <td><?= htmlspecialchars((string)$product['min_stock']) ?></td>
+                                <td>
+                                    <?= htmlspecialchars(
+                                        $product['barcode'] ?? '',
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </td>
 
                                 <td>
-                                    <?php if ((int)$product['is_active'] === 1): ?>
+                                    <?= htmlspecialchars(
+                                        $product['name'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </td>
+
+                                <td>
+                                    <?= htmlspecialchars(
+                                        $product['category_name'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </td>
+
+                                <td>
+                                    <?= htmlspecialchars(
+                                        $product['supplier_name'] ?? '',
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </td>
+
+                                <td>
+                                    <?= htmlspecialchars(
+                                        $product['unit'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </td>
+
+                                <td>
+                                    <?= htmlspecialchars(
+                                        (string) $product['purchase_price'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </td>
+
+                                <td>
+                                    <?= htmlspecialchars(
+                                        (string) $product['selling_price'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </td>
+
+                                <td>
+                                    <?= htmlspecialchars(
+                                        (string) $product['min_stock'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </td>
+
+                                <td>
+                                    <?php if ((int) $product['is_active'] === 1): ?>
                                         <span class="badge text-bg-success">
                                             Active
                                         </span>
@@ -92,44 +164,52 @@
 
                                 <td>
                                     <div class="d-flex gap-2">
-
                                         <a
-                                            href="/products/edit?id=<?= htmlspecialchars((string)$product['id']) ?>"
+                                            href="/products/edit?id=<?= htmlspecialchars(
+                                                                        (string) $product['id'],
+                                                                        ENT_QUOTES,
+                                                                        'UTF-8'
+                                                                    ) ?>"
                                             class="btn btn-sm btn-outline-primary">
                                             Edit
                                         </a>
 
-                                        <?php if ((int)$product['is_active'] === 1): ?>
+                                        <?php if ((int) $product['is_active'] === 1): ?>
                                             <form
                                                 action="/products/deactivate"
                                                 method="POST"
-                                                onsubmit="return confirm('Are you sure you want to deactivate this product?');">
+                                                onsubmit="
+                                                    return confirm(
+                                                        'Are you sure you want to deactivate this product?'
+                                                    );
+                                                ">
                                                 <?= \App\Core\Csrf::field() ?>
 
                                                 <input
                                                     type="hidden"
                                                     name="id"
-                                                    value="<?= htmlspecialchars((string)$product['id']) ?>">
+                                                    value="<?= htmlspecialchars(
+                                                                (string) $product['id'],
+                                                                ENT_QUOTES,
+                                                                'UTF-8'
+                                                            ) ?>">
 
                                                 <button
                                                     type="submit"
                                                     class="btn btn-sm btn-outline-danger">
                                                     Deactivate
                                                 </button>
-
                                             </form>
                                         <?php endif; ?>
-
                                     </div>
                                 </td>
-
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
-
                 </table>
             </div>
 
+            <?php require __DIR__ . '/../components/pagination.php'; ?>
         <?php endif; ?>
     </div>
 </div>
