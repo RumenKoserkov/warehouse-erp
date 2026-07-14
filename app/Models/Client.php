@@ -8,8 +8,10 @@ use App\Core\Model;
 
 class Client extends Model
 {
-    public function allByCompany(int $companyId, string $search = ''): array
-    {
+    public function allByCompany(
+        int $companyId,
+        string $search = ''
+    ): array {
         if ($search !== '') {
             $searchTerm = '%' . $search . '%';
 
@@ -23,13 +25,17 @@ class Client extends Model
                     OR email LIKE ?
                     OR company_name LIKE ?
                     OR eik LIKE ?
+                    OR vat_number LIKE ?
                     OR contact_person LIKE ?
+                    OR billing_email LIKE ?
                 )
                 ORDER BY id DESC
             ");
 
             $stmt->execute([
                 $companyId,
+                $searchTerm,
+                $searchTerm,
                 $searchTerm,
                 $searchTerm,
                 $searchTerm,
@@ -53,8 +59,10 @@ class Client extends Model
         return $stmt->fetchAll();
     }
 
-    public function findByIdAndCompany(int $id, int $companyId): ?array
-    {
+    public function findByIdAndCompany(
+        int $id,
+        int $companyId
+    ): ?array {
         $stmt = $this->db->prepare("
             SELECT *
             FROM clients
@@ -63,7 +71,10 @@ class Client extends Model
             LIMIT 1
         ");
 
-        $stmt->execute([$id, $companyId]);
+        $stmt->execute([
+            $id,
+            $companyId,
+        ]);
 
         $client = $stmt->fetch();
 
@@ -78,9 +89,29 @@ class Client extends Model
     {
         $stmt = $this->db->prepare("
             INSERT INTO clients
-                (company_id, name, phone, email, address, company_name, eik, contact_person, is_active)
+            (
+                company_id,
+                name,
+                phone,
+                email,
+                address,
+                company_name,
+                eik,
+                contact_person,
+                client_type,
+                vat_number,
+                billing_address,
+                billing_city,
+                billing_postal_code,
+                billing_country,
+                billing_email,
+                is_active
+            )
             VALUES
-                (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?
+            )
         ");
 
         return $stmt->execute([
@@ -92,6 +123,13 @@ class Client extends Model
             $data['company_name'],
             $data['eik'],
             $data['contact_person'],
+            $data['client_type'],
+            $data['vat_number'],
+            $data['billing_address'],
+            $data['billing_city'],
+            $data['billing_postal_code'],
+            $data['billing_country'],
+            $data['billing_email'],
             $data['is_active'],
         ]);
     }
@@ -108,6 +146,13 @@ class Client extends Model
                 company_name = ?,
                 eik = ?,
                 contact_person = ?,
+                client_type = ?,
+                vat_number = ?,
+                billing_address = ?,
+                billing_city = ?,
+                billing_postal_code = ?,
+                billing_country = ?,
+                billing_email = ?,
                 is_active = ?
             WHERE id = ?
             AND company_id = ?
@@ -121,14 +166,95 @@ class Client extends Model
             $data['company_name'],
             $data['eik'],
             $data['contact_person'],
+            $data['client_type'],
+            $data['vat_number'],
+            $data['billing_address'],
+            $data['billing_city'],
+            $data['billing_postal_code'],
+            $data['billing_country'],
+            $data['billing_email'],
             $data['is_active'],
             $id,
             $data['company_id'],
         ]);
     }
 
-    public function deactivate(int $id, int $companyId): bool
-    {
+    public function eikExistsInCompany(
+        string $eik,
+        int $companyId,
+        int $exceptClientId = 0
+    ): bool {
+        $sql = "
+            SELECT id
+            FROM clients
+            WHERE company_id = ?
+            AND eik = ?
+        ";
+
+        $parameters = [
+            $companyId,
+            $eik,
+        ];
+
+        if ($exceptClientId > 0) {
+            $sql .= "
+                AND id != ?
+            ";
+
+            $parameters[] = $exceptClientId;
+        }
+
+        $sql .= "
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+
+        $stmt->execute($parameters);
+
+        return $stmt->fetch() !== false;
+    }
+
+    public function vatNumberExistsInCompany(
+        string $vatNumber,
+        int $companyId,
+        int $exceptClientId = 0
+    ): bool {
+        $sql = "
+            SELECT id
+            FROM clients
+            WHERE company_id = ?
+            AND vat_number = ?
+        ";
+
+        $parameters = [
+            $companyId,
+            $vatNumber,
+        ];
+
+        if ($exceptClientId > 0) {
+            $sql .= "
+                AND id != ?
+            ";
+
+            $parameters[] = $exceptClientId;
+        }
+
+        $sql .= "
+            LIMIT 1
+        ";
+
+        $stmt = $this->db->prepare($sql);
+
+        $stmt->execute($parameters);
+
+        return $stmt->fetch() !== false;
+    }
+
+    public function deactivate(
+        int $id,
+        int $companyId
+    ): bool {
         $stmt = $this->db->prepare("
             UPDATE clients
             SET is_active = 0
@@ -136,18 +262,24 @@ class Client extends Model
             AND company_id = ?
         ");
 
-        return $stmt->execute([$id, $companyId]);
+        return $stmt->execute([
+            $id,
+            $companyId,
+        ]);
     }
 
     public function activeByCompany(int $companyId): array
     {
         $stmt = $this->db->prepare("
-        SELECT id, name, company_name
-        FROM clients
-        WHERE company_id = ?
-        AND is_active = 1
-        ORDER BY name ASC
-    ");
+            SELECT
+                id,
+                name,
+                company_name
+            FROM clients
+            WHERE company_id = ?
+            AND is_active = 1
+            ORDER BY name ASC
+        ");
 
         $stmt->execute([$companyId]);
 
