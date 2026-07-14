@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Core;
 
 use App\Middleware\AuthMiddleware;
+use App\Middleware\CsrfMiddleware;
 use App\Middleware\GuestMiddleware;
 use App\Middleware\RoleMiddleware;
+
 
 class Router
 {
@@ -47,6 +49,12 @@ class Router
         }
 
         $route = $this->routes[$requestMethod][$path];
+
+        if ($requestMethod === 'POST') {
+            $csrfMiddleware = new CsrfMiddleware();
+
+            $csrfMiddleware->handle();
+        }
 
         $this->runMiddleware($route['middleware']);
 

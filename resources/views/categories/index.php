@@ -86,6 +86,7 @@
                                                 method="POST"
                                                 onsubmit="return confirm('Are you sure you want to deactivate this category?');"
                                             >
+                                                <?= \App\Core\Csrf::field() ?>
                                                 <input
                                                     type="hidden"
                                                     name="id"

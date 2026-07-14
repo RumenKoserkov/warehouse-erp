@@ -402,6 +402,7 @@ if (isset($title)) {
                         </div>
 
                         <form action="/logout" method="POST" class="mb-0">
+                            <?= \App\Core\Csrf::field() ?>
 
                             <button
                                 type="submit"

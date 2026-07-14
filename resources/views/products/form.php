@@ -26,6 +26,7 @@ if (isset($product)) {
                 <?php endif; ?>
 
                 <form action="<?= htmlspecialchars($action) ?>" method="POST" enctype="multipart/form-data">
+                    <?= \App\Core\Csrf::field() ?>
 
                     <?php if ($isEdit): ?>
                         <input

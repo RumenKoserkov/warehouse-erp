@@ -31,6 +31,7 @@
                 <?php endif; ?>
 
                 <form action="/users/update" method="POST">
+                    <?= \App\Core\Csrf::field() ?>
 
                     <input
                         type="hidden"

@@ -21,6 +21,7 @@
                 <?php endif; ?>
 
                 <form action="/stock/transfer/store" method="POST">
+                    <?= \App\Core\Csrf::field() ?>
                     <div class="mb-3">
                         <label class="form-label">Product *</label>
 

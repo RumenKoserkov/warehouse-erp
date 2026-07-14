@@ -9,6 +9,7 @@
                 action="/sales/cancel"
                 method="POST"
                 onsubmit="return confirm('Are you sure you want to cancel this sale and return the stock?');">
+                <?= \App\Core\Csrf::field() ?>
                 <input
                     type="hidden"
                     name="id"

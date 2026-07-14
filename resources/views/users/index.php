@@ -104,6 +104,7 @@
                                                 method="POST"
                                                 onsubmit="return confirm('Are you sure you want to deactivate this user?');"
                                             >
+                                                <?= \App\Core\Csrf::field() ?>
 
                                                 <input
                                                     type="hidden"

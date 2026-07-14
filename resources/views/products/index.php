@@ -104,6 +104,7 @@
                                                 action="/products/deactivate"
                                                 method="POST"
                                                 onsubmit="return confirm('Are you sure you want to deactivate this product?');">
+                                                <?= \App\Core\Csrf::field() ?>
 
                                                 <input
                                                     type="hidden"

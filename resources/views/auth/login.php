@@ -20,6 +20,7 @@
                 <?php endif; ?>
 
                 <form action="/login" method="POST">
+                    <?= \App\Core\Csrf::field() ?>
 
                     <div class="mb-3">
                         <label

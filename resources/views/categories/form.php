@@ -26,6 +26,7 @@
                 ?>
 
                 <form action="<?= htmlspecialchars($action) ?>" method="POST">
+                    <?= \App\Core\Csrf::field() ?>
 
                     <?php if ($isEdit): ?>
                         <input

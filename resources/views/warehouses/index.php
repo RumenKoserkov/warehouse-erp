@@ -96,6 +96,7 @@
                                                     method="POST"
                                                     onsubmit="return confirm('Are you sure you want to deactivate this warehouse?');"
                                                 >
+                                                    <?= \App\Core\Csrf::field() ?>
                                                     <input
                                                         type="hidden"
                                                         name="id"

@@ -18,6 +18,7 @@
                 ?>
 
                 <form action="<?= htmlspecialchars($action) ?>" method="POST">
+                    <?= \App\Core\Csrf::field() ?>
                     <?php if ($isEdit): ?>
                         <input type="hidden" name="id" value="<?= htmlspecialchars((string)$supplier['id']) ?>">
                     <?php endif; ?>

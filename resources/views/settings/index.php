@@ -23,6 +23,7 @@
 
     <div class="card-body">
         <form action="/settings/update" method="POST">
+            <?= \App\Core\Csrf::field() ?>
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Company Name *</label>

@@ -17,6 +17,7 @@
 <?php endif; ?>
 
 <form action="/purchases/store" method="POST" id="purchaseForm">
+    <?= \App\Core\Csrf::field() ?>
     <div class="card shadow-sm mb-4">
         <div class="card-header">
             Purchase Information
