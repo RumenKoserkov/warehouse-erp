@@ -185,21 +185,53 @@ class Invoice extends Model
         int $companyId
     ): ?array {
         $sql = "
-            SELECT
-                invoices.*,
-                users.name AS created_by_user_name
-            FROM invoices
-            LEFT JOIN users
-                ON users.id = invoices.created_by_user_id
-            WHERE invoices.id = :id
-            AND invoices.company_id = :company_id
-            LIMIT 1
-        ";
+        SELECT
+            invoices.*,
+            users.name AS created_by_user_name,
+            sales.sale_number AS source_sale_number
+        FROM invoices
+        LEFT JOIN users
+            ON users.id = invoices.created_by_user_id
+        LEFT JOIN sales
+            ON sales.id = invoices.sale_id
+            AND sales.company_id = invoices.company_id
+        WHERE invoices.id = :id
+        AND invoices.company_id = :company_id
+        LIMIT 1
+    ";
 
         $statement = $this->db->prepare($sql);
 
         $statement->execute([
             'id' => $id,
+            'company_id' => $companyId,
+        ]);
+
+        $invoice = $statement->fetch();
+
+        if ($invoice === false) {
+            return null;
+        }
+
+        return $invoice;
+    }
+
+    public function findBySaleAndCompany(
+        int $saleId,
+        int $companyId
+    ): ?array {
+        $sql = "
+        SELECT *
+        FROM invoices
+        WHERE sale_id = :sale_id
+        AND company_id = :company_id
+        LIMIT 1
+    ";
+
+        $statement = $this->db->prepare($sql);
+
+        $statement->execute([
+            'sale_id' => $saleId,
             'company_id' => $companyId,
         ]);
 

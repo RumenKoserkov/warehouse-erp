@@ -518,6 +518,18 @@ return [
             'role:administrator,manager',
         ],
     ],
+    [
+        'method' => 'POST',
+        'uri' => '/invoices/from-sale',
+        'action' => [
+            InvoiceController::class,
+            'generateFromSale',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
 ];
 /*
 |--------------------------------------------------------------------------

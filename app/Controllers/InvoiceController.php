@@ -66,10 +66,10 @@ class InvoiceController extends Controller
 
         $invoices =
             $this->invoiceModel
-                ->allByCompany(
-                    $companyId,
-                    $search
-                );
+            ->allByCompany(
+                $companyId,
+                $search
+            );
 
         $this->view('invoices/index', [
             'title' => 'Invoices',
@@ -180,10 +180,10 @@ class InvoiceController extends Controller
         if ($clientId > 0) {
             $client =
                 $this->clientModel
-                    ->findByIdAndCompany(
-                        $clientId,
-                        $companyId
-                    );
+                ->findByIdAndCompany(
+                    $clientId,
+                    $companyId
+                );
 
             if ($client === null) {
                 $errors[] =
@@ -233,25 +233,25 @@ class InvoiceController extends Controller
 
         $result =
             $this->invoiceService
-                ->createDraft([
-                    'company_id' => $companyId,
-                    'client_id' => $clientId,
+            ->createDraft([
+                'company_id' => $companyId,
+                'client_id' => $clientId,
 
-                    'user_id' =>
-                        (int) $currentUser['id'],
+                'user_id' =>
+                (int) $currentUser['id'],
 
-                    'invoice_date' =>
-                        $invoiceDate,
+                'invoice_date' =>
+                $invoiceDate,
 
-                    'supply_date' =>
-                        $supplyDate,
+                'supply_date' =>
+                $supplyDate,
 
-                    'due_date' =>
-                        $preparedDueDate,
+                'due_date' =>
+                $preparedDueDate,
 
-                    'note' => $note,
-                    'items' => $items,
-                ]);
+                'note' => $note,
+                'items' => $items,
+            ]);
 
         if (!$result['success']) {
             $this->renderCreate(
@@ -271,7 +271,80 @@ class InvoiceController extends Controller
 
         $this->redirect(
             '/invoices/show?id=' .
-            (int) $result['invoice_id']
+                (int) $result['invoice_id']
+        );
+    }
+
+    public function generateFromSale(): void
+    {
+        $currentUser =
+            $this->authService->user();
+
+        if ($currentUser === null) {
+            $this->redirect('/login');
+
+            return;
+        }
+
+        $saleId = 0;
+
+        if (isset($_POST['sale_id'])) {
+            $validatedSaleId = filter_var(
+                $_POST['sale_id'],
+                FILTER_VALIDATE_INT
+            );
+
+            if (
+                $validatedSaleId !== false &&
+                $validatedSaleId > 0
+            ) {
+                $saleId = $validatedSaleId;
+            }
+        }
+
+        if ($saleId <= 0) {
+            Flash::danger(
+                'Invalid sale.'
+            );
+
+            $this->redirect('/sales');
+
+            return;
+        }
+
+        $result =
+            $this->invoiceService
+            ->createDraftFromSale(
+                $saleId,
+                (int) $currentUser['company_id'],
+                (int) $currentUser['id']
+            );
+
+        if (!$result['success']) {
+            Flash::danger(
+                (string) $result['error']
+            );
+
+            $this->redirect(
+                '/sales/show?id=' . $saleId
+            );
+
+            return;
+        }
+
+        if ($result['created']) {
+            Flash::success(
+                'Invoice draft generated from sale successfully.'
+            );
+        } else {
+            Flash::success(
+                'This sale already has an invoice.'
+            );
+        }
+
+        $this->redirect(
+            '/invoices/show?id=' .
+                (int) $result['invoice_id']
         );
     }
 
@@ -303,10 +376,10 @@ class InvoiceController extends Controller
 
         $invoice =
             $this->invoiceModel
-                ->findByIdAndCompany(
-                    $id,
-                    $companyId
-                );
+            ->findByIdAndCompany(
+                $id,
+                $companyId
+            );
 
         if ($invoice === null) {
             $this->abort(404);
@@ -316,10 +389,10 @@ class InvoiceController extends Controller
 
         $items =
             $this->invoiceItemModel
-                ->allByInvoice(
-                    $id,
-                    $companyId
-                );
+            ->allByInvoice(
+                $id,
+                $companyId
+            );
 
         $this->view('invoices/show', [
             'title' => 'Invoice Draft',
@@ -337,22 +410,22 @@ class InvoiceController extends Controller
             'title' => 'Create Invoice Draft',
 
             'clients' =>
-                $this->clientModel
-                    ->activeByCompany(
-                        $companyId
-                    ),
+            $this->clientModel
+                ->activeByCompany(
+                    $companyId
+                ),
 
             'products' =>
-                $this->productModel
-                    ->activeByCompany(
-                        $companyId
-                    ),
+            $this->productModel
+                ->activeByCompany(
+                    $companyId
+                ),
 
             'taxConfiguration' =>
-                $this->taxService
-                    ->salesConfiguration(
-                        $companyId
-                    ),
+            $this->taxService
+                ->salesConfiguration(
+                    $companyId
+                ),
 
             'errors' => $errors,
             'old' => $old,
@@ -421,9 +494,7 @@ class InvoiceController extends Controller
                 isset($discountAmounts[$index])
             ) {
                 $discountAmount =
-                    (float) $discountAmounts[
-                        $index
-                    ];
+                    (float) $discountAmounts[$index];
             }
 
             if ((int) $productId <= 0) {
@@ -432,15 +503,15 @@ class InvoiceController extends Controller
 
             $items[] = [
                 'product_id' =>
-                    (int) $productId,
+                (int) $productId,
 
                 'quantity' => $quantity,
 
                 'unit_price' =>
-                    $unitPrice,
+                $unitPrice,
 
                 'discount_amount' =>
-                    $discountAmount,
+                $discountAmount,
             ];
         }
 

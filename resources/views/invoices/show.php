@@ -14,15 +14,14 @@ if (
 
 <div
     class="d-flex justify-content-between
-    align-items-start mb-4"
->
+    align-items-start mb-4">
     <div>
         <h1 class="h3 mb-1">
             Invoice <?= htmlspecialchars(
-                $reference,
-                ENT_QUOTES,
-                'UTF-8'
-            ) ?>
+                        $reference,
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ) ?>
         </h1>
 
         <span class="badge text-bg-warning">
@@ -38,8 +37,7 @@ if (
 
     <a
         href="/invoices"
-        class="btn btn-outline-secondary"
-    >
+        class="btn btn-outline-secondary">
         Back to Invoices
     </a>
 </div>
@@ -48,6 +46,36 @@ if (
     <div class="alert alert-warning">
         This document is a draft and does not yet have
         an official invoice number.
+    </div>
+<?php endif; ?>
+
+<?php if (
+    isset($invoice['sale_id']) &&
+    (int) $invoice['sale_id'] > 0
+): ?>
+    <div class="alert alert-light border">
+        Generated from sale:
+
+        <a
+            href="/sales/show?id=<?= (int) $invoice['sale_id'] ?>"
+            class="fw-semibold">
+            <?php if (
+                isset(
+                    $invoice['source_sale_number']
+                ) &&
+                trim(
+                    (string) $invoice['source_sale_number']
+                ) !== ''
+            ): ?>
+                <?= htmlspecialchars(
+                    (string) $invoice['source_sale_number'],
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>
+            <?php else: ?>
+                Sale #<?= (int) $invoice['sale_id'] ?>
+            <?php endif; ?>
+        </a>
     </div>
 <?php endif; ?>
 
@@ -61,9 +89,7 @@ if (
             <div class="card-body">
                 <h2 class="h5">
                     <?= htmlspecialchars(
-                        (string) $invoice[
-                            'supplier_legal_name'
-                        ],
+                        (string) $invoice['supplier_legal_name'],
                         ENT_QUOTES,
                         'UTF-8'
                     ) ?>
@@ -72,9 +98,7 @@ if (
                 <div>
                     EIK:
                     <?= htmlspecialchars(
-                        (string) $invoice[
-                            'supplier_eik'
-                        ],
+                        (string) $invoice['supplier_eik'],
                         ENT_QUOTES,
                         'UTF-8'
                     ) ?>
@@ -82,17 +106,13 @@ if (
 
                 <?php if (
                     trim(
-                        (string) $invoice[
-                            'supplier_vat_number'
-                        ]
+                        (string) $invoice['supplier_vat_number']
                     ) !== ''
                 ): ?>
                     <div>
                         VAT:
                         <?= htmlspecialchars(
-                            (string) $invoice[
-                                'supplier_vat_number'
-                            ],
+                            (string) $invoice['supplier_vat_number'],
                             ENT_QUOTES,
                             'UTF-8'
                         ) ?>
@@ -101,23 +121,17 @@ if (
 
                 <div class="mt-2">
                     <?= htmlspecialchars(
-                        (string) $invoice[
-                            'supplier_address'
-                        ],
+                        (string) $invoice['supplier_address'],
                         ENT_QUOTES,
                         'UTF-8'
                     ) ?>,
                     <?= htmlspecialchars(
-                        (string) $invoice[
-                            'supplier_city'
-                        ],
+                        (string) $invoice['supplier_city'],
                         ENT_QUOTES,
                         'UTF-8'
                     ) ?>,
                     <?= htmlspecialchars(
-                        (string) $invoice[
-                            'supplier_country'
-                        ],
+                        (string) $invoice['supplier_country'],
                         ENT_QUOTES,
                         'UTF-8'
                     ) ?>
@@ -135,9 +149,7 @@ if (
             <div class="card-body">
                 <h2 class="h5">
                     <?= htmlspecialchars(
-                        (string) $invoice[
-                            'client_legal_name'
-                        ],
+                        (string) $invoice['client_legal_name'],
                         ENT_QUOTES,
                         'UTF-8'
                     ) ?>
@@ -145,17 +157,13 @@ if (
 
                 <?php if (
                     trim(
-                        (string) $invoice[
-                            'client_eik'
-                        ]
+                        (string) $invoice['client_eik']
                     ) !== ''
                 ): ?>
                     <div>
                         EIK:
                         <?= htmlspecialchars(
-                            (string) $invoice[
-                                'client_eik'
-                            ],
+                            (string) $invoice['client_eik'],
                             ENT_QUOTES,
                             'UTF-8'
                         ) ?>
@@ -164,17 +172,13 @@ if (
 
                 <?php if (
                     trim(
-                        (string) $invoice[
-                            'client_vat_number'
-                        ]
+                        (string) $invoice['client_vat_number']
                     ) !== ''
                 ): ?>
                     <div>
                         VAT:
                         <?= htmlspecialchars(
-                            (string) $invoice[
-                                'client_vat_number'
-                            ],
+                            (string) $invoice['client_vat_number'],
                             ENT_QUOTES,
                             'UTF-8'
                         ) ?>
@@ -183,23 +187,17 @@ if (
 
                 <div class="mt-2">
                     <?= htmlspecialchars(
-                        (string) $invoice[
-                            'client_address'
-                        ],
+                        (string) $invoice['client_address'],
                         ENT_QUOTES,
                         'UTF-8'
                     ) ?>,
                     <?= htmlspecialchars(
-                        (string) $invoice[
-                            'client_city'
-                        ],
+                        (string) $invoice['client_city'],
                         ENT_QUOTES,
                         'UTF-8'
                     ) ?>,
                     <?= htmlspecialchars(
-                        (string) $invoice[
-                            'client_country'
-                        ],
+                        (string) $invoice['client_country'],
                         ENT_QUOTES,
                         'UTF-8'
                     ) ?>
@@ -215,9 +213,7 @@ if (
             <div class="col-md-4">
                 <strong>Invoice date:</strong>
                 <?= htmlspecialchars(
-                    (string) $invoice[
-                        'invoice_date'
-                    ],
+                    (string) $invoice['invoice_date'],
                     ENT_QUOTES,
                     'UTF-8'
                 ) ?>
@@ -226,9 +222,7 @@ if (
             <div class="col-md-4">
                 <strong>Supply date:</strong>
                 <?= htmlspecialchars(
-                    (string) $invoice[
-                        'supply_date'
-                    ],
+                    (string) $invoice['supply_date'],
                     ENT_QUOTES,
                     'UTF-8'
                 ) ?>
@@ -239,15 +233,11 @@ if (
 
                 <?php if (
                     trim(
-                        (string) $invoice[
-                            'due_date'
-                        ]
+                        (string) $invoice['due_date']
                     ) !== ''
                 ): ?>
                     <?= htmlspecialchars(
-                        (string) $invoice[
-                            'due_date'
-                        ],
+                        (string) $invoice['due_date'],
                         ENT_QUOTES,
                         'UTF-8'
                     ) ?>
@@ -262,8 +252,7 @@ if (
 <div class="card shadow-sm mb-4">
     <div class="table-responsive">
         <table
-            class="table align-middle mb-0"
-        >
+            class="table align-middle mb-0">
             <thead>
                 <tr>
                     <th>Description</th>
@@ -283,9 +272,7 @@ if (
                     <tr>
                         <td>
                             <?= htmlspecialchars(
-                                (string) $item[
-                                    'description'
-                                ],
+                                (string) $item['description'],
                                 ENT_QUOTES,
                                 'UTF-8'
                             ) ?>
@@ -293,18 +280,14 @@ if (
 
                         <td>
                             <?= number_format(
-                                (float) $item[
-                                    'quantity'
-                                ],
+                                (float) $item['quantity'],
                                 3
                             ) ?>
                         </td>
 
                         <td>
                             <?= htmlspecialchars(
-                                (string) $item[
-                                    'unit'
-                                ],
+                                (string) $item['unit'],
                                 ENT_QUOTES,
                                 'UTF-8'
                             ) ?>
@@ -312,45 +295,35 @@ if (
 
                         <td>
                             <?= number_format(
-                                (float) $item[
-                                    'unit_price'
-                                ],
+                                (float) $item['unit_price'],
                                 2
                             ) ?>
                         </td>
 
                         <td>
                             <?= number_format(
-                                (float) $item[
-                                    'discount_amount'
-                                ],
+                                (float) $item['discount_amount'],
                                 2
                             ) ?>
                         </td>
 
                         <td>
                             <?= number_format(
-                                (float) $item[
-                                    'net_amount'
-                                ],
+                                (float) $item['net_amount'],
                                 2
                             ) ?>
                         </td>
 
                         <td>
                             <?= number_format(
-                                (float) $item[
-                                    'vat_rate'
-                                ],
+                                (float) $item['vat_rate'],
                                 2
                             ) ?>%
                         </td>
 
                         <td>
                             <?= number_format(
-                                (float) $item[
-                                    'tax_amount'
-                                ],
+                                (float) $item['tax_amount'],
                                 2
                             ) ?>
                         </td>
@@ -358,9 +331,7 @@ if (
                         <td>
                             <strong>
                                 <?= number_format(
-                                    (float) $item[
-                                        'total_amount'
-                                    ],
+                                    (float) $item['total_amount'],
                                     2
                                 ) ?>
                             </strong>
@@ -378,22 +349,17 @@ if (
             <div class="card-body">
                 <div
                     class="d-flex
-                    justify-content-between"
-                >
+                    justify-content-between">
                     <span>Subtotal</span>
 
                     <strong>
                         <?= number_format(
-                            (float) $invoice[
-                                'subtotal'
-                            ],
+                            (float) $invoice['subtotal'],
                             2
                         ) ?>
 
                         <?= htmlspecialchars(
-                            (string) $invoice[
-                                'currency'
-                            ],
+                            (string) $invoice['currency'],
                             ENT_QUOTES,
                             'UTF-8'
                         ) ?>
@@ -402,15 +368,12 @@ if (
 
                 <div
                     class="d-flex
-                    justify-content-between"
-                >
+                    justify-content-between">
                     <span>Discount</span>
 
                     <strong>
                         <?= number_format(
-                            (float) $invoice[
-                                'discount_amount'
-                            ],
+                            (float) $invoice['discount_amount'],
                             2
                         ) ?>
                     </strong>
@@ -418,15 +381,12 @@ if (
 
                 <div
                     class="d-flex
-                    justify-content-between"
-                >
+                    justify-content-between">
                     <span>VAT</span>
 
                     <strong>
                         <?= number_format(
-                            (float) $invoice[
-                                'tax_amount'
-                            ],
+                            (float) $invoice['tax_amount'],
                             2
                         ) ?>
                     </strong>
@@ -436,22 +396,17 @@ if (
 
                 <div
                     class="d-flex
-                    justify-content-between fs-5"
-                >
+                    justify-content-between fs-5">
                     <span>Total</span>
 
                     <strong>
                         <?= number_format(
-                            (float) $invoice[
-                                'total_amount'
-                            ],
+                            (float) $invoice['total_amount'],
                             2
                         ) ?>
 
                         <?= htmlspecialchars(
-                            (string) $invoice[
-                                'currency'
-                            ],
+                            (string) $invoice['currency'],
                             ENT_QUOTES,
                             'UTF-8'
                         ) ?>

@@ -8,6 +8,36 @@
     </h1>
 
     <div class="d-flex gap-2">
+        <?php if ($existingInvoice !== null): ?>
+            <a
+                href="/invoices/show?id=<?= (int) $existingInvoice['id'] ?>"
+                class="btn btn-outline-primary">
+                View Invoice
+            </a>
+        <?php elseif (
+            (string) $sale['status'] === 'completed' &&
+            isset($sale['client_id']) &&
+            (int) $sale['client_id'] > 0
+        ): ?>
+            <form
+                method="POST"
+                action="/invoices/from-sale"
+                class="d-inline">
+                <?= \App\Core\Csrf::field() ?>
+
+                <input
+                    type="hidden"
+                    name="sale_id"
+                    value="<?= (int) $sale['id'] ?>">
+
+                <button
+                    type="submit"
+                    class="btn btn-primary">
+                    Generate Invoice
+                </button>
+            </form>
+        <?php endif; ?>
+
         <?php if ($sale['status'] === 'completed'): ?>
             <form
                 action="/sales/cancel"
@@ -41,6 +71,20 @@
         </a>
     </div>
 </div>
+
+<?php if (
+    $existingInvoice === null &&
+    (string) $sale['status'] === 'completed' &&
+    (
+        !isset($sale['client_id']) ||
+        (int) $sale['client_id'] <= 0
+    )
+): ?>
+    <div class="alert alert-warning">
+        This sale does not have a client.
+        An invoice cannot be generated.
+    </div>
+<?php endif; ?>
 
 <div class="row mb-4">
     <div class="col-md-6">

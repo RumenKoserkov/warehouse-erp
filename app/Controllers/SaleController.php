@@ -8,6 +8,7 @@ use App\Core\Controller;
 use App\Core\Flash;
 use App\Core\Validator;
 use App\Models\Client;
+use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -20,6 +21,7 @@ use App\Services\TaxService;
 class SaleController extends Controller
 {
     private Sale $saleModel;
+    private Invoice $invoiceModel;
     private Client $clientModel;
     private Product $productModel;
     private Warehouse $warehouseModel;
@@ -32,6 +34,7 @@ class SaleController extends Controller
     public function __construct()
     {
         $this->saleModel = new Sale();
+        $this->invoiceModel = new Invoice();
         $this->saleItemModel = new SaleItem();
         $this->clientModel = new Client();
         $this->productModel = new Product();
@@ -437,11 +440,14 @@ class SaleController extends Controller
             return;
         }
 
+        $companyId =
+            (int) $currentUser['company_id'];
+
         $sale =
             $this->saleModel
             ->findByIdAndCompany(
                 $id,
-                (int) $currentUser['company_id']
+                $companyId
             );
 
         if ($sale === null) {
@@ -454,13 +460,22 @@ class SaleController extends Controller
             $this->saleItemModel
             ->allBySale(
                 $id,
-                (int) $currentUser['company_id']
+                $companyId
+            );
+
+        $existingInvoice =
+            $this->invoiceModel
+            ->findBySaleAndCompany(
+                $id,
+                $companyId
             );
 
         $this->view('sales/show', [
             'title' => 'Sale Details',
             'sale' => $sale,
             'items' => $items,
+            'existingInvoice' =>
+            $existingInvoice,
         ]);
     }
 
