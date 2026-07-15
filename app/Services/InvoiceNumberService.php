@@ -13,7 +13,10 @@ use Throwable;
 
 class InvoiceNumberService
 {
-    private const DOCUMENT_TYPE = 'invoice';
+    private const INVOICE_TYPE = 'invoice';
+
+    private const CREDIT_NOTE_TYPE =
+    'credit_note';
 
     private const MIN_NUMBER = 1;
 
@@ -46,21 +49,21 @@ class InvoiceNumberService
     ): array {
         $this->sequenceModel->ensureExists(
             $companyId,
-            self::DOCUMENT_TYPE
+            self::INVOICE_TYPE
         );
 
         $sequence =
             $this->sequenceModel
-                ->findByCompanyAndType(
-                    $companyId,
-                    self::DOCUMENT_TYPE
-                );
+            ->findByCompanyAndType(
+                $companyId,
+                self::INVOICE_TYPE
+            );
 
         if ($sequence === null) {
             return [
                 'next_number' => 1,
                 'next_invoice_number' =>
-                    $this->formatNumber(1),
+                $this->formatNumber(1),
 
                 'last_issued_number' => null,
                 'last_invoice_number' => null,
@@ -79,16 +82,14 @@ class InvoiceNumberService
             $sequence['last_issued_number'] !== null
         ) {
             $lastIssuedNumber =
-                (int) $sequence[
-                    'last_issued_number'
-                ];
+                (int) $sequence['last_issued_number'];
         }
 
         $issuedCount =
             $this->invoiceModel
-                ->countIssuedByCompany(
-                    $companyId
-                );
+            ->countIssuedByCompany(
+                $companyId
+            );
 
         $lastInvoiceNumber = null;
 
@@ -103,18 +104,18 @@ class InvoiceNumberService
             'next_number' => $nextNumber,
 
             'next_invoice_number' =>
-                $this->formatNumber(
-                    $nextNumber
-                ),
+            $this->formatNumber(
+                $nextNumber
+            ),
 
             'last_issued_number' =>
-                $lastIssuedNumber,
+            $lastIssuedNumber,
 
             'last_invoice_number' =>
-                $lastInvoiceNumber,
+            $lastInvoiceNumber,
 
             'can_change_start' =>
-                $lastIssuedNumber === null &&
+            $lastIssuedNumber === null &&
                 $issuedCount === 0,
         ];
     }
@@ -131,7 +132,7 @@ class InvoiceNumberService
             return [
                 'success' => false,
                 'error' =>
-                    'Starting invoice number must be between 1 and 9999999999.',
+                'Starting invoice number must be between 1 and 9999999999.',
             ];
         }
 
@@ -140,15 +141,15 @@ class InvoiceNumberService
 
             $this->sequenceModel->ensureExists(
                 $companyId,
-                self::DOCUMENT_TYPE
+                self::INVOICE_TYPE
             );
 
             $sequence =
                 $this->sequenceModel
-                    ->lockForUpdate(
-                        $companyId,
-                        self::DOCUMENT_TYPE
-                    );
+                ->lockForUpdate(
+                    $companyId,
+                    self::INVOICE_TYPE
+                );
 
             if ($sequence === null) {
                 throw new Exception(
@@ -158,9 +159,9 @@ class InvoiceNumberService
 
             $issuedCount =
                 $this->invoiceModel
-                    ->countIssuedByCompany(
-                        $companyId
-                    );
+                ->countIssuedByCompany(
+                    $companyId
+                );
 
             if (
                 $sequence['last_issued_number'] !== null ||
@@ -173,10 +174,10 @@ class InvoiceNumberService
 
             $updated =
                 $this->sequenceModel
-                    ->setStartingNumber(
-                        (int) $sequence['id'],
-                        $nextNumber
-                    );
+                ->setStartingNumber(
+                    (int) $sequence['id'],
+                    $nextNumber
+                );
 
             if (!$updated) {
                 throw new Exception(
@@ -196,7 +197,7 @@ class InvoiceNumberService
                 'invoice',
                 null,
                 'Configured starting invoice number: ' .
-                $formattedNumber
+                    $formattedNumber
             );
 
             $this->db->commit();
@@ -205,7 +206,7 @@ class InvoiceNumberService
                 'success' => true,
                 'error' => null,
                 'next_invoice_number' =>
-                    $formattedNumber,
+                $formattedNumber,
             ];
         } catch (Throwable $exception) {
             if ($this->db->inTransaction()) {
@@ -215,69 +216,138 @@ class InvoiceNumberService
             return [
                 'success' => false,
                 'error' =>
-                    $exception->getMessage(),
+                $exception->getMessage(),
             ];
         }
     }
 
     public function issue(
-        int $invoiceId,
+        int $documentId,
         int $companyId,
         int $userId
     ): array {
+        $preview =
+            $this->invoiceModel
+            ->findByIdAndCompany(
+                $documentId,
+                $companyId
+            );
+
+        if ($preview === null) {
+            return [
+                'success' => false,
+                'issued' => false,
+                'invoice_number' => null,
+                'document_type' => null,
+                'error' =>
+                'Document was not found.',
+            ];
+        }
+
+        $documentType =
+            (string) $preview['document_type'];
+
+        if (
+            $documentType !==
+            self::INVOICE_TYPE &&
+            $documentType !==
+            self::CREDIT_NOTE_TYPE
+        ) {
+            return [
+                'success' => false,
+                'issued' => false,
+                'invoice_number' => null,
+                'document_type' => null,
+                'error' =>
+                'Unsupported document type.',
+            ];
+        }
+
         try {
             $this->db->beginTransaction();
 
             /*
-             * Винаги заключваме sequence-а първо.
-             * Това поддържа еднакъв lock order.
+             * Sequence се заключва първо.
              */
             $this->sequenceModel->ensureExists(
                 $companyId,
-                self::DOCUMENT_TYPE
+                $documentType
             );
 
             $sequence =
                 $this->sequenceModel
-                    ->lockForUpdate(
-                        $companyId,
-                        self::DOCUMENT_TYPE
-                    );
+                ->lockForUpdate(
+                    $companyId,
+                    $documentType
+                );
 
             if ($sequence === null) {
                 throw new Exception(
-                    'Invoice sequence was not found.'
+                    'Document number sequence was not found.'
                 );
             }
 
-            $invoice =
-                $this->invoiceModel
+            /*
+             * При credit note оригиналната фактура
+             * трябва все още да е издадена.
+             */
+            if (
+                $documentType ===
+                self::CREDIT_NOTE_TYPE
+            ) {
+                $relatedInvoiceId =
+                    (int) $preview['related_invoice_id'];
+
+                if ($relatedInvoiceId <= 0) {
+                    throw new Exception(
+                        'The credit note does not reference an invoice.'
+                    );
+                }
+
+                $originalInvoice =
+                    $this->invoiceModel
                     ->findForUpdate(
-                        $invoiceId,
+                        $relatedInvoiceId,
                         $companyId
                     );
 
-            if ($invoice === null) {
+                if (
+                    $originalInvoice === null ||
+                    (string) $originalInvoice['status'] !== 'issued'
+                ) {
+                    throw new Exception(
+                        'The original invoice is not available for this credit note.'
+                    );
+                }
+            }
+
+            $document =
+                $this->invoiceModel
+                ->findForUpdate(
+                    $documentId,
+                    $companyId
+                );
+
+            if ($document === null) {
                 throw new Exception(
-                    'Invoice was not found.'
+                    'Document was not found.'
                 );
             }
 
             $existingNumber = '';
 
             if (
-                isset($invoice['invoice_number']) &&
-                $invoice['invoice_number'] !== null
+                isset($document['invoice_number']) &&
+                $document['invoice_number'] !== null
             ) {
                 $existingNumber = trim(
-                    (string) $invoice[
-                        'invoice_number'
-                    ]
+                    (string) $document['invoice_number']
                 );
             }
 
             if (
-                (string) $invoice['status'] === 'issued' &&
+                (string) $document['status'] ===
+                'issued' &&
                 $existingNumber !== ''
             ) {
                 $this->db->commit();
@@ -286,34 +356,43 @@ class InvoiceNumberService
                     'success' => true,
                     'issued' => false,
                     'invoice_number' =>
-                        $existingNumber,
+                    $existingNumber,
+                    'document_type' =>
+                    $documentType,
                     'error' => null,
                 ];
             }
 
             if ($existingNumber !== '') {
                 throw new Exception(
-                    'The invoice contains a number but is not marked as issued.'
+                    'The document contains a number but is not marked as issued.'
                 );
             }
 
             if (
-                (string) $invoice['status'] !== 'draft'
+                (string) $document['status'] !==
+                'draft'
             ) {
                 throw new Exception(
-                    'Only invoice drafts can be issued.'
+                    'Only document drafts can be issued.'
                 );
             }
 
             $issueDate = date('Y-m-d');
 
+            /*
+             * Due date се прилага само за фактури.
+             * Credit notes нямат падеж в тази стъпка.
+             */
             if (
-                isset($invoice['due_date']) &&
-                $invoice['due_date'] !== null &&
+                $documentType ===
+                self::INVOICE_TYPE &&
+                isset($document['due_date']) &&
+                $document['due_date'] !== null &&
                 trim(
-                    (string) $invoice['due_date']
+                    (string) $document['due_date']
                 ) !== '' &&
-                (string) $invoice['due_date'] <
+                (string) $document['due_date'] <
                 $issueDate
             ) {
                 throw new Exception(
@@ -329,53 +408,66 @@ class InvoiceNumberService
                 $nextNumber > self::MAX_NUMBER
             ) {
                 throw new Exception(
-                    'The invoice number sequence is outside the supported 10-digit range.'
+                    'The document sequence is outside the supported 10-digit range.'
                 );
             }
 
-            $invoiceNumber =
+            $documentNumber =
                 $this->formatNumber(
                     $nextNumber
                 );
 
-            $invoiceUpdated =
+            $documentUpdated =
                 $this->invoiceModel
-                    ->markAsIssued(
-                        $invoiceId,
-                        $companyId,
-                        $invoiceNumber,
-                        $issueDate,
-                        $userId
-                    );
+                ->markAsIssued(
+                    $documentId,
+                    $companyId,
+                    $documentNumber,
+                    $issueDate,
+                    $userId
+                );
 
-            if (!$invoiceUpdated) {
+            if (!$documentUpdated) {
                 throw new Exception(
-                    'The invoice could not be issued.'
+                    'The document could not be issued.'
                 );
             }
 
             $sequenceUpdated =
                 $this->sequenceModel
-                    ->advance(
-                        (int) $sequence['id'],
-                        $nextNumber,
-                        $nextNumber + 1
-                    );
+                ->advance(
+                    (int) $sequence['id'],
+                    $nextNumber,
+                    $nextNumber + 1
+                );
 
             if (!$sequenceUpdated) {
                 throw new Exception(
-                    'The invoice sequence could not be advanced.'
+                    'The document sequence could not be advanced.'
                 );
+            }
+
+            $entityType = 'invoice';
+            $documentLabel = 'invoice';
+
+            if (
+                $documentType ===
+                self::CREDIT_NOTE_TYPE
+            ) {
+                $entityType = 'credit_note';
+                $documentLabel = 'credit note';
             }
 
             $this->auditLogService->log(
                 $companyId,
                 $userId,
                 'issue',
-                'invoice',
-                $invoiceId,
-                'Issued invoice ' .
-                $invoiceNumber
+                $entityType,
+                $documentId,
+                'Issued ' .
+                    $documentLabel .
+                    ' ' .
+                    $documentNumber
             );
 
             $this->db->commit();
@@ -384,7 +476,9 @@ class InvoiceNumberService
                 'success' => true,
                 'issued' => true,
                 'invoice_number' =>
-                    $invoiceNumber,
+                $documentNumber,
+                'document_type' =>
+                $documentType,
                 'error' => null,
             ];
         } catch (Throwable $exception) {
@@ -396,8 +490,10 @@ class InvoiceNumberService
                 'success' => false,
                 'issued' => false,
                 'invoice_number' => null,
+                'document_type' =>
+                $documentType,
                 'error' =>
-                    $exception->getMessage(),
+                $exception->getMessage(),
             ];
         }
     }

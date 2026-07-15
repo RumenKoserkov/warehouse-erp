@@ -112,6 +112,7 @@ class InvoiceService
                 'company_id' => $companyId,
                 'client_id' => $clientId,
                 'sale_id' => null,
+                'related_invoice_id' => null,
                 'created_by_user_id' => $userId,
 
                 'document_type' => 'invoice',
@@ -241,6 +242,8 @@ class InvoiceService
                 $this->nullableString(
                     $data['note']
                 ),
+
+                'correction_reason' => null,
             ]);
 
             foreach ($items as $item) {
@@ -249,6 +252,8 @@ class InvoiceService
                     'company_id' => $companyId,
                     'product_id' =>
                     $item['product_id'],
+
+                    'source_invoice_item_id' => null,
 
                     'description' =>
                     $item['description'],
@@ -428,6 +433,7 @@ class InvoiceService
                     'company_id' => $companyId,
                     'client_id' => $clientId,
                     'sale_id' => $saleId,
+                    'related_invoice_id' => null,
 
                     'created_by_user_id' =>
                     $userId,
@@ -573,6 +579,8 @@ class InvoiceService
                     $this->nullableString(
                         $sale['note']
                     ),
+
+                    'correction_reason' => null,
                 ]);
 
             foreach ($saleItems as $saleItem) {
@@ -595,6 +603,8 @@ class InvoiceService
 
                     'product_id' =>
                     $productId,
+
+                    'source_invoice_item_id' => null,
 
                     'description' =>
                     (string) $saleItem['product_name'],
@@ -674,6 +684,188 @@ class InvoiceService
                 'success' => false,
                 'created' => false,
                 'invoice_id' => null,
+                'error' =>
+                $exception->getMessage(),
+            ];
+        }
+    }
+
+    public function cancelDocument(
+        int $documentId,
+        int $companyId,
+        int $userId,
+        string $reason
+    ): array {
+        $reason = trim($reason);
+
+        if ($reason === '') {
+            return [
+                'success' => false,
+                'cancelled' => false,
+                'error' =>
+                'Cancellation reason is required.',
+            ];
+        }
+
+        if (mb_strlen($reason) > 500) {
+            return [
+                'success' => false,
+                'cancelled' => false,
+                'error' =>
+                'Cancellation reason must be maximum 500 characters.',
+            ];
+        }
+
+        $preview =
+            $this->invoiceModel
+            ->findByIdAndCompany(
+                $documentId,
+                $companyId
+            );
+
+        if ($preview === null) {
+            return [
+                'success' => false,
+                'cancelled' => false,
+                'error' =>
+                'Document was not found.',
+            ];
+        }
+
+        try {
+            $this->db->beginTransaction();
+
+            /*
+             * При credit note заключваме първо
+             * оригиналната фактура.
+             */
+            if (
+                isset($preview['related_invoice_id']) &&
+                (int) $preview['related_invoice_id'] > 0
+            ) {
+                $this->invoiceModel->findForUpdate(
+                    (int) $preview['related_invoice_id'],
+                    $companyId
+                );
+            }
+
+            $document =
+                $this->invoiceModel
+                ->findForUpdate(
+                    $documentId,
+                    $companyId
+                );
+
+            if ($document === null) {
+                throw new Exception(
+                    'Document was not found.'
+                );
+            }
+
+            if (
+                (string) $document['status'] ===
+                'cancelled'
+            ) {
+                $this->db->commit();
+
+                return [
+                    'success' => true,
+                    'cancelled' => false,
+                    'error' => null,
+                ];
+            }
+
+            if (
+                (string) $document['status'] !==
+                'draft' &&
+                (string) $document['status'] !==
+                'issued'
+            ) {
+                throw new Exception(
+                    'This document cannot be cancelled.'
+                );
+            }
+
+            if (
+                (string) $document['document_type'] === 'invoice' &&
+                $this->invoiceModel
+                ->hasActiveCreditNotes(
+                    $documentId,
+                    $companyId
+                )
+            ) {
+                throw new Exception(
+                    'Cancel or discard the related credit notes before cancelling this invoice.'
+                );
+            }
+
+            $updated =
+                $this->invoiceModel
+                ->markAsCancelled(
+                    $documentId,
+                    $companyId,
+                    $userId,
+                    $reason
+                );
+
+            if (!$updated) {
+                throw new Exception(
+                    'The document could not be cancelled.'
+                );
+            }
+
+            $entityType = 'invoice';
+            $documentLabel = 'invoice';
+
+            if (
+                (string) $document['document_type'] === 'credit_note'
+            ) {
+                $entityType = 'credit_note';
+                $documentLabel = 'credit note';
+            }
+
+            $reference =
+                'draft #' . $documentId;
+
+            if (
+                isset($document['invoice_number']) &&
+                trim(
+                    (string) $document['invoice_number']
+                ) !== ''
+            ) {
+                $reference =
+                    (string) $document['invoice_number'];
+            }
+
+            $this->auditLogService->log(
+                $companyId,
+                $userId,
+                'cancel',
+                $entityType,
+                $documentId,
+                'Cancelled ' .
+                    $documentLabel .
+                    ' ' .
+                    $reference .
+                    '. Reason: ' .
+                    $reason
+            );
+
+            $this->db->commit();
+
+            return [
+                'success' => true,
+                'cancelled' => true,
+                'error' => null,
+            ];
+        } catch (Throwable $exception) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+
+            return [
+                'success' => false,
+                'cancelled' => false,
                 'error' =>
                 $exception->getMessage(),
             ];

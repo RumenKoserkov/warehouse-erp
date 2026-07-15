@@ -16,6 +16,7 @@ class Invoice extends Model
                 company_id,
                 client_id,
                 sale_id,
+                related_invoice_id,
                 created_by_user_id,
 
                 document_type,
@@ -62,13 +63,16 @@ class Invoice extends Model
                 discount_amount,
                 tax_amount,
                 total_amount,
-                note
+
+                note,
+                correction_reason
             )
             VALUES
             (
                 :company_id,
                 :client_id,
                 :sale_id,
+                :related_invoice_id,
                 :created_by_user_id,
 
                 :document_type,
@@ -115,7 +119,9 @@ class Invoice extends Model
                 :discount_amount,
                 :tax_amount,
                 :total_amount,
-                :note
+
+                :note,
+                :correction_reason
             )
         ";
 
@@ -133,6 +139,8 @@ class Invoice extends Model
         $sql = "
             SELECT
                 invoices.id,
+                invoices.document_type,
+                invoices.related_invoice_id,
                 invoices.invoice_number,
                 invoices.invoice_date,
                 invoices.supply_date,
@@ -142,6 +150,8 @@ class Invoice extends Model
                 invoices.client_display_name,
                 invoices.client_legal_name,
                 invoices.total_amount,
+                invoices.correction_reason,
+                invoices.cancelled_at,
                 invoices.created_at,
                 users.name AS created_by_user_name
             FROM invoices
@@ -190,20 +200,43 @@ class Invoice extends Model
 
                 creator.name AS created_by_user_name,
                 issuer.name AS issued_by_user_name,
+                canceller.name AS cancelled_by_user_name,
 
-                sales.sale_number AS source_sale_number
+                sales.sale_number AS source_sale_number,
+
+                related_invoice.invoice_number
+                    AS related_invoice_number,
+
+                related_invoice.invoice_date
+                    AS related_invoice_date,
+
+                related_invoice.status
+                    AS related_invoice_status
 
             FROM invoices
 
             LEFT JOIN users AS creator
-                ON creator.id = invoices.created_by_user_id
+                ON creator.id =
+                    invoices.created_by_user_id
 
             LEFT JOIN users AS issuer
-                ON issuer.id = invoices.issued_by_user_id
+                ON issuer.id =
+                    invoices.issued_by_user_id
+
+            LEFT JOIN users AS canceller
+                ON canceller.id =
+                    invoices.cancelled_by_user_id
 
             LEFT JOIN sales
                 ON sales.id = invoices.sale_id
-                AND sales.company_id = invoices.company_id
+                AND sales.company_id =
+                    invoices.company_id
+
+            LEFT JOIN invoices AS related_invoice
+                ON related_invoice.id =
+                    invoices.related_invoice_id
+                AND related_invoice.company_id =
+                    invoices.company_id
 
             WHERE invoices.id = :id
             AND invoices.company_id = :company_id
@@ -235,6 +268,8 @@ class Invoice extends Model
             FROM invoices
             WHERE sale_id = :sale_id
             AND company_id = :company_id
+            AND status <> 'cancelled'
+            ORDER BY id DESC
             LIMIT 1
         ";
 
@@ -252,6 +287,63 @@ class Invoice extends Model
         }
 
         return $invoice;
+    }
+
+    public function creditNotesForInvoice(
+        int $invoiceId,
+        int $companyId
+    ): array {
+        $sql = "
+            SELECT
+                invoices.id,
+                invoices.invoice_number,
+                invoices.invoice_date,
+                invoices.status,
+                invoices.total_amount,
+                invoices.currency,
+                invoices.correction_reason,
+                invoices.created_at
+            FROM invoices
+            WHERE invoices.company_id = :company_id
+            AND invoices.related_invoice_id =
+                :invoice_id
+            AND invoices.document_type =
+                'credit_note'
+            ORDER BY invoices.id DESC
+        ";
+
+        $statement = $this->db->prepare($sql);
+
+        $statement->execute([
+            'company_id' => $companyId,
+            'invoice_id' => $invoiceId,
+        ]);
+
+        return $statement->fetchAll();
+    }
+
+    public function hasActiveCreditNotes(
+        int $invoiceId,
+        int $companyId
+    ): bool {
+        $sql = "
+            SELECT id
+            FROM invoices
+            WHERE company_id = :company_id
+            AND related_invoice_id = :invoice_id
+            AND document_type = 'credit_note'
+            AND status IN ('draft', 'issued')
+            LIMIT 1
+        ";
+
+        $statement = $this->db->prepare($sql);
+
+        $statement->execute([
+            'company_id' => $companyId,
+            'invoice_id' => $invoiceId,
+        ]);
+
+        return $statement->fetch() !== false;
     }
 
     public function findForUpdate(
@@ -311,6 +403,39 @@ class Invoice extends Model
             'invoice_number' => $invoiceNumber,
             'invoice_date' => $invoiceDate,
             'issued_by_user_id' => $userId,
+            'id' => $id,
+            'company_id' => $companyId,
+        ]);
+
+        return $statement->rowCount() === 1;
+    }
+
+    public function markAsCancelled(
+        int $id,
+        int $companyId,
+        int $userId,
+        string $reason
+    ): bool {
+        $sql = "
+            UPDATE invoices
+            SET
+                status = 'cancelled',
+                cancelled_at = NOW(),
+                cancelled_by_user_id =
+                    :cancelled_by_user_id,
+                cancellation_reason =
+                    :cancellation_reason,
+                updated_at = NOW()
+            WHERE id = :id
+            AND company_id = :company_id
+            AND status IN ('draft', 'issued')
+        ";
+
+        $statement = $this->db->prepare($sql);
+
+        $statement->execute([
+            'cancelled_by_user_id' => $userId,
+            'cancellation_reason' => $reason,
             'id' => $id,
             'company_id' => $companyId,
         ]);

@@ -158,6 +158,7 @@
                 align-middle mb-0">
                 <thead>
                     <tr>
+                        <th>Type</th>
                         <th>Reference</th>
                         <th>Date</th>
                         <th>Client</th>
@@ -192,6 +193,24 @@
 
                         <tr>
                             <td>
+                                <?php if (
+                                    (string) $invoice['document_type'] === 'credit_note'
+                                ): ?>
+                                    <span
+                                        class="badge
+                                        text-bg-info">
+                                        Credit Note
+                                    </span>
+                                <?php else: ?>
+                                    <span
+                                        class="badge
+                                        text-bg-primary">
+                                        Invoice
+                                    </span>
+                                <?php endif; ?>
+                            </td>
+
+                            <td>
                                 <strong>
                                     <?= htmlspecialchars(
                                         $reference,
@@ -219,32 +238,28 @@
 
                             <td>
                                 <?php if (
-                                    (string) $invoice['status'] === 'draft'
+                                    (string) $invoice['status'] ===
+                                    'cancelled'
+                                ): ?>
+                                    <span
+                                        class="badge
+                                        text-bg-danger">
+                                        Cancelled
+                                    </span>
+                                <?php elseif (
+                                    (string) $invoice['status'] ===
+                                    'draft'
                                 ): ?>
                                     <span
                                         class="badge
                                         text-bg-warning">
                                         Draft
                                     </span>
-                                <?php elseif (
-                                    (string) $invoice['status'] === 'issued'
-                                ): ?>
+                                <?php else: ?>
                                     <span
                                         class="badge
                                         text-bg-success">
                                         Issued
-                                    </span>
-                                <?php else: ?>
-                                    <span
-                                        class="badge
-                                        text-bg-secondary">
-                                        <?= htmlspecialchars(
-                                            ucfirst(
-                                                (string) $invoice['status']
-                                            ),
-                                            ENT_QUOTES,
-                                            'UTF-8'
-                                        ) ?>
                                     </span>
                                 <?php endif; ?>
                             </td>

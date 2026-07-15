@@ -569,6 +569,43 @@ return [
     ],
 
     [
+        'method' => 'GET',
+        'uri' => '/invoices/credit-note/create',
+        'action' => [
+            InvoiceController::class,
+            'createCreditNote',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+    [
+        'method' => 'POST',
+        'uri' => '/invoices/credit-note/store',
+        'action' => [
+            InvoiceController::class,
+            'storeCreditNote',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+    [
+        'method' => 'POST',
+        'uri' => '/invoices/cancel',
+        'action' => [
+            InvoiceController::class,
+            'cancel',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
         'method' => 'POST',
         'uri' => '/invoices/sequence/update',
         'action' => [

@@ -12,6 +12,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Product;
 use App\Services\AuthService;
+use App\Services\CreditNoteService;
 use App\Services\InvoiceService;
 use App\Services\TaxService;
 use App\Services\InvoiceNumberService;
@@ -29,6 +30,7 @@ class InvoiceController extends Controller
 
     private AuthService $authService;
     private InvoiceService $invoiceService;
+    private CreditNoteService $creditNoteService;
     private TaxService $taxService;
 
     public function __construct()
@@ -43,6 +45,9 @@ class InvoiceController extends Controller
         $this->authService = new AuthService();
         $this->invoiceService =
             new InvoiceService();
+
+        $this->creditNoteService =
+            new CreditNoteService();
 
         $this->invoiceNumberService =
             new InvoiceNumberService();
@@ -390,7 +395,17 @@ class InvoiceController extends Controller
         $id = 0;
 
         if (isset($_GET['id'])) {
-            $id = (int) $_GET['id'];
+            $validatedId = filter_var(
+                $_GET['id'],
+                FILTER_VALIDATE_INT
+            );
+
+            if (
+                $validatedId !== false &&
+                $validatedId > 0
+            ) {
+                $id = $validatedId;
+            }
         }
 
         if ($id <= 0) {
@@ -422,11 +437,305 @@ class InvoiceController extends Controller
                 $companyId
             );
 
+        $creditNotes = [];
+
+        if (
+            (string) $invoice['document_type'] === 'invoice'
+        ) {
+            $creditNotes =
+                $this->invoiceModel
+                ->creditNotesForInvoice(
+                    $id,
+                    $companyId
+                );
+        }
+
+        $documentTitle = 'Invoice';
+
+        if (
+            (string) $invoice['document_type'] === 'credit_note'
+        ) {
+            $documentTitle = 'Credit Note';
+        }
+
         $this->view('invoices/show', [
-            'title' => 'Invoice Draft',
+            'title' => $documentTitle,
             'invoice' => $invoice,
             'items' => $items,
+            'creditNotes' => $creditNotes,
         ]);
+    }
+
+    public function createCreditNote(): void
+    {
+        $currentUser =
+            $this->authService->user();
+
+        if ($currentUser === null) {
+            $this->redirect('/login');
+
+            return;
+        }
+
+        $invoiceId = 0;
+
+        if (isset($_GET['invoice_id'])) {
+            $validatedId = filter_var(
+                $_GET['invoice_id'],
+                FILTER_VALIDATE_INT
+            );
+
+            if (
+                $validatedId !== false &&
+                $validatedId > 0
+            ) {
+                $invoiceId = $validatedId;
+            }
+        }
+
+        if ($invoiceId <= 0) {
+            $this->abort(404);
+
+            return;
+        }
+
+        $companyId =
+            (int) $currentUser['company_id'];
+
+        $originalInvoice =
+            $this->invoiceModel
+            ->findByIdAndCompany(
+                $invoiceId,
+                $companyId
+            );
+
+        if (
+            $originalInvoice === null ||
+            (string) $originalInvoice['document_type'] !== 'invoice' ||
+            (string) $originalInvoice['status'] !== 'issued'
+        ) {
+            $this->abort(404);
+
+            return;
+        }
+
+        $items =
+            $this->invoiceItemModel
+            ->allByInvoice(
+                $invoiceId,
+                $companyId
+            );
+
+        $usage =
+            $this->invoiceItemModel
+            ->creditUsageByOriginalInvoice(
+                $invoiceId,
+                $companyId
+            );
+
+        foreach ($items as &$item) {
+            $itemId = (int) $item['id'];
+
+            $creditedQuantity = 0.00;
+
+            if (isset($usage[$itemId])) {
+                $creditedQuantity =
+                    (float) $usage[$itemId]['credited_quantity'];
+            }
+
+            $item['credited_quantity'] =
+                $creditedQuantity;
+
+            $item['remaining_quantity'] =
+                max(
+                    0,
+                    round(
+                        (float) $item['quantity'] -
+                            $creditedQuantity,
+                        3
+                    )
+                );
+        }
+
+        unset($item);
+
+        $this->view(
+            'invoices/credit_note_create',
+            [
+                'title' =>
+                'Create Credit Note',
+
+                'originalInvoice' =>
+                $originalInvoice,
+
+                'items' => $items,
+            ]
+        );
+    }
+
+    public function storeCreditNote(): void
+    {
+        $currentUser =
+            $this->authService->user();
+
+        if ($currentUser === null) {
+            $this->redirect('/login');
+
+            return;
+        }
+
+        $originalInvoiceId = 0;
+
+        if (isset($_POST['invoice_id'])) {
+            $validatedId = filter_var(
+                $_POST['invoice_id'],
+                FILTER_VALIDATE_INT
+            );
+
+            if (
+                $validatedId !== false &&
+                $validatedId > 0
+            ) {
+                $originalInvoiceId =
+                    $validatedId;
+            }
+        }
+
+        if ($originalInvoiceId <= 0) {
+            Flash::danger(
+                'Invalid original invoice.'
+            );
+
+            $this->redirect('/invoices');
+
+            return;
+        }
+
+        $reason = $this->input('reason');
+
+        $quantities = [];
+
+        if (
+            isset($_POST['credit_quantity']) &&
+            is_array(
+                $_POST['credit_quantity']
+            )
+        ) {
+            $quantities =
+                $_POST['credit_quantity'];
+        }
+
+        $result =
+            $this->creditNoteService
+            ->createDraft(
+                $originalInvoiceId,
+                (int) $currentUser['company_id'],
+                (int) $currentUser['id'],
+                $reason,
+                $quantities
+            );
+
+        if (!$result['success']) {
+            Flash::danger(
+                (string) $result['error']
+            );
+
+            $this->redirect(
+                '/invoices/credit-note/create' .
+                    '?invoice_id=' .
+                    $originalInvoiceId
+            );
+
+            return;
+        }
+
+        Flash::success(
+            'Credit note draft created successfully.'
+        );
+
+        $this->redirect(
+            '/invoices/show?id=' .
+                (int) $result['credit_note_id']
+        );
+    }
+
+    public function cancel(): void
+    {
+        $currentUser =
+            $this->authService->user();
+
+        if ($currentUser === null) {
+            $this->redirect('/login');
+
+            return;
+        }
+
+        $documentId = 0;
+
+        if (isset($_POST['document_id'])) {
+            $validatedId = filter_var(
+                $_POST['document_id'],
+                FILTER_VALIDATE_INT
+            );
+
+            if (
+                $validatedId !== false &&
+                $validatedId > 0
+            ) {
+                $documentId = $validatedId;
+            }
+        }
+
+        if ($documentId <= 0) {
+            Flash::danger(
+                'Invalid document.'
+            );
+
+            $this->redirect('/invoices');
+
+            return;
+        }
+
+        $reason = $this->input(
+            'cancellation_reason'
+        );
+
+        $result =
+            $this->invoiceService
+            ->cancelDocument(
+                $documentId,
+                (int) $currentUser['company_id'],
+                (int) $currentUser['id'],
+                $reason
+            );
+
+        if (!$result['success']) {
+            Flash::danger(
+                (string) $result['error']
+            );
+
+            $this->redirect(
+                '/invoices/show?id=' .
+                    $documentId
+            );
+
+            return;
+        }
+
+        if ($result['cancelled']) {
+            Flash::success(
+                'Document cancelled successfully.'
+            );
+        } else {
+            Flash::success(
+                'This document is already cancelled.'
+            );
+        }
+
+        $this->redirect(
+            '/invoices/show?id=' .
+                $documentId
+        );
     }
 
     private function renderCreate(
@@ -581,26 +890,26 @@ class InvoiceController extends Controller
             return;
         }
 
-        $invoiceId = 0;
+        $documentId = 0;
 
         if (isset($_POST['invoice_id'])) {
-            $validatedInvoiceId = filter_var(
+            $validatedDocumentId = filter_var(
                 $_POST['invoice_id'],
                 FILTER_VALIDATE_INT
             );
 
             if (
-                $validatedInvoiceId !== false &&
-                $validatedInvoiceId > 0
+                $validatedDocumentId !== false &&
+                $validatedDocumentId > 0
             ) {
-                $invoiceId =
-                    $validatedInvoiceId;
+                $documentId =
+                    $validatedDocumentId;
             }
         }
 
-        if ($invoiceId <= 0) {
+        if ($documentId <= 0) {
             Flash::danger(
-                'Invalid invoice.'
+                'Invalid document.'
             );
 
             $this->redirect('/invoices');
@@ -611,7 +920,7 @@ class InvoiceController extends Controller
         $result =
             $this->invoiceNumberService
             ->issue(
-                $invoiceId,
+                $documentId,
                 (int) $currentUser['company_id'],
                 (int) $currentUser['id']
             );
@@ -623,21 +932,33 @@ class InvoiceController extends Controller
 
             $this->redirect(
                 '/invoices/show?id=' .
-                    $invoiceId
+                    $documentId
             );
 
             return;
         }
 
+        $documentLabel = 'Invoice';
+
+        if (
+            isset($result['document_type']) &&
+            $result['document_type'] ===
+            'credit_note'
+        ) {
+            $documentLabel = 'Credit note';
+        }
+
         if ($result['issued']) {
             Flash::success(
-                'Invoice ' .
+                $documentLabel .
+                    ' ' .
                     (string) $result['invoice_number'] .
                     ' issued successfully.'
             );
         } else {
             Flash::success(
-                'This invoice is already issued as ' .
+                $documentLabel .
+                    ' is already issued as ' .
                     (string) $result['invoice_number'] .
                     '.'
             );
@@ -645,7 +966,7 @@ class InvoiceController extends Controller
 
         $this->redirect(
             '/invoices/show?id=' .
-                $invoiceId
+                $documentId
         );
     }
 
@@ -989,7 +1310,17 @@ class InvoiceController extends Controller
                 (string) $invoice['id'];
         }
 
-        return 'invoice-' .
+        $prefix = 'invoice';
+
+        if (
+            isset($invoice['document_type']) &&
+            (string) $invoice['document_type'] ===
+            'credit_note'
+        ) {
+            $prefix = 'credit-note';
+        }
+
+        return $prefix . '-' .
             $reference .
             '.pdf';
     }

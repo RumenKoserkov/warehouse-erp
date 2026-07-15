@@ -52,15 +52,18 @@ class AuditLogService
         ]);
     }
 
-    public function allByCompany(int $companyId, array $filters = []): array
-    {
+    public function allByCompany(
+        int $companyId,
+        array $filters = []
+    ): array {
         $sql = "
             SELECT
                 logs.*,
                 users.name AS user_name,
                 users.email AS user_email
             FROM logs
-            LEFT JOIN users ON logs.user_id = users.id
+            LEFT JOIN users
+                ON logs.user_id = users.id
             WHERE logs.company_id = ?
         ";
 
@@ -96,7 +99,8 @@ class AuditLogService
                 )
             ";
 
-            $searchTerm = '%' . $filters['search'] . '%';
+            $searchTerm =
+                '%' . $filters['search'] . '%';
 
             $params[] = $searchTerm;
             $params[] = $searchTerm;
@@ -110,6 +114,7 @@ class AuditLogService
         ";
 
         $stmt = $this->db->prepare($sql);
+
         $stmt->execute($params);
 
         return $stmt->fetchAll();
@@ -146,13 +151,14 @@ class AuditLogService
             'settings',
             'company',
             'invoice',
+            'credit_note',
         ];
     }
 
     private function getIpAddress(): string
     {
         if (isset($_SERVER['REMOTE_ADDR'])) {
-            return (string)$_SERVER['REMOTE_ADDR'];
+            return (string) $_SERVER['REMOTE_ADDR'];
         }
 
         return 'unknown';
@@ -161,7 +167,7 @@ class AuditLogService
     private function getUserAgent(): string
     {
         if (isset($_SERVER['HTTP_USER_AGENT'])) {
-            return (string)$_SERVER['HTTP_USER_AGENT'];
+            return (string) $_SERVER['HTTP_USER_AGENT'];
         }
 
         return 'unknown';

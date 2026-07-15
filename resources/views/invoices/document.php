@@ -2,6 +2,18 @@
 
 declare(strict_types=1);
 
+$isCreditNote =
+    (string) $invoice['document_type'] === 'credit_note';
+
+$isCancelled =
+    (string) $invoice['status'] === 'cancelled';
+
+$documentTitle = 'INVOICE';
+
+if ($isCreditNote) {
+    $documentTitle = 'CREDIT NOTE';
+}
+
 $isDraft =
     (string) $invoice['status'] === 'draft';
 
@@ -80,10 +92,6 @@ $taxBase =
     (float) $invoice['subtotal'] -
     (float) $invoice['discount_amount'];
 
-if ($taxBase < 0) {
-    $taxBase = 0;
-}
-
 $priceMode = 'Prices exclude VAT';
 
 if ((int) $invoice['vat_registered'] !== 1) {
@@ -101,7 +109,8 @@ if ((int) $invoice['vat_registered'] !== 1) {
     <meta charset="UTF-8">
 
     <title>
-        Invoice <?= $escape($documentNumber) ?>
+        <?= $escape($documentTitle) ?>
+        <?= $escape($documentNumber) ?>
     </title>
 
     <style>
@@ -374,7 +383,7 @@ if ((int) $invoice['vat_registered'] !== 1) {
             <button
                 type="button"
                 onclick="window.print()">
-                Print Invoice
+                Print Document
             </button>
         </div>
     <?php endif; ?>
@@ -382,7 +391,14 @@ if ((int) $invoice['vat_registered'] !== 1) {
     <div class="document">
         <?php if ($isDraft): ?>
             <div class="draft-banner">
-                DRAFT - NOT AN OFFICIAL INVOICE
+                DRAFT <?= $escape($documentTitle) ?>
+                - NOT AN OFFICIAL DOCUMENT
+            </div>
+        <?php endif; ?>
+
+        <?php if ($isCancelled): ?>
+            <div class="draft-banner">
+                CANCELLED DOCUMENT
             </div>
         <?php endif; ?>
 
@@ -390,11 +406,15 @@ if ((int) $invoice['vat_registered'] !== 1) {
             <tr>
                 <td>
                     <div class="header-title">
-                        INVOICE
+                        <?= $escape($documentTitle) ?>
                     </div>
 
                     <div class="small-muted">
-                        Original document
+                        <?php if ($isCreditNote): ?>
+                            Correction document
+                        <?php else: ?>
+                            Original document
+                        <?php endif; ?>
                     </div>
                 </td>
 
@@ -563,7 +583,7 @@ if ((int) $invoice['vat_registered'] !== 1) {
             <tr>
                 <td>
                     <span class="meta-name">
-                        Invoice date
+                        Document date
                     </span>
 
                     <?= $escape(
@@ -608,6 +628,37 @@ if ((int) $invoice['vat_registered'] !== 1) {
                 </td>
             </tr>
         </table>
+
+        <?php if ($isCreditNote): ?>
+            <div class="note-box">
+                <div class="section-label">
+                    Original invoice
+                </div>
+
+                <div>
+                    Number:
+                    <?= $escape(
+                        $invoice['related_invoice_number']
+                    ) ?>
+                </div>
+
+                <div>
+                    Date:
+                    <?= $escape(
+                        $formatDate(
+                            $invoice['related_invoice_date']
+                        )
+                    ) ?>
+                </div>
+
+                <div>
+                    Reason:
+                    <?= $escape(
+                        $invoice['correction_reason']
+                    ) ?>
+                </div>
+            </div>
+        <?php endif; ?>
 
         <div
             class="small-muted"
@@ -929,7 +980,28 @@ if ((int) $invoice['vat_registered'] !== 1) {
             <div
                 class="draft-banner"
                 style="margin-top: 18px;">
-                DRAFT - NOT AN OFFICIAL INVOICE
+                DRAFT <?= $escape($documentTitle) ?>
+                - NOT AN OFFICIAL DOCUMENT
+            </div>
+        <?php endif; ?>
+
+        <?php if ($isCancelled): ?>
+            <div
+                class="draft-banner"
+                style="margin-top: 18px;">
+                CANCELLED DOCUMENT
+
+                <?php if (
+                    trim(
+                        (string) $invoice['cancellation_reason']
+                    ) !== ''
+                ): ?>
+                    <br>
+                    Reason:
+                    <?= $escape(
+                        $invoice['cancellation_reason']
+                    ) ?>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
     </div>

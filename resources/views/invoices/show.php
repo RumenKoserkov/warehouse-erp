@@ -1,5 +1,18 @@
 <?php
-$reference = 'DRAFT-' . (int) $invoice['id'];
+$isCreditNote =
+    (string) $invoice['document_type'] === 'credit_note';
+
+$isCancelled =
+    (string) $invoice['status'] === 'cancelled';
+
+$documentLabel = 'Invoice';
+
+if ($isCreditNote) {
+    $documentLabel = 'Credit Note';
+}
+
+$reference =
+    'DRAFT-' . (int) $invoice['id'];
 
 if (
     isset($invoice['invoice_number']) &&
@@ -17,41 +30,50 @@ if (
     align-items-start mb-4">
     <div>
         <h1 class="h3 mb-1">
-            Invoice <?= htmlspecialchars(
-                        $reference,
-                        ENT_QUOTES,
-                        'UTF-8'
-                    ) ?>
+            <?= htmlspecialchars(
+                $documentLabel,
+                ENT_QUOTES,
+                'UTF-8'
+            ) ?>
+
+            <?= htmlspecialchars(
+                $reference,
+                ENT_QUOTES,
+                'UTF-8'
+            ) ?>
         </h1>
 
-        <?php if (
+        <?php if ($isCancelled): ?>
+            <span class="badge text-bg-danger">
+                Cancelled
+            </span>
+        <?php elseif (
             (string) $invoice['status'] ===
             'issued'
         ): ?>
             <span class="badge text-bg-success">
                 Issued
             </span>
-        <?php elseif (
-            (string) $invoice['status'] ===
-            'draft'
-        ): ?>
+        <?php else: ?>
             <span class="badge text-bg-warning">
                 Draft
-            </span>
-        <?php else: ?>
-            <span class="badge text-bg-secondary">
-                <?= htmlspecialchars(
-                    ucfirst(
-                        (string) $invoice['status']
-                    ),
-                    ENT_QUOTES,
-                    'UTF-8'
-                ) ?>
             </span>
         <?php endif; ?>
     </div>
 
     <div class="d-flex flex-wrap gap-2">
+        <?php if (
+            !$isCreditNote &&
+            (string) $invoice['status'] ===
+            'issued'
+        ): ?>
+            <a
+                href="/invoices/credit-note/create?invoice_id=<?= (int) $invoice['id'] ?>"
+                class="btn btn-outline-primary">
+                Create Credit Note
+            </a>
+        <?php endif; ?>
+
         <?php if (
             (string) $invoice['status'] ===
             'draft'
@@ -61,9 +83,8 @@ if (
                 action="/invoices/issue"
                 onsubmit="
                     return confirm(
-                        'Issue this invoice? ' +
-                        'The official number will be assigned ' +
-                        'and the invoice must no longer be edited.'
+                        'Issue this document? ' +
+                        'An official number will be assigned.'
                     );
                 ">
                 <?= \App\Core\Csrf::field() ?>
@@ -76,7 +97,11 @@ if (
                 <button
                     type="submit"
                     class="btn btn-success">
-                    Issue Invoice
+                    <?php if ($isCreditNote): ?>
+                        Issue Credit Note
+                    <?php else: ?>
+                        Issue Invoice
+                    <?php endif; ?>
                 </button>
             </form>
         <?php endif; ?>
@@ -123,7 +148,7 @@ if (
 ): ?>
     <div class="alert alert-success">
         <div>
-            <strong>Official invoice number:</strong>
+            <strong>Official document number:</strong>
 
             <span class="font-monospace">
                 <?= htmlspecialchars(
@@ -167,6 +192,109 @@ if (
                 ) ?>
             </div>
         <?php endif; ?>
+    </div>
+<?php endif; ?>
+
+<?php if ($isCancelled): ?>
+    <div class="alert alert-danger">
+        <h2 class="h5">
+            Cancelled Document
+        </h2>
+
+        <?php if (
+            trim(
+                (string) $invoice['invoice_number']
+            ) !== ''
+        ): ?>
+            <p class="mb-1">
+                The official number
+                <strong>
+                    <?= htmlspecialchars(
+                        (string) $invoice['invoice_number'],
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ) ?>
+                </strong>
+                remains permanently used.
+            </p>
+        <?php endif; ?>
+
+        <p class="mb-1">
+            <strong>Reason:</strong>
+
+            <?= htmlspecialchars(
+                (string) $invoice['cancellation_reason'],
+                ENT_QUOTES,
+                'UTF-8'
+            ) ?>
+        </p>
+
+        <p class="mb-1">
+            <strong>Cancelled at:</strong>
+
+            <?= htmlspecialchars(
+                (string) $invoice['cancelled_at'],
+                ENT_QUOTES,
+                'UTF-8'
+            ) ?>
+        </p>
+
+        <?php if (
+            trim(
+                (string) $invoice['cancelled_by_user_name']
+            ) !== ''
+        ): ?>
+            <p class="mb-0">
+                <strong>Cancelled by:</strong>
+
+                <?= htmlspecialchars(
+                    (string) $invoice['cancelled_by_user_name'],
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>
+            </p>
+        <?php endif; ?>
+    </div>
+<?php endif; ?>
+
+<?php if ($isCreditNote): ?>
+    <div class="alert alert-light border">
+        <div>
+            <strong>
+                Original invoice:
+            </strong>
+
+            <a
+                href="/invoices/show?id=<?= (int) $invoice['related_invoice_id'] ?>">
+                <?= htmlspecialchars(
+                    (string) $invoice['related_invoice_number'],
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>
+            </a>
+        </div>
+
+        <div>
+            <strong>
+                Original invoice date:
+            </strong>
+
+            <?= htmlspecialchars(
+                (string) $invoice['related_invoice_date'],
+                ENT_QUOTES,
+                'UTF-8'
+            ) ?>
+        </div>
+
+        <div>
+            <strong>Reason:</strong>
+
+            <?= htmlspecialchars(
+                (string) $invoice['correction_reason'],
+                ENT_QUOTES,
+                'UTF-8'
+            ) ?>
+        </div>
     </div>
 <?php endif; ?>
 
@@ -332,7 +460,7 @@ if (
     <div class="card-body">
         <div class="row">
             <div class="col-md-4">
-                <strong>Invoice date:</strong>
+                <strong>Document date:</strong>
 
                 <?= htmlspecialchars(
                     (string) $invoice['invoice_date'],
@@ -558,6 +686,195 @@ if (
                     )
                 ) ?>
             </p>
+        </div>
+    </div>
+<?php endif; ?>
+
+<?php if (
+    (string) $invoice['status'] ===
+    'draft' ||
+    (string) $invoice['status'] ===
+    'issued'
+): ?>
+    <div class="card border-danger mt-4">
+        <div class="card-header text-danger">
+            <strong>
+                <?php if (
+                    (string) $invoice['status'] === 'draft'
+                ): ?>
+                    Discard Draft
+                <?php else: ?>
+                    Cancel Issued Document
+                <?php endif; ?>
+            </strong>
+        </div>
+
+        <div class="card-body">
+            <form
+                method="POST"
+                action="/invoices/cancel"
+                onsubmit="
+                    return confirm(
+                        'Cancel this document? ' +
+                        'This action cannot be reversed.'
+                    );
+                ">
+                <?= \App\Core\Csrf::field() ?>
+
+                <input
+                    type="hidden"
+                    name="document_id"
+                    value="<?= (int) $invoice['id'] ?>">
+
+                <label
+                    for="cancellation_reason"
+                    class="form-label">
+                    Cancellation Reason
+                </label>
+
+                <textarea
+                    id="cancellation_reason"
+                    name="cancellation_reason"
+                    class="form-control"
+                    maxlength="500"
+                    rows="3"
+                    required></textarea>
+
+                <button
+                    type="submit"
+                    class="btn btn-danger mt-3">
+                    <?php if (
+                        (string) $invoice['status'] === 'draft'
+                    ): ?>
+                        Discard Draft
+                    <?php else: ?>
+                        Cancel Document
+                    <?php endif; ?>
+                </button>
+            </form>
+        </div>
+    </div>
+<?php endif; ?>
+
+<?php if (
+    !$isCreditNote &&
+    !empty($creditNotes)
+): ?>
+    <div class="card shadow-sm mt-4">
+        <div class="card-header">
+            <h2 class="h5 mb-0">
+                Credit Notes
+            </h2>
+        </div>
+
+        <div class="table-responsive">
+            <table
+                class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Reason</th>
+                        <th>Total</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <?php foreach (
+                        $creditNotes as $creditNote
+                    ): ?>
+                        <?php
+                        $creditReference =
+                            'DRAFT-' .
+                            (int) $creditNote['id'];
+
+                        if (
+                            trim(
+                                (string) $creditNote['invoice_number']
+                            ) !== ''
+                        ) {
+                            $creditReference =
+                                (string) $creditNote['invoice_number'];
+                        }
+                        ?>
+
+                        <tr>
+                            <td>
+                                <?= htmlspecialchars(
+                                    $creditReference,
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </td>
+
+                            <td>
+                                <?= htmlspecialchars(
+                                    (string) $creditNote['invoice_date'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </td>
+
+                            <td>
+                                <?php if (
+                                    (string) $creditNote['status'] === 'cancelled'
+                                ): ?>
+                                    <span
+                                        class="badge
+                                        text-bg-danger">
+                                        Cancelled
+                                    </span>
+                                <?php elseif (
+                                    (string) $creditNote['status'] === 'draft'
+                                ): ?>
+                                    <span
+                                        class="badge
+                                        text-bg-warning">
+                                        Draft
+                                    </span>
+                                <?php else: ?>
+                                    <span
+                                        class="badge
+                                        text-bg-success">
+                                        Issued
+                                    </span>
+                                <?php endif; ?>
+                            </td>
+
+                            <td>
+                                <?= htmlspecialchars(
+                                    (string) $creditNote['correction_reason'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </td>
+
+                            <td>
+                                <?= number_format(
+                                    (float) $creditNote['total_amount'],
+                                    2
+                                ) ?>
+
+                                <?= htmlspecialchars(
+                                    (string) $creditNote['currency'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </td>
+
+                            <td>
+                                <a
+                                    href="/invoices/show?id=<?= (int) $creditNote['id'] ?>"
+                                    class="btn btn-sm btn-outline-primary">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
     </div>
 <?php endif; ?>
