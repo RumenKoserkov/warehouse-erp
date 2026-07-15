@@ -122,6 +122,7 @@ class AuditLogService
             'update',
             'deactivate',
             'cancel',
+            'issue',
             'stock_in',
             'stock_out',
             'stock_transfer',

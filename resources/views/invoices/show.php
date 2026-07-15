@@ -24,28 +24,135 @@ if (
                     ) ?>
         </h1>
 
-        <span class="badge text-bg-warning">
-            <?= htmlspecialchars(
-                ucfirst(
-                    (string) $invoice['status']
-                ),
-                ENT_QUOTES,
-                'UTF-8'
-            ) ?>
-        </span>
+        <?php if (
+            (string) $invoice['status'] ===
+            'issued'
+        ): ?>
+            <span class="badge text-bg-success">
+                Issued
+            </span>
+        <?php elseif (
+            (string) $invoice['status'] ===
+            'draft'
+        ): ?>
+            <span class="badge text-bg-warning">
+                Draft
+            </span>
+        <?php else: ?>
+            <span class="badge text-bg-secondary">
+                <?= htmlspecialchars(
+                    ucfirst(
+                        (string) $invoice['status']
+                    ),
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>
+            </span>
+        <?php endif; ?>
     </div>
 
-    <a
-        href="/invoices"
-        class="btn btn-outline-secondary">
-        Back to Invoices
-    </a>
+    <div class="d-flex gap-2">
+        <?php if (
+            (string) $invoice['status'] ===
+            'draft'
+        ): ?>
+            <form
+                method="POST"
+                action="/invoices/issue"
+                onsubmit="
+                    return confirm(
+                        'Issue this invoice? ' +
+                        'The official number will be assigned ' +
+                        'and the invoice must no longer be edited.'
+                    );
+                ">
+                <?= \App\Core\Csrf::field() ?>
+
+                <input
+                    type="hidden"
+                    name="invoice_id"
+                    value="<?= (int) $invoice['id'] ?>">
+
+                <button
+                    type="submit"
+                    class="btn btn-success">
+                    Issue Invoice
+                </button>
+            </form>
+        <?php endif; ?>
+
+        <a
+            href="/invoices"
+            class="btn btn-outline-secondary">
+            Back to Invoices
+        </a>
+    </div>
 </div>
 
-<?php if ($invoice['status'] === 'draft'): ?>
+<?php if (
+    (string) $invoice['status'] ===
+    'draft'
+): ?>
     <div class="alert alert-warning">
-        This document is a draft and does not yet have
-        an official invoice number.
+        This document is still a draft.
+        Review all supplier, client, item and tax
+        information before issuing it.
+
+        Once issued, it receives a permanent official
+        number and must not be edited freely.
+    </div>
+<?php endif; ?>
+
+<?php if (
+    (string) $invoice['status'] ===
+    'issued'
+): ?>
+    <div class="alert alert-success">
+        <div>
+            <strong>Official invoice number:</strong>
+
+            <span class="font-monospace">
+                <?= htmlspecialchars(
+                    (string) $invoice['invoice_number'],
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>
+            </span>
+        </div>
+
+        <?php if (
+            isset($invoice['issued_at']) &&
+            $invoice['issued_at'] !== null
+        ): ?>
+            <div>
+                <strong>Issued at:</strong>
+
+                <?= htmlspecialchars(
+                    (string) $invoice['issued_at'],
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (
+            isset(
+                $invoice['issued_by_user_name']
+            ) &&
+            trim(
+                (string) $invoice['issued_by_user_name']
+            ) !== ''
+        ): ?>
+            <div>
+                <strong>Issued by:</strong>
+
+                <?= htmlspecialchars(
+                    (string) $invoice['issued_by_user_name'],
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>
+            </div>
+        <?php endif; ?>
     </div>
 <?php endif; ?>
 
@@ -212,6 +319,7 @@ if (
         <div class="row">
             <div class="col-md-4">
                 <strong>Invoice date:</strong>
+
                 <?= htmlspecialchars(
                     (string) $invoice['invoice_date'],
                     ENT_QUOTES,
@@ -221,6 +329,7 @@ if (
 
             <div class="col-md-4">
                 <strong>Supply date:</strong>
+
                 <?= htmlspecialchars(
                     (string) $invoice['supply_date'],
                     ENT_QUOTES,
@@ -251,8 +360,7 @@ if (
 
 <div class="card shadow-sm mb-4">
     <div class="table-responsive">
-        <table
-            class="table align-middle mb-0">
+        <table class="table align-middle mb-0">
             <thead>
                 <tr>
                     <th>Description</th>
@@ -419,7 +527,9 @@ if (
 
 <?php if (
     isset($invoice['note']) &&
-    trim((string) $invoice['note']) !== ''
+    trim(
+        (string) $invoice['note']
+    ) !== ''
 ): ?>
     <div class="card shadow-sm mt-4">
         <div class="card-body">

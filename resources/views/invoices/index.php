@@ -18,6 +18,108 @@
     </a>
 </div>
 
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div
+            class="d-flex flex-column
+            flex-lg-row justify-content-between
+            align-items-lg-center gap-3">
+            <div>
+                <h2 class="h5 mb-2">
+                    Invoice Number Sequence
+                </h2>
+
+                <div>
+                    Next official invoice number:
+
+                    <strong class="font-monospace">
+                        <?= htmlspecialchars(
+                            (string) $sequence['next_invoice_number'],
+                            ENT_QUOTES,
+                            'UTF-8'
+                        ) ?>
+                    </strong>
+                </div>
+
+                <div class="text-muted">
+                    Last issued:
+
+                    <?php if (
+                        $sequence['last_invoice_number'] !== null
+                    ): ?>
+                        <span class="font-monospace">
+                            <?= htmlspecialchars(
+                                (string) $sequence['last_invoice_number'],
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>
+                        </span>
+                    <?php else: ?>
+                        No invoices issued yet
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <?php if (
+                $canConfigureSequence &&
+                $sequence['can_change_start']
+            ): ?>
+                <form
+                    method="POST"
+                    action="/invoices/sequence/update"
+                    class="d-flex align-items-end gap-2">
+                    <?= \App\Core\Csrf::field() ?>
+
+                    <div>
+                        <label
+                            for="next_number"
+                            class="form-label">
+                            Starting number
+                        </label>
+
+                        <input
+                            type="number"
+                            id="next_number"
+                            name="next_number"
+                            class="form-control"
+                            min="1"
+                            max="9999999999"
+                            step="1"
+                            required
+                            value="<?= (int) $sequence['next_number'] ?>">
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="btn btn-outline-primary">
+                        Save
+                    </button>
+                </form>
+            <?php endif; ?>
+        </div>
+
+        <?php if (
+            $canConfigureSequence &&
+            !$sequence['can_change_start']
+        ): ?>
+            <div class="form-text mt-3">
+                The starting number is locked because
+                at least one invoice has already been issued.
+            </div>
+        <?php elseif (
+            $canConfigureSequence &&
+            $sequence['can_change_start']
+        ): ?>
+            <div class="form-text mt-3">
+                Set this only when the company needs to
+                continue an existing invoice sequence.
+                It cannot be changed after the first
+                invoice is issued.
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+
 <form
     method="GET"
     action="/invoices"
@@ -115,18 +217,25 @@
 
                             <td>
                                 <?php if (
-                                    $invoice['status'] ===
-                                    'draft'
+                                    (string) $invoice['status'] === 'draft'
                                 ): ?>
                                     <span
                                         class="badge
                                         text-bg-warning">
                                         Draft
                                     </span>
-                                <?php else: ?>
+                                <?php elseif (
+                                    (string) $invoice['status'] === 'issued'
+                                ): ?>
                                     <span
                                         class="badge
                                         text-bg-success">
+                                        Issued
+                                    </span>
+                                <?php else: ?>
+                                    <span
+                                        class="badge
+                                        text-bg-secondary">
                                         <?= htmlspecialchars(
                                             ucfirst(
                                                 (string) $invoice['status']

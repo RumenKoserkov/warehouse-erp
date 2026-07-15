@@ -185,20 +185,30 @@ class Invoice extends Model
         int $companyId
     ): ?array {
         $sql = "
-        SELECT
-            invoices.*,
-            users.name AS created_by_user_name,
-            sales.sale_number AS source_sale_number
-        FROM invoices
-        LEFT JOIN users
-            ON users.id = invoices.created_by_user_id
-        LEFT JOIN sales
-            ON sales.id = invoices.sale_id
-            AND sales.company_id = invoices.company_id
-        WHERE invoices.id = :id
-        AND invoices.company_id = :company_id
-        LIMIT 1
-    ";
+            SELECT
+                invoices.*,
+
+                creator.name AS created_by_user_name,
+                issuer.name AS issued_by_user_name,
+
+                sales.sale_number AS source_sale_number
+
+            FROM invoices
+
+            LEFT JOIN users AS creator
+                ON creator.id = invoices.created_by_user_id
+
+            LEFT JOIN users AS issuer
+                ON issuer.id = invoices.issued_by_user_id
+
+            LEFT JOIN sales
+                ON sales.id = invoices.sale_id
+                AND sales.company_id = invoices.company_id
+
+            WHERE invoices.id = :id
+            AND invoices.company_id = :company_id
+            LIMIT 1
+        ";
 
         $statement = $this->db->prepare($sql);
 
@@ -221,12 +231,12 @@ class Invoice extends Model
         int $companyId
     ): ?array {
         $sql = "
-        SELECT *
-        FROM invoices
-        WHERE sale_id = :sale_id
-        AND company_id = :company_id
-        LIMIT 1
-    ";
+            SELECT *
+            FROM invoices
+            WHERE sale_id = :sale_id
+            AND company_id = :company_id
+            LIMIT 1
+        ";
 
         $statement = $this->db->prepare($sql);
 
@@ -242,5 +252,88 @@ class Invoice extends Model
         }
 
         return $invoice;
+    }
+
+    public function findForUpdate(
+        int $id,
+        int $companyId
+    ): ?array {
+        $sql = "
+            SELECT *
+            FROM invoices
+            WHERE id = :id
+            AND company_id = :company_id
+            LIMIT 1
+            FOR UPDATE
+        ";
+
+        $statement = $this->db->prepare($sql);
+
+        $statement->execute([
+            'id' => $id,
+            'company_id' => $companyId,
+        ]);
+
+        $invoice = $statement->fetch();
+
+        if ($invoice === false) {
+            return null;
+        }
+
+        return $invoice;
+    }
+
+    public function markAsIssued(
+        int $id,
+        int $companyId,
+        string $invoiceNumber,
+        string $invoiceDate,
+        int $userId
+    ): bool {
+        $sql = "
+            UPDATE invoices
+            SET
+                invoice_number = :invoice_number,
+                invoice_date = :invoice_date,
+                status = 'issued',
+                issued_at = NOW(),
+                issued_by_user_id = :issued_by_user_id,
+                updated_at = NOW()
+            WHERE id = :id
+            AND company_id = :company_id
+            AND status = 'draft'
+            AND invoice_number IS NULL
+        ";
+
+        $statement = $this->db->prepare($sql);
+
+        $statement->execute([
+            'invoice_number' => $invoiceNumber,
+            'invoice_date' => $invoiceDate,
+            'issued_by_user_id' => $userId,
+            'id' => $id,
+            'company_id' => $companyId,
+        ]);
+
+        return $statement->rowCount() === 1;
+    }
+
+    public function countIssuedByCompany(
+        int $companyId
+    ): int {
+        $sql = "
+            SELECT COUNT(*)
+            FROM invoices
+            WHERE company_id = :company_id
+            AND invoice_number IS NOT NULL
+        ";
+
+        $statement = $this->db->prepare($sql);
+
+        $statement->execute([
+            'company_id' => $companyId,
+        ]);
+
+        return (int) $statement->fetchColumn();
     }
 }

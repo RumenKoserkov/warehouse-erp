@@ -14,6 +14,7 @@ use App\Models\Product;
 use App\Services\AuthService;
 use App\Services\InvoiceService;
 use App\Services\TaxService;
+use App\Services\InvoiceNumberService;
 
 class InvoiceController extends Controller
 {
@@ -21,6 +22,7 @@ class InvoiceController extends Controller
     private InvoiceItem $invoiceItemModel;
     private Client $clientModel;
     private Product $productModel;
+    private InvoiceNumberService $invoiceNumberService;
 
     private AuthService $authService;
     private InvoiceService $invoiceService;
@@ -38,6 +40,9 @@ class InvoiceController extends Controller
         $this->authService = new AuthService();
         $this->invoiceService =
             new InvoiceService();
+
+        $this->invoiceNumberService =
+            new InvoiceNumberService();
 
         $this->taxService = new TaxService();
     }
@@ -71,10 +76,28 @@ class InvoiceController extends Controller
                 $search
             );
 
+        $sequence =
+            $this->invoiceNumberService
+            ->information($companyId);
+
+        $canConfigureSequence = false;
+
+        if (
+            isset($currentUser['role_slug']) &&
+            $currentUser['role_slug'] ===
+            'administrator'
+        ) {
+            $canConfigureSequence = true;
+        }
+
         $this->view('invoices/index', [
             'title' => 'Invoices',
             'invoices' => $invoices,
             'search' => $search,
+            'sequence' => $sequence,
+
+            'canConfigureSequence' =>
+            $canConfigureSequence,
         ]);
     }
 
@@ -540,5 +563,163 @@ class InvoiceController extends Controller
         }
 
         return trim((string) $_POST[$field]);
+    }
+
+    public function issue(): void
+    {
+        $currentUser =
+            $this->authService->user();
+
+        if ($currentUser === null) {
+            $this->redirect('/login');
+
+            return;
+        }
+
+        $invoiceId = 0;
+
+        if (isset($_POST['invoice_id'])) {
+            $validatedInvoiceId = filter_var(
+                $_POST['invoice_id'],
+                FILTER_VALIDATE_INT
+            );
+
+            if (
+                $validatedInvoiceId !== false &&
+                $validatedInvoiceId > 0
+            ) {
+                $invoiceId =
+                    $validatedInvoiceId;
+            }
+        }
+
+        if ($invoiceId <= 0) {
+            Flash::danger(
+                'Invalid invoice.'
+            );
+
+            $this->redirect('/invoices');
+
+            return;
+        }
+
+        $result =
+            $this->invoiceNumberService
+            ->issue(
+                $invoiceId,
+                (int) $currentUser['company_id'],
+                (int) $currentUser['id']
+            );
+
+        if (!$result['success']) {
+            Flash::danger(
+                (string) $result['error']
+            );
+
+            $this->redirect(
+                '/invoices/show?id=' .
+                    $invoiceId
+            );
+
+            return;
+        }
+
+        if ($result['issued']) {
+            Flash::success(
+                'Invoice ' .
+                    (string) $result['invoice_number'] .
+                    ' issued successfully.'
+            );
+        } else {
+            Flash::success(
+                'This invoice is already issued as ' .
+                    (string) $result['invoice_number'] .
+                    '.'
+            );
+        }
+
+        $this->redirect(
+            '/invoices/show?id=' .
+                $invoiceId
+        );
+    }
+
+    public function updateSequence(): void
+    {
+        $currentUser =
+            $this->authService->user();
+
+        if ($currentUser === null) {
+            $this->redirect('/login');
+
+            return;
+        }
+
+        $rawNumber = '';
+
+        if (
+            isset($_POST['next_number']) &&
+            is_scalar($_POST['next_number'])
+        ) {
+            $rawNumber = trim(
+                (string) $_POST['next_number']
+            );
+        }
+
+        if (
+            preg_match(
+                '/^\d{1,10}$/',
+                $rawNumber
+            ) !== 1
+        ) {
+            Flash::danger(
+                'Starting invoice number must contain between 1 and 10 digits.'
+            );
+
+            $this->redirect('/invoices');
+
+            return;
+        }
+
+        $nextNumber = (int) $rawNumber;
+
+        if (
+            $nextNumber < 1 ||
+            $nextNumber > 9999999999
+        ) {
+            Flash::danger(
+                'Starting invoice number must be between 1 and 9999999999.'
+            );
+
+            $this->redirect('/invoices');
+
+            return;
+        }
+
+        $result =
+            $this->invoiceNumberService
+            ->configureStartingNumber(
+                (int) $currentUser['company_id'],
+                $nextNumber,
+                (int) $currentUser['id']
+            );
+
+        if (!$result['success']) {
+            Flash::danger(
+                (string) $result['error']
+            );
+
+            $this->redirect('/invoices');
+
+            return;
+        }
+
+        Flash::success(
+            'Starting invoice number updated to ' .
+                (string) $result['next_invoice_number'] .
+                '.'
+        );
+
+        $this->redirect('/invoices');
     }
 }

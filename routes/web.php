@@ -530,6 +530,31 @@ return [
             'role:administrator,manager',
         ],
     ],
+    [
+        'method' => 'POST',
+        'uri' => '/invoices/issue',
+        'action' => [
+            InvoiceController::class,
+            'issue',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/invoices/sequence/update',
+        'action' => [
+            InvoiceController::class,
+            'updateSequence',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator',
+        ],
+    ],
 ];
 /*
 |--------------------------------------------------------------------------
