@@ -14,6 +14,7 @@ use App\Controllers\PurchaseController;
 use App\Controllers\SearchController;
 use App\Controllers\AuditLogController;
 use App\Controllers\SettingsController;
+use App\Controllers\InvoiceController;
 
 return [
     [
@@ -465,6 +466,57 @@ return [
             'updateCompanyBilling',
         ],
         'middleware' => ['auth', 'role:administrator'],
+    ],
+
+
+    // Invoices
+    [
+        'method' => 'GET',
+        'uri' => '/invoices',
+        'action' => [
+            InvoiceController::class,
+            'index',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+    [
+        'method' => 'GET',
+        'uri' => '/invoices/create',
+        'action' => [
+            InvoiceController::class,
+            'create',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+    [
+        'method' => 'POST',
+        'uri' => '/invoices/store',
+        'action' => [
+            InvoiceController::class,
+            'store',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+    [
+        'method' => 'GET',
+        'uri' => '/invoices/show',
+        'action' => [
+            InvoiceController::class,
+            'show',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
     ],
 ];
 /*
