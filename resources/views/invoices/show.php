@@ -51,7 +51,7 @@ if (
         <?php endif; ?>
     </div>
 
-    <div class="d-flex gap-2">
+    <div class="d-flex flex-wrap gap-2">
         <?php if (
             (string) $invoice['status'] ===
             'draft'
@@ -80,6 +80,20 @@ if (
                 </button>
             </form>
         <?php endif; ?>
+
+        <a
+            href="/invoices/print?id=<?= (int) $invoice['id'] ?>"
+            target="_blank"
+            rel="noopener"
+            class="btn btn-outline-dark">
+            Print Preview
+        </a>
+
+        <a
+            href="/invoices/pdf?id=<?= (int) $invoice['id'] ?>"
+            class="btn btn-outline-primary">
+            Download PDF
+        </a>
 
         <a
             href="/invoices"

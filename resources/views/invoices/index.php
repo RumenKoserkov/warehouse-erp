@@ -169,7 +169,9 @@
                 </thead>
 
                 <tbody>
-                    <?php foreach ($invoices as $invoice): ?>
+                    <?php foreach (
+                        $invoices as $invoice
+                    ): ?>
                         <?php
                         $reference =
                             'DRAFT-' .
@@ -269,12 +271,28 @@
                             </td>
 
                             <td>
-                                <a
-                                    href="/invoices/show?id=<?= (int) $invoice['id'] ?>"
-                                    class="btn btn-sm
-                                    btn-outline-primary">
-                                    View
-                                </a>
+                                <div
+                                    class="d-flex flex-wrap gap-1">
+                                    <a
+                                        href="/invoices/show?id=<?= (int) $invoice['id'] ?>"
+                                        class="btn btn-sm btn-outline-primary">
+                                        View
+                                    </a>
+
+                                    <a
+                                        href="/invoices/print?id=<?= (int) $invoice['id'] ?>"
+                                        target="_blank"
+                                        rel="noopener"
+                                        class="btn btn-sm btn-outline-dark">
+                                        Print
+                                    </a>
+
+                                    <a
+                                        href="/invoices/pdf?id=<?= (int) $invoice['id'] ?>"
+                                        class="btn btn-sm btn-outline-secondary">
+                                        PDF
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>

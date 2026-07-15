@@ -519,6 +519,31 @@ return [
         ],
     ],
     [
+        'method' => 'GET',
+        'uri' => '/invoices/print',
+        'action' => [
+            InvoiceController::class,
+            'printView',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/invoices/pdf',
+        'action' => [
+            InvoiceController::class,
+            'pdf',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+    [
         'method' => 'POST',
         'uri' => '/invoices/from-sale',
         'action' => [

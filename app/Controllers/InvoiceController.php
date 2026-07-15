@@ -15,6 +15,8 @@ use App\Services\AuthService;
 use App\Services\InvoiceService;
 use App\Services\TaxService;
 use App\Services\InvoiceNumberService;
+use App\Services\PdfService;
+use RuntimeException;
 
 class InvoiceController extends Controller
 {
@@ -23,6 +25,7 @@ class InvoiceController extends Controller
     private Client $clientModel;
     private Product $productModel;
     private InvoiceNumberService $invoiceNumberService;
+    private PdfService $pdfService;
 
     private AuthService $authService;
     private InvoiceService $invoiceService;
@@ -43,6 +46,8 @@ class InvoiceController extends Controller
 
         $this->invoiceNumberService =
             new InvoiceNumberService();
+
+        $this->pdfService = new PdfService();
 
         $this->taxService = new TaxService();
     }
@@ -721,5 +726,271 @@ class InvoiceController extends Controller
         );
 
         $this->redirect('/invoices');
+    }
+
+    public function printView(): void
+    {
+        $currentUser =
+            $this->authService->user();
+
+        if ($currentUser === null) {
+            $this->redirect('/login');
+
+            return;
+        }
+
+        $invoiceId =
+            $this->invoiceIdFromQuery();
+
+        if ($invoiceId <= 0) {
+            $this->abort(404);
+
+            return;
+        }
+
+        $document =
+            $this->loadInvoiceDocument(
+                $invoiceId,
+                (int) $currentUser['company_id']
+            );
+
+        if ($document === null) {
+            $this->abort(404);
+
+            return;
+        }
+
+        try {
+            $html =
+                $this->renderDocumentHtml(
+                    $document['invoice'],
+                    $document['items'],
+                    false
+                );
+        } catch (RuntimeException $exception) {
+            http_response_code(500);
+
+            echo htmlspecialchars(
+                $exception->getMessage(),
+                ENT_QUOTES,
+                'UTF-8'
+            );
+
+            return;
+        }
+
+        header(
+            'Content-Type: text/html; charset=UTF-8'
+        );
+
+        echo $html;
+
+        exit;
+    }
+
+    public function pdf(): void
+    {
+        $currentUser =
+            $this->authService->user();
+
+        if ($currentUser === null) {
+            $this->redirect('/login');
+
+            return;
+        }
+
+        $invoiceId =
+            $this->invoiceIdFromQuery();
+
+        if ($invoiceId <= 0) {
+            $this->abort(404);
+
+            return;
+        }
+
+        $document =
+            $this->loadInvoiceDocument(
+                $invoiceId,
+                (int) $currentUser['company_id']
+            );
+
+        if ($document === null) {
+            $this->abort(404);
+
+            return;
+        }
+
+        $invoice = $document['invoice'];
+        $items = $document['items'];
+
+        try {
+            $html =
+                $this->renderDocumentHtml(
+                    $invoice,
+                    $items,
+                    true
+                );
+
+            $pdf =
+                $this->pdfService->generate(
+                    $html,
+                    'A4',
+                    'portrait'
+                );
+        } catch (RuntimeException $exception) {
+            Flash::danger(
+                $exception->getMessage()
+            );
+
+            $this->redirect(
+                '/invoices/show?id=' .
+                    $invoiceId
+            );
+
+            return;
+        }
+
+        $filename =
+            $this->invoicePdfFilename(
+                $invoice
+            );
+
+        header('Content-Type: application/pdf');
+
+        header(
+            'Content-Disposition: attachment; filename="' .
+                $filename .
+                '"'
+        );
+
+        header(
+            'Content-Length: ' .
+                strlen($pdf)
+        );
+
+        header(
+            'Cache-Control: private, max-age=0, must-revalidate'
+        );
+
+        header('Pragma: public');
+
+        echo $pdf;
+
+        exit;
+    }
+
+    private function invoiceIdFromQuery(): int
+    {
+        if (!isset($_GET['id'])) {
+            return 0;
+        }
+
+        $validatedId = filter_var(
+            $_GET['id'],
+            FILTER_VALIDATE_INT
+        );
+
+        if (
+            $validatedId === false ||
+            $validatedId <= 0
+        ) {
+            return 0;
+        }
+
+        return $validatedId;
+    }
+
+    private function loadInvoiceDocument(
+        int $invoiceId,
+        int $companyId
+    ): ?array {
+        $invoice =
+            $this->invoiceModel
+            ->findByIdAndCompany(
+                $invoiceId,
+                $companyId
+            );
+
+        if ($invoice === null) {
+            return null;
+        }
+
+        $items =
+            $this->invoiceItemModel
+            ->allByInvoice(
+                $invoiceId,
+                $companyId
+            );
+
+        return [
+            'invoice' => $invoice,
+            'items' => $items,
+        ];
+    }
+
+    private function renderDocumentHtml(
+        array $invoice,
+        array $items,
+        bool $forPdf
+    ): string {
+        $viewPath =
+            dirname(__DIR__, 2) .
+            '/resources/views/invoices/document.php';
+
+        if (!is_file($viewPath)) {
+            throw new RuntimeException(
+                'Invoice document template was not found.'
+            );
+        }
+
+        ob_start();
+
+        require $viewPath;
+
+        $html = ob_get_clean();
+
+        if ($html === false) {
+            throw new RuntimeException(
+                'Invoice document could not be rendered.'
+            );
+        }
+
+        return $html;
+    }
+
+    private function invoicePdfFilename(
+        array $invoice
+    ): string {
+        $reference =
+            'draft-' . (int) $invoice['id'];
+
+        if (
+            isset($invoice['invoice_number']) &&
+            trim(
+                (string) $invoice['invoice_number']
+            ) !== ''
+        ) {
+            $reference = trim(
+                (string) $invoice['invoice_number']
+            );
+        }
+
+        $reference = preg_replace(
+            '/[^0-9A-Za-z_-]/',
+            '-',
+            $reference
+        );
+
+        if (
+            !is_string($reference) ||
+            $reference === ''
+        ) {
+            $reference =
+                (string) $invoice['id'];
+        }
+
+        return 'invoice-' .
+            $reference .
+            '.pdf';
     }
 }
