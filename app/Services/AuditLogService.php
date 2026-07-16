@@ -152,6 +152,7 @@ class AuditLogService
             'company',
             'invoice',
             'credit_note',
+            'payment',
         ];
     }
 

@@ -15,6 +15,7 @@ use App\Controllers\SearchController;
 use App\Controllers\AuditLogController;
 use App\Controllers\SettingsController;
 use App\Controllers\InvoiceController;
+use App\Controllers\PaymentController;
 
 return [
     [
@@ -615,6 +616,73 @@ return [
         'middleware' => [
             'auth',
             'role:administrator',
+        ],
+    ],
+
+    // Payments
+
+    [
+        'method' => 'GET',
+        'uri' => '/payments',
+        'action' => [
+            PaymentController::class,
+            'index',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/payments/create',
+        'action' => [
+            PaymentController::class,
+            'create',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/payments/store',
+        'action' => [
+            PaymentController::class,
+            'store',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/payments/show',
+        'action' => [
+            PaymentController::class,
+            'show',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/payments/cancel',
+        'action' => [
+            PaymentController::class,
+            'cancel',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
         ],
     ],
 ];

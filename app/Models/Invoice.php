@@ -486,4 +486,33 @@ class Invoice extends Model
 
         return (int) $statement->fetchColumn();
     }
+
+    public function issuedCreditTotalForInvoice(
+        int $invoiceId,
+        int $companyId
+    ): float {
+        $sql = "
+        SELECT COALESCE(
+            SUM(ABS(total_amount)),
+            0
+        )
+        FROM invoices
+        WHERE company_id = :company_id
+        AND related_invoice_id = :invoice_id
+        AND document_type = 'credit_note'
+        AND status = 'issued'
+    ";
+
+        $statement = $this->db->prepare($sql);
+
+        $statement->execute([
+            'company_id' => $companyId,
+            'invoice_id' => $invoiceId,
+        ]);
+
+        return round(
+            (float) $statement->fetchColumn(),
+            2
+        );
+    }
 }

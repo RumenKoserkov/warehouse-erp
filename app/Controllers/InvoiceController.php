@@ -10,6 +10,7 @@ use App\Core\Validator;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Services\AuthService;
 use App\Services\CreditNoteService;
@@ -17,12 +18,14 @@ use App\Services\InvoiceService;
 use App\Services\TaxService;
 use App\Services\InvoiceNumberService;
 use App\Services\PdfService;
+use App\Services\PaymentService;
 use RuntimeException;
 
 class InvoiceController extends Controller
 {
     private Invoice $invoiceModel;
     private InvoiceItem $invoiceItemModel;
+    private Payment $paymentModel;
     private Client $clientModel;
     private Product $productModel;
     private InvoiceNumberService $invoiceNumberService;
@@ -31,6 +34,7 @@ class InvoiceController extends Controller
     private AuthService $authService;
     private InvoiceService $invoiceService;
     private CreditNoteService $creditNoteService;
+    private PaymentService $paymentService;
     private TaxService $taxService;
 
     public function __construct()
@@ -38,6 +42,8 @@ class InvoiceController extends Controller
         $this->invoiceModel = new Invoice();
         $this->invoiceItemModel =
             new InvoiceItem();
+
+        $this->paymentModel = new Payment();
 
         $this->clientModel = new Client();
         $this->productModel = new Product();
@@ -48,6 +54,9 @@ class InvoiceController extends Controller
 
         $this->creditNoteService =
             new CreditNoteService();
+
+        $this->paymentService =
+            new PaymentService();
 
         $this->invoiceNumberService =
             new InvoiceNumberService();
@@ -438,6 +447,8 @@ class InvoiceController extends Controller
             );
 
         $creditNotes = [];
+        $paymentSummary = null;
+        $payments = [];
 
         if (
             (string) $invoice['document_type'] === 'invoice'
@@ -445,6 +456,20 @@ class InvoiceController extends Controller
             $creditNotes =
                 $this->invoiceModel
                 ->creditNotesForInvoice(
+                    $id,
+                    $companyId
+                );
+
+            $paymentSummary =
+                $this->paymentService
+                ->summaryForInvoice(
+                    $id,
+                    $companyId
+                );
+
+            $payments =
+                $this->paymentModel
+                ->allByInvoice(
                     $id,
                     $companyId
                 );
@@ -463,6 +488,15 @@ class InvoiceController extends Controller
             'invoice' => $invoice,
             'items' => $items,
             'creditNotes' => $creditNotes,
+
+            'paymentSummary' =>
+            $paymentSummary,
+
+            'payments' => $payments,
+
+            'paymentMethods' =>
+            $this->paymentService
+                ->methods(),
         ]);
     }
 

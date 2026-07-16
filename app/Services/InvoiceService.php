@@ -9,6 +9,7 @@ use App\Models\Client;
 use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
@@ -23,6 +24,7 @@ class InvoiceService
 
     private Invoice $invoiceModel;
     private InvoiceItem $invoiceItemModel;
+    private Payment $paymentModel;
     private Company $companyModel;
     private Client $clientModel;
     private Product $productModel;
@@ -39,6 +41,7 @@ class InvoiceService
 
         $this->invoiceModel = new Invoice();
         $this->invoiceItemModel = new InvoiceItem();
+        $this->paymentModel = new Payment();
         $this->companyModel = new Company();
         $this->clientModel = new Client();
         $this->productModel = new Product();
@@ -796,6 +799,19 @@ class InvoiceService
             ) {
                 throw new Exception(
                     'Cancel or discard the related credit notes before cancelling this invoice.'
+                );
+            }
+
+            if (
+                (string) $document['document_type'] === 'invoice' &&
+                $this->paymentModel
+                ->hasCompletedForInvoice(
+                    $documentId,
+                    $companyId
+                )
+            ) {
+                throw new Exception(
+                    'Cancel the active invoice payments before cancelling this invoice.'
                 );
             }
 

@@ -691,6 +691,286 @@ if (
 <?php endif; ?>
 
 <?php if (
+    !$isCreditNote &&
+    $paymentSummary !== null
+): ?>
+    <div class="card shadow-sm mt-4">
+        <div
+            class="card-header d-flex
+            justify-content-between
+            align-items-center">
+            <h2 class="h5 mb-0">
+                Payment Status
+            </h2>
+
+            <?php if (
+                (string) $invoice['status'] ===
+                'issued' &&
+                (float) $paymentSummary['balance_due'] > 0
+            ): ?>
+                <a
+                    href="/payments/create?invoice_id=<?= (int) $invoice['id'] ?>"
+                    class="btn btn-sm btn-success">
+                    Record Full Payment
+                </a>
+            <?php endif; ?>
+        </div>
+
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-2">
+                    <div class="text-muted">
+                        Invoice Total
+                    </div>
+
+                    <div class="fw-semibold">
+                        <?= number_format(
+                            (float) $paymentSummary['invoice_total'],
+                            2
+                        ) ?>
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <div class="text-muted">
+                        Credit Notes
+                    </div>
+
+                    <div class="fw-semibold">
+                        <?= number_format(
+                            (float) $paymentSummary['credit_total'],
+                            2
+                        ) ?>
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <div class="text-muted">
+                        Adjusted Total
+                    </div>
+
+                    <div class="fw-semibold">
+                        <?= number_format(
+                            (float) $paymentSummary['adjusted_total'],
+                            2
+                        ) ?>
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <div class="text-muted">
+                        Paid
+                    </div>
+
+                    <div class="fw-semibold">
+                        <?= number_format(
+                            (float) $paymentSummary['paid_amount'],
+                            2
+                        ) ?>
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <div class="text-muted">
+                        Balance
+                    </div>
+
+                    <div class="fw-bold">
+                        <?= number_format(
+                            (float) $paymentSummary['balance_due'],
+                            2
+                        ) ?>
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <div class="text-muted">
+                        Status
+                    </div>
+
+                    <?php if (
+                        $paymentSummary['payment_status'] === 'paid'
+                    ): ?>
+                        <span
+                            class="badge
+                            text-bg-success">
+                            Paid
+                        </span>
+                    <?php elseif (
+                        $paymentSummary['payment_status'] === 'overpaid'
+                    ): ?>
+                        <span
+                            class="badge
+                            text-bg-warning">
+                            Overpaid
+                        </span>
+                    <?php elseif (
+                        $paymentSummary['payment_status'] === 'partially_paid'
+                    ): ?>
+                        <span
+                            class="badge
+                            text-bg-info">
+                            Partially Paid
+                        </span>
+                    <?php else: ?>
+                        <span
+                            class="badge
+                            text-bg-secondary">
+                            Unpaid
+                        </span>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <?php if (
+                (float) $paymentSummary['overpaid_amount'] > 0
+            ): ?>
+                <div class="alert alert-warning mt-3 mb-0">
+                    The invoice is overpaid by
+
+                    <strong>
+                        <?= number_format(
+                            (float) $paymentSummary['overpaid_amount'],
+                            2
+                        ) ?>
+
+                        <?= htmlspecialchars(
+                            (string) $paymentSummary['currency'],
+                            ENT_QUOTES,
+                            'UTF-8'
+                        ) ?>
+                    </strong>.
+
+                    Review the payments and credit notes.
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <?php if (!empty($payments)): ?>
+            <div class="table-responsive">
+                <table
+                    class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Date</th>
+                            <th>Method</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <?php foreach (
+                            $payments as $payment
+                        ): ?>
+                            <?php
+                            $paymentReference =
+                                'PAY-' .
+                                str_pad(
+                                    (string) $payment['id'],
+                                    8,
+                                    '0',
+                                    STR_PAD_LEFT
+                                );
+
+                            $method =
+                                (string) $payment['payment_method'];
+
+                            $methodLabel =
+                                ucfirst(
+                                    str_replace(
+                                        '_',
+                                        ' ',
+                                        $method
+                                    )
+                                );
+
+                            if (
+                                isset(
+                                    $paymentMethods[$method]
+                                )
+                            ) {
+                                $methodLabel =
+                                    $paymentMethods[$method];
+                            }
+                            ?>
+
+                            <tr>
+                                <td>
+                                    <?= htmlspecialchars(
+                                        $paymentReference,
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </td>
+
+                                <td>
+                                    <?= htmlspecialchars(
+                                        (string) $payment['payment_date'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </td>
+
+                                <td>
+                                    <?= htmlspecialchars(
+                                        $methodLabel,
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </td>
+
+                                <td>
+                                    <?= number_format(
+                                        (float) $payment['amount'],
+                                        2
+                                    ) ?>
+
+                                    <?= htmlspecialchars(
+                                        (string) $payment['currency'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </td>
+
+                                <td>
+                                    <?php if (
+                                        (string) $payment['status'] === 'completed'
+                                    ): ?>
+                                        <span
+                                            class="badge
+                                            text-bg-success">
+                                            Completed
+                                        </span>
+                                    <?php else: ?>
+                                        <span
+                                            class="badge
+                                            text-bg-danger">
+                                            Cancelled
+                                        </span>
+                                    <?php endif; ?>
+                                </td>
+
+                                <td>
+                                    <a
+                                        href="/payments/show?id=<?= (int) $payment['id'] ?>"
+                                        class="btn btn-sm
+                                        btn-outline-primary">
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </div>
+<?php endif; ?>
+
+<?php if (
     (string) $invoice['status'] ===
     'draft' ||
     (string) $invoice['status'] ===
