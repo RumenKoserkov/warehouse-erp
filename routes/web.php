@@ -16,6 +16,7 @@ use App\Controllers\AuditLogController;
 use App\Controllers\SettingsController;
 use App\Controllers\InvoiceController;
 use App\Controllers\PaymentController;
+use App\Controllers\ReceivableController;
 
 return [
     [
@@ -679,6 +680,21 @@ return [
         'action' => [
             PaymentController::class,
             'cancel',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    // Receivables Report
+
+    [
+        'method' => 'GET',
+        'uri' => '/receivables',
+        'action' => [
+            ReceivableController::class,
+            'index',
         ],
         'middleware' => [
             'auth',
