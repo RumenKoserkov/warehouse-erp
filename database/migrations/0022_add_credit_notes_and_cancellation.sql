@@ -6,15 +6,7 @@ ALTER TABLE invoices
     ADD COLUMN related_invoice_id BIGINT UNSIGNED NULL
         AFTER sale_id,
 
-    ADD COLUMN active_sale_id BIGINT UNSIGNED
-        GENERATED ALWAYS AS (
-            CASE
-                WHEN sale_id IS NOT NULL
-                    AND status <> 'cancelled'
-                THEN sale_id
-                ELSE NULL
-            END
-        ) STORED
+    ADD COLUMN active_sale_id BIGINT UNSIGNED NULL
         AFTER related_invoice_id,
 
     ADD COLUMN correction_reason VARCHAR(500) NULL
@@ -29,25 +21,45 @@ ALTER TABLE invoices
     ADD COLUMN cancellation_reason VARCHAR(500) NULL
         AFTER cancelled_by_user_id,
 
-    ADD INDEX index_invoices_related_invoice (
+    ADD INDEX index_invoices_related_invoice_id (
+        related_invoice_id
+    ),
+
+    ADD INDEX index_invoices_company_related_invoice (
         company_id,
         related_invoice_id
     ),
 
     ADD INDEX index_invoices_cancelled_by_user (
         cancelled_by_user_id
-    ),
+    );
 
+
+UPDATE invoices
+SET active_sale_id =
+    CASE
+        WHEN sale_id IS NOT NULL
+            AND status <> 'cancelled'
+        THEN sale_id
+        ELSE NULL
+    END;
+
+
+ALTER TABLE invoices
     ADD UNIQUE KEY unique_company_active_sale_invoice (
         company_id,
         active_sale_id
-    ),
+    );
 
+
+ALTER TABLE invoices
     ADD CONSTRAINT fk_invoices_related_invoice_id
         FOREIGN KEY (related_invoice_id)
         REFERENCES invoices(id)
-        ON DELETE RESTRICT,
+        ON DELETE RESTRICT;
 
+
+ALTER TABLE invoices
     ADD CONSTRAINT fk_invoices_cancelled_by_user_id
         FOREIGN KEY (cancelled_by_user_id)
         REFERENCES users(id)
@@ -60,8 +72,10 @@ ALTER TABLE invoice_items
 
     ADD INDEX index_invoice_items_source_item (
         source_invoice_item_id
-    ),
+    );
 
+
+ALTER TABLE invoice_items
     ADD CONSTRAINT fk_invoice_items_source_item_id
         FOREIGN KEY (source_invoice_item_id)
         REFERENCES invoice_items(id)

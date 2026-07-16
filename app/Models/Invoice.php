@@ -10,6 +10,28 @@ class Invoice extends Model
 {
     public function create(array $data): int
     {
+        $saleId = null;
+
+        if (
+            isset($data['sale_id']) &&
+            $data['sale_id'] !== null &&
+            (int) $data['sale_id'] > 0
+        ) {
+            $saleId = (int) $data['sale_id'];
+        }
+
+        $status = 'draft';
+
+        if (isset($data['status'])) {
+            $status = (string) $data['status'];
+        }
+
+        $data['active_sale_id'] =
+            $saleId !== null &&
+            $status !== 'cancelled'
+            ? $saleId
+            : null;
+
         $sql = "
             INSERT INTO invoices
             (
@@ -17,6 +39,7 @@ class Invoice extends Model
                 client_id,
                 sale_id,
                 related_invoice_id,
+                active_sale_id,
                 created_by_user_id,
 
                 document_type,
@@ -73,6 +96,7 @@ class Invoice extends Model
                 :client_id,
                 :sale_id,
                 :related_invoice_id,
+                :active_sale_id,
                 :created_by_user_id,
 
                 :document_type,
@@ -266,9 +290,8 @@ class Invoice extends Model
         $sql = "
             SELECT *
             FROM invoices
-            WHERE sale_id = :sale_id
+            WHERE active_sale_id = :sale_id
             AND company_id = :company_id
-            AND status <> 'cancelled'
             ORDER BY id DESC
             LIMIT 1
         ";
@@ -420,6 +443,7 @@ class Invoice extends Model
             UPDATE invoices
             SET
                 status = 'cancelled',
+                active_sale_id = NULL,
                 cancelled_at = NOW(),
                 cancelled_by_user_id =
                     :cancelled_by_user_id,
@@ -450,6 +474,7 @@ class Invoice extends Model
             SELECT COUNT(*)
             FROM invoices
             WHERE company_id = :company_id
+            AND document_type = 'invoice'
             AND invoice_number IS NOT NULL
         ";
 
