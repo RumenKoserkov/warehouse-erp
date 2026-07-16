@@ -14,8 +14,7 @@
 
             <a
                 href="/invoices"
-                class="btn btn-outline-secondary"
-            >
+                class="btn btn-outline-secondary">
                 Back
             </a>
         </div>
@@ -45,8 +44,7 @@
         <form
             method="POST"
             action="/invoices/store"
-            id="invoice-form"
-        >
+            id="invoice-form">
             <?= \App\Core\Csrf::field() ?>
 
             <div class="card shadow-sm mb-4">
@@ -55,8 +53,7 @@
                         <div class="col-md-6">
                             <label
                                 for="client_id"
-                                class="form-label"
-                            >
+                                class="form-label">
                                 Client
                             </label>
 
@@ -64,8 +61,7 @@
                                 id="client_id"
                                 name="client_id"
                                 class="form-select"
-                                required
-                            >
+                                required>
                                 <option value="">
                                     Select client
                                 </option>
@@ -77,9 +73,8 @@
                                             (string) $old['client_id'] ===
                                             (string) $client['id']
                                         ): ?>
-                                            selected
-                                        <?php endif; ?>
-                                    >
+                                        selected
+                                        <?php endif; ?>>
                                         <?= htmlspecialchars(
                                             (string) $client['name'],
                                             ENT_QUOTES,
@@ -88,21 +83,15 @@
 
                                         <?php if (
                                             isset(
-                                                $client[
-                                                    'company_name'
-                                                ]
+                                                $client['company_name']
                                             ) &&
                                             trim(
-                                                (string) $client[
-                                                    'company_name'
-                                                ]
+                                                (string) $client['company_name']
                                             ) !== ''
                                         ): ?>
                                             —
                                             <?= htmlspecialchars(
-                                                (string) $client[
-                                                    'company_name'
-                                                ],
+                                                (string) $client['company_name'],
                                                 ENT_QUOTES,
                                                 'UTF-8'
                                             ) ?>
@@ -115,8 +104,7 @@
                         <div class="col-md-2">
                             <label
                                 for="invoice_date"
-                                class="form-label"
-                            >
+                                class="form-label">
                                 Invoice Date
                             </label>
 
@@ -127,20 +115,16 @@
                                 class="form-control"
                                 required
                                 value="<?= htmlspecialchars(
-                                    (string) $old[
-                                        'invoice_date'
-                                    ],
-                                    ENT_QUOTES,
-                                    'UTF-8'
-                                ) ?>"
-                            >
+                                            (string) $old['invoice_date'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>">
                         </div>
 
                         <div class="col-md-2">
                             <label
                                 for="supply_date"
-                                class="form-label"
-                            >
+                                class="form-label">
                                 Supply Date
                             </label>
 
@@ -151,20 +135,16 @@
                                 class="form-control"
                                 required
                                 value="<?= htmlspecialchars(
-                                    (string) $old[
-                                        'supply_date'
-                                    ],
-                                    ENT_QUOTES,
-                                    'UTF-8'
-                                ) ?>"
-                            >
+                                            (string) $old['supply_date'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>">
                         </div>
 
                         <div class="col-md-2">
                             <label
                                 for="due_date"
-                                class="form-label"
-                            >
+                                class="form-label">
                                 Due Date
                             </label>
 
@@ -173,14 +153,17 @@
                                 id="due_date"
                                 name="due_date"
                                 class="form-control"
+                                min="<?= htmlspecialchars(
+                                            (string) $old['invoice_date'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>"
+                                required
                                 value="<?= htmlspecialchars(
-                                    (string) $old[
-                                        'due_date'
-                                    ],
-                                    ENT_QUOTES,
-                                    'UTF-8'
-                                ) ?>"
-                            >
+                                            (string) $old['due_date'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>">
                         </div>
                     </div>
                 </div>
@@ -190,8 +173,7 @@
                 <div
                     class="card-header d-flex
                     justify-content-between
-                    align-items-center"
-                >
+                    align-items-center">
                     <h2 class="h5 mb-0">
                         Invoice Items
                     </h2>
@@ -200,16 +182,14 @@
                         type="button"
                         id="add-invoice-item"
                         class="btn btn-sm
-                        btn-outline-primary"
-                    >
+                        btn-outline-primary">
                         Add Product
                     </button>
                 </div>
 
                 <div class="table-responsive">
                     <table
-                        class="table align-middle mb-0"
-                    >
+                        class="table align-middle mb-0">
                         <thead>
                             <tr>
                                 <th style="min-width: 250px;">
@@ -246,8 +226,7 @@
                 <div class="col-lg-7">
                     <label
                         for="note"
-                        class="form-label"
-                    >
+                        class="form-label">
                         Note
                     </label>
 
@@ -255,12 +234,11 @@
                         id="note"
                         name="note"
                         class="form-control"
-                        rows="4"
-                    ><?= htmlspecialchars(
-                        (string) $old['note'],
-                        ENT_QUOTES,
-                        'UTF-8'
-                    ) ?></textarea>
+                        rows="4"><?= htmlspecialchars(
+                                        (string) $old['note'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?></textarea>
                 </div>
 
                 <div class="col-lg-5">
@@ -268,8 +246,7 @@
                         <div class="card-body">
                             <div
                                 class="d-flex
-                                justify-content-between"
-                            >
+                                justify-content-between">
                                 <span>Subtotal</span>
 
                                 <strong id="preview-subtotal">
@@ -279,8 +256,7 @@
 
                             <div
                                 class="d-flex
-                                justify-content-between"
-                            >
+                                justify-content-between">
                                 <span>Discount</span>
 
                                 <strong id="preview-discount">
@@ -290,16 +266,13 @@
 
                             <div
                                 class="d-flex
-                                justify-content-between"
-                            >
+                                justify-content-between">
                                 <span>
                                     VAT
                                     (<?= number_format(
-                                        (float) $taxConfiguration[
-                                            'vat_rate'
-                                        ],
-                                        2
-                                    ) ?>%)
+                                            (float) $taxConfiguration['vat_rate'],
+                                            2
+                                        ) ?>%)
                                 </span>
 
                                 <strong id="preview-tax">
@@ -312,8 +285,7 @@
                             <div
                                 class="d-flex
                                 justify-content-between
-                                fs-5"
-                            >
+                                fs-5">
                                 <span>Total</span>
 
                                 <strong id="preview-total">
@@ -328,8 +300,7 @@
             <div class="mt-4">
                 <button
                     type="submit"
-                    class="btn btn-primary"
-                >
+                    class="btn btn-primary">
                     Save Invoice Draft
                 </button>
             </div>
@@ -338,338 +309,338 @@
 </div>
 
 <script>
-document.addEventListener(
-    'DOMContentLoaded',
-    function () {
-        const products =
-            <?= json_encode(
-                $products,
-                JSON_UNESCAPED_UNICODE |
-                JSON_UNESCAPED_SLASHES
-            ) ?>;
+    document.addEventListener(
+        'DOMContentLoaded',
+        function() {
+            const products =
+                <?= json_encode(
+                    $products,
+                    JSON_UNESCAPED_UNICODE |
+                        JSON_UNESCAPED_SLASHES
+                ) ?>;
 
-        const taxConfiguration =
-            <?= json_encode(
-                $taxConfiguration,
-                JSON_UNESCAPED_UNICODE |
-                JSON_UNESCAPED_SLASHES
-            ) ?>;
+            const taxConfiguration =
+                <?= json_encode(
+                    $taxConfiguration,
+                    JSON_UNESCAPED_UNICODE |
+                        JSON_UNESCAPED_SLASHES
+                ) ?>;
 
-        const itemsBody =
-            document.getElementById(
-                'invoice-items-body'
-            );
+            const itemsBody =
+                document.getElementById(
+                    'invoice-items-body'
+                );
 
-        const addButton =
-            document.getElementById(
-                'add-invoice-item'
-            );
+            const addButton =
+                document.getElementById(
+                    'add-invoice-item'
+                );
 
-        const previewSubtotal =
-            document.getElementById(
-                'preview-subtotal'
-            );
+            const previewSubtotal =
+                document.getElementById(
+                    'preview-subtotal'
+                );
 
-        const previewDiscount =
-            document.getElementById(
-                'preview-discount'
-            );
+            const previewDiscount =
+                document.getElementById(
+                    'preview-discount'
+                );
 
-        const previewTax =
-            document.getElementById(
-                'preview-tax'
-            );
+            const previewTax =
+                document.getElementById(
+                    'preview-tax'
+                );
 
-        const previewTotal =
-            document.getElementById(
-                'preview-total'
-            );
+            const previewTotal =
+                document.getElementById(
+                    'preview-total'
+                );
 
-        function productOptions() {
-            let html =
-                '<option value="">Select product</option>';
+            function productOptions() {
+                let html =
+                    '<option value="">Select product</option>';
 
-            products.forEach(function (product) {
-                html +=
-                    '<option value="' +
-                    Number(product.id) +
-                    '" data-price="' +
-                    Number(
-                        product.selling_price
-                    ).toFixed(2) +
-                    '">' +
-                    escapeHtml(
-                        String(
-                            product.internal_code
-                        )
-                    ) +
-                    ' — ' +
-                    escapeHtml(
-                        String(product.name)
-                    ) +
-                    '</option>';
-            });
+                products.forEach(function(product) {
+                    html +=
+                        '<option value="' +
+                        Number(product.id) +
+                        '" data-price="' +
+                        Number(
+                            product.selling_price
+                        ).toFixed(2) +
+                        '">' +
+                        escapeHtml(
+                            String(
+                                product.internal_code
+                            )
+                        ) +
+                        ' — ' +
+                        escapeHtml(
+                            String(product.name)
+                        ) +
+                        '</option>';
+                });
 
-            return html;
-        }
+                return html;
+            }
 
-        function addRow() {
-            const row =
-                document.createElement('tr');
+            function addRow() {
+                const row =
+                    document.createElement('tr');
 
-            row.innerHTML =
-                '<td>' +
+                row.innerHTML =
+                    '<td>' +
                     '<select name="product_id[]" ' +
                     'class="form-select product-select" ' +
                     'required>' +
-                        productOptions() +
+                    productOptions() +
                     '</select>' +
-                '</td>' +
+                    '</td>' +
 
-                '<td>' +
+                    '<td>' +
                     '<input type="number" ' +
                     'name="quantity[]" ' +
                     'class="form-control quantity-input" ' +
                     'min="0.001" step="0.001" ' +
                     'value="1" required>' +
-                '</td>' +
+                    '</td>' +
 
-                '<td>' +
+                    '<td>' +
                     '<input type="number" ' +
                     'name="unit_price[]" ' +
                     'class="form-control price-input" ' +
                     'min="0" step="0.01" ' +
                     'value="0.00" required>' +
-                '</td>' +
+                    '</td>' +
 
-                '<td>' +
+                    '<td>' +
                     '<input type="number" ' +
                     'name="discount_amount[]" ' +
                     'class="form-control discount-input" ' +
                     'min="0" step="0.01" ' +
                     'value="0.00">' +
-                '</td>' +
+                    '</td>' +
 
-                '<td>' +
+                    '<td>' +
                     '<strong class="line-total">' +
-                        '0.00' +
+                    '0.00' +
                     '</strong>' +
-                '</td>' +
+                    '</td>' +
 
-                '<td>' +
+                    '<td>' +
                     '<button type="button" ' +
                     'class="btn btn-sm btn-outline-danger ' +
                     'remove-row">' +
-                        '×' +
+                    '×' +
                     '</button>' +
-                '</td>';
+                    '</td>';
 
-            itemsBody.appendChild(row);
+                itemsBody.appendChild(row);
 
-            bindRow(row);
-            calculateTotals();
-        }
+                bindRow(row);
+                calculateTotals();
+            }
 
-        function bindRow(row) {
-            const productSelect =
-                row.querySelector(
-                    '.product-select'
+            function bindRow(row) {
+                const productSelect =
+                    row.querySelector(
+                        '.product-select'
+                    );
+
+                const quantityInput =
+                    row.querySelector(
+                        '.quantity-input'
+                    );
+
+                const priceInput =
+                    row.querySelector(
+                        '.price-input'
+                    );
+
+                const discountInput =
+                    row.querySelector(
+                        '.discount-input'
+                    );
+
+                const removeButton =
+                    row.querySelector(
+                        '.remove-row'
+                    );
+
+                productSelect.addEventListener(
+                    'change',
+                    function() {
+                        const selectedOption =
+                            productSelect.options[
+                                productSelect.selectedIndex
+                            ];
+
+                        if (
+                            selectedOption !== undefined &&
+                            selectedOption.dataset.price !==
+                            undefined
+                        ) {
+                            priceInput.value =
+                                selectedOption.dataset.price;
+                        }
+
+                        calculateTotals();
+                    }
                 );
 
-            const quantityInput =
-                row.querySelector(
-                    '.quantity-input'
+                quantityInput.addEventListener(
+                    'input',
+                    calculateTotals
                 );
 
-            const priceInput =
-                row.querySelector(
-                    '.price-input'
+                priceInput.addEventListener(
+                    'input',
+                    calculateTotals
                 );
 
-            const discountInput =
-                row.querySelector(
-                    '.discount-input'
+                discountInput.addEventListener(
+                    'input',
+                    calculateTotals
                 );
 
-            const removeButton =
-                row.querySelector(
-                    '.remove-row'
+                removeButton.addEventListener(
+                    'click',
+                    function() {
+                        row.remove();
+
+                        if (
+                            itemsBody.children.length === 0
+                        ) {
+                            addRow();
+                        }
+
+                        calculateTotals();
+                    }
                 );
+            }
 
-            productSelect.addEventListener(
-                'change',
-                function () {
-                    const selectedOption =
-                        productSelect.options[
-                            productSelect.selectedIndex
-                        ];
+            function calculateTotals() {
+                let subtotal = 0;
+                let totalDiscount = 0;
+                let totalTax = 0;
+                let total = 0;
 
-                    if (
-                        selectedOption !== undefined &&
-                        selectedOption.dataset.price !==
-                        undefined
-                    ) {
-                        priceInput.value =
-                            selectedOption.dataset.price;
+                const rows =
+                    itemsBody.querySelectorAll('tr');
+
+                rows.forEach(function(row) {
+                    const quantity =
+                        Number(
+                            row.querySelector(
+                                '.quantity-input'
+                            ).value
+                        );
+
+                    const unitPrice =
+                        Number(
+                            row.querySelector(
+                                '.price-input'
+                            ).value
+                        );
+
+                    const discount =
+                        Number(
+                            row.querySelector(
+                                '.discount-input'
+                            ).value
+                        );
+
+                    const lineGross =
+                        quantity * unitPrice;
+
+                    let lineAfterDiscount =
+                        lineGross - discount;
+
+                    if (lineAfterDiscount < 0) {
+                        lineAfterDiscount = 0;
                     }
 
-                    calculateTotals();
-                }
-            );
+                    let lineNet =
+                        lineAfterDiscount;
 
-            quantityInput.addEventListener(
-                'input',
-                calculateTotals
-            );
+                    let lineTax = 0;
 
-            priceInput.addEventListener(
-                'input',
-                calculateTotals
-            );
+                    const vatRegistered =
+                        taxConfiguration.vat_registered ===
+                        true;
 
-            discountInput.addEventListener(
-                'input',
-                calculateTotals
-            );
+                    const pricesIncludeVat =
+                        taxConfiguration.prices_include_vat ===
+                        true;
 
-            removeButton.addEventListener(
+                    let vatRate =
+                        Number(
+                            taxConfiguration.vat_rate
+                        );
+
+                    if (!vatRegistered) {
+                        vatRate = 0;
+                    }
+
+                    if (
+                        pricesIncludeVat &&
+                        vatRate > 0
+                    ) {
+                        lineNet =
+                            lineAfterDiscount /
+                            (1 + vatRate / 100);
+
+                        lineTax =
+                            lineAfterDiscount -
+                            lineNet;
+                    } else {
+                        lineTax =
+                            lineNet *
+                            (vatRate / 100);
+                    }
+
+                    const lineTotal =
+                        lineNet + lineTax;
+
+                    subtotal += lineGross;
+                    totalDiscount += discount;
+                    totalTax += lineTax;
+                    total += lineTotal;
+
+                    row.querySelector(
+                            '.line-total'
+                        ).textContent =
+                        lineTotal.toFixed(2);
+                });
+
+                previewSubtotal.textContent =
+                    subtotal.toFixed(2);
+
+                previewDiscount.textContent =
+                    totalDiscount.toFixed(2);
+
+                previewTax.textContent =
+                    totalTax.toFixed(2);
+
+                previewTotal.textContent =
+                    total.toFixed(2);
+            }
+
+            function escapeHtml(value) {
+                return value
+                    .replaceAll('&', '&amp;')
+                    .replaceAll('<', '&lt;')
+                    .replaceAll('>', '&gt;')
+                    .replaceAll('"', '&quot;')
+                    .replaceAll("'", '&#039;');
+            }
+
+            addButton.addEventListener(
                 'click',
-                function () {
-                    row.remove();
-
-                    if (
-                        itemsBody.children.length === 0
-                    ) {
-                        addRow();
-                    }
-
-                    calculateTotals();
-                }
+                addRow
             );
+
+            addRow();
         }
-
-        function calculateTotals() {
-            let subtotal = 0;
-            let totalDiscount = 0;
-            let totalTax = 0;
-            let total = 0;
-
-            const rows =
-                itemsBody.querySelectorAll('tr');
-
-            rows.forEach(function (row) {
-                const quantity =
-                    Number(
-                        row.querySelector(
-                            '.quantity-input'
-                        ).value
-                    );
-
-                const unitPrice =
-                    Number(
-                        row.querySelector(
-                            '.price-input'
-                        ).value
-                    );
-
-                const discount =
-                    Number(
-                        row.querySelector(
-                            '.discount-input'
-                        ).value
-                    );
-
-                const lineGross =
-                    quantity * unitPrice;
-
-                let lineAfterDiscount =
-                    lineGross - discount;
-
-                if (lineAfterDiscount < 0) {
-                    lineAfterDiscount = 0;
-                }
-
-                let lineNet =
-                    lineAfterDiscount;
-
-                let lineTax = 0;
-
-                const vatRegistered =
-                    taxConfiguration.vat_registered ===
-                    true;
-
-                const pricesIncludeVat =
-                    taxConfiguration.prices_include_vat ===
-                    true;
-
-                let vatRate =
-                    Number(
-                        taxConfiguration.vat_rate
-                    );
-
-                if (!vatRegistered) {
-                    vatRate = 0;
-                }
-
-                if (
-                    pricesIncludeVat &&
-                    vatRate > 0
-                ) {
-                    lineNet =
-                        lineAfterDiscount /
-                        (1 + vatRate / 100);
-
-                    lineTax =
-                        lineAfterDiscount -
-                        lineNet;
-                } else {
-                    lineTax =
-                        lineNet *
-                        (vatRate / 100);
-                }
-
-                const lineTotal =
-                    lineNet + lineTax;
-
-                subtotal += lineGross;
-                totalDiscount += discount;
-                totalTax += lineTax;
-                total += lineTotal;
-
-                row.querySelector(
-                    '.line-total'
-                ).textContent =
-                    lineTotal.toFixed(2);
-            });
-
-            previewSubtotal.textContent =
-                subtotal.toFixed(2);
-
-            previewDiscount.textContent =
-                totalDiscount.toFixed(2);
-
-            previewTax.textContent =
-                totalTax.toFixed(2);
-
-            previewTotal.textContent =
-                total.toFixed(2);
-        }
-
-        function escapeHtml(value) {
-            return value
-                .replaceAll('&', '&amp;')
-                .replaceAll('<', '&lt;')
-                .replaceAll('>', '&gt;')
-                .replaceAll('"', '&quot;')
-                .replaceAll("'", '&#039;');
-        }
-
-        addButton.addEventListener(
-            'click',
-            addRow
-        );
-
-        addRow();
-    }
-);
+    );
 </script>

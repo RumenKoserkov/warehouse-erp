@@ -158,8 +158,39 @@ class Invoice extends Model
 
     public function allByCompany(
         int $companyId,
-        string $search = ''
+        string $search = '',
+        string $dueFilter = 'all'
     ): array {
+        $creditExpression = "
+            COALESCE(
+                credit_totals.credit_total,
+                0
+            )
+        ";
+
+        $paidExpression = "
+            COALESCE(
+                payment_totals.paid_amount,
+                0
+            )
+        ";
+
+        $adjustedExpression = "
+            GREATEST(
+                invoices.total_amount -
+                {$creditExpression},
+                0
+            )
+        ";
+
+        $balanceExpression = "
+            GREATEST(
+                {$adjustedExpression} -
+                {$paidExpression},
+                0
+            )
+        ";
+
         $sql = "
             SELECT
                 invoices.id,
@@ -171,17 +202,88 @@ class Invoice extends Model
                 invoices.due_date,
                 invoices.status,
                 invoices.currency,
+
                 invoices.client_display_name,
                 invoices.client_legal_name,
+                invoices.client_eik,
+                invoices.client_vat_number,
+
                 invoices.total_amount,
                 invoices.correction_reason,
                 invoices.cancelled_at,
                 invoices.created_at,
-                users.name AS created_by_user_name
+
+                users.name
+                    AS created_by_user_name,
+
+                {$creditExpression}
+                    AS credit_total,
+
+                {$adjustedExpression}
+                    AS adjusted_total,
+
+                {$paidExpression}
+                    AS paid_amount,
+
+                {$balanceExpression}
+                    AS balance_due
+
             FROM invoices
+
             LEFT JOIN users
-                ON users.id = invoices.created_by_user_id
-            WHERE invoices.company_id = :company_id
+                ON users.id =
+                    invoices.created_by_user_id
+
+            LEFT JOIN (
+                SELECT
+                    company_id,
+                    related_invoice_id,
+
+                    SUM(
+                        ABS(total_amount)
+                    ) AS credit_total
+
+                FROM invoices
+
+                WHERE document_type =
+                    'credit_note'
+
+                AND status = 'issued'
+
+                GROUP BY
+                    company_id,
+                    related_invoice_id
+            ) AS credit_totals
+                ON credit_totals.company_id =
+                    invoices.company_id
+
+                AND credit_totals.related_invoice_id =
+                    invoices.id
+
+            LEFT JOIN (
+                SELECT
+                    company_id,
+                    invoice_id,
+
+                    SUM(amount)
+                        AS paid_amount
+
+                FROM payments
+
+                WHERE status = 'completed'
+
+                GROUP BY
+                    company_id,
+                    invoice_id
+            ) AS payment_totals
+                ON payment_totals.company_id =
+                    invoices.company_id
+
+                AND payment_totals.invoice_id =
+                    invoices.id
+
+            WHERE invoices.company_id =
+                :company_id
         ";
 
         $parameters = [
@@ -189,22 +291,136 @@ class Invoice extends Model
         ];
 
         if ($search !== '') {
+            $searchTerm = '%' . $search . '%';
+
             $sql .= "
                 AND (
-                    invoices.invoice_number LIKE :search
-                    OR invoices.client_display_name LIKE :search
-                    OR invoices.client_legal_name LIKE :search
-                    OR invoices.client_eik LIKE :search
-                    OR invoices.client_vat_number LIKE :search
+                    invoices.invoice_number
+                        LIKE :search_number
+
+                    OR invoices.client_display_name
+                        LIKE :search_display_name
+
+                    OR invoices.client_legal_name
+                        LIKE :search_legal_name
+
+                    OR invoices.client_eik
+                        LIKE :search_eik
+
+                    OR invoices.client_vat_number
+                        LIKE :search_vat
                 )
             ";
 
-            $parameters['search'] =
-                '%' . $search . '%';
+            $parameters['search_number'] =
+                $searchTerm;
+
+            $parameters['search_display_name'] =
+                $searchTerm;
+
+            $parameters['search_legal_name'] =
+                $searchTerm;
+
+            $parameters['search_eik'] =
+                $searchTerm;
+
+            $parameters['search_vat'] =
+                $searchTerm;
+        }
+
+        if ($dueFilter === 'overdue') {
+            $sql .= "
+                AND invoices.document_type =
+                    'invoice'
+
+                AND invoices.status = 'issued'
+
+                AND invoices.due_date IS NOT NULL
+
+                AND invoices.due_date < CURDATE()
+
+                AND {$balanceExpression} > 0.009
+            ";
+        } elseif ($dueFilter === 'due_today') {
+            $sql .= "
+                AND invoices.document_type =
+                    'invoice'
+
+                AND invoices.status = 'issued'
+
+                AND invoices.due_date = CURDATE()
+
+                AND {$balanceExpression} > 0.009
+            ";
+        } elseif ($dueFilter === 'due_soon') {
+            $sql .= "
+                AND invoices.document_type =
+                    'invoice'
+
+                AND invoices.status = 'issued'
+
+                AND invoices.due_date > CURDATE()
+
+                AND invoices.due_date <=
+                    DATE_ADD(
+                        CURDATE(),
+                        INTERVAL 7 DAY
+                    )
+
+                AND {$balanceExpression} > 0.009
+            ";
+        } elseif ($dueFilter === 'unpaid') {
+            $sql .= "
+                AND invoices.document_type =
+                    'invoice'
+
+                AND invoices.status = 'issued'
+
+                AND {$paidExpression} <= 0.009
+
+                AND {$balanceExpression} > 0.009
+            ";
+        } elseif (
+            $dueFilter === 'partially_paid'
+        ) {
+            $sql .= "
+                AND invoices.document_type =
+                    'invoice'
+
+                AND invoices.status = 'issued'
+
+                AND {$paidExpression} > 0.009
+
+                AND {$balanceExpression} > 0.009
+            ";
+        } elseif ($dueFilter === 'paid') {
+            $sql .= "
+                AND invoices.document_type =
+                    'invoice'
+
+                AND invoices.status = 'issued'
+
+                AND {$balanceExpression} <= 0.009
+            ";
+        } elseif (
+            $dueFilter === 'no_due_date'
+        ) {
+            $sql .= "
+                AND invoices.document_type =
+                    'invoice'
+
+                AND invoices.status = 'issued'
+
+                AND invoices.due_date IS NULL
+
+                AND {$balanceExpression} > 0.009
+            ";
         }
 
         $sql .= "
-            ORDER BY invoices.id DESC
+            ORDER BY
+                invoices.invoice_date DESC,
+                invoices.id DESC
         ";
 
         $statement = $this->db->prepare($sql);

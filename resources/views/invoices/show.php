@@ -328,6 +328,94 @@ if (
     </div>
 <?php endif; ?>
 
+<?php if (
+    !$isCreditNote &&
+    $paymentSummary !== null
+): ?>
+    <?php if (
+        $paymentSummary['due_status'] === 'overdue'
+    ): ?>
+        <div class="alert alert-danger">
+            <h2 class="h5">
+                Invoice Overdue
+            </h2>
+
+            <p class="mb-1">
+                This invoice is overdue by
+
+                <strong>
+                    <?= (int) $paymentSummary['days_overdue'] ?>
+                    day(s)
+                </strong>.
+            </p>
+
+            <p class="mb-0">
+                Outstanding balance:
+
+                <strong>
+                    <?= number_format(
+                        (float) $paymentSummary['balance_due'],
+                        2
+                    ) ?>
+
+                    <?= htmlspecialchars(
+                        (string) $paymentSummary['currency'],
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ) ?>
+                </strong>
+            </p>
+        </div>
+    <?php elseif (
+        $paymentSummary['due_status'] === 'due_today'
+    ): ?>
+        <div class="alert alert-warning">
+            This invoice is due today.
+
+            Outstanding balance:
+
+            <strong>
+                <?= number_format(
+                    (float) $paymentSummary['balance_due'],
+                    2
+                ) ?>
+
+                <?= htmlspecialchars(
+                    (string) $paymentSummary['currency'],
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>
+            </strong>
+        </div>
+    <?php elseif (
+        $paymentSummary['due_status'] === 'due_soon'
+    ): ?>
+        <div class="alert alert-warning">
+            This invoice is due in
+
+            <strong>
+                <?= (int) $paymentSummary['days_until_due'] ?>
+                day(s)
+            </strong>.
+
+            Remaining balance:
+
+            <strong>
+                <?= number_format(
+                    (float) $paymentSummary['balance_due'],
+                    2
+                ) ?>
+
+                <?= htmlspecialchars(
+                    (string) $paymentSummary['currency'],
+                    ENT_QUOTES,
+                    'UTF-8'
+                ) ?>
+            </strong>
+        </div>
+    <?php endif; ?>
+<?php endif; ?>
+
 <div class="row g-4 mb-4">
     <div class="col-lg-6">
         <div class="card shadow-sm h-100">
@@ -825,6 +913,25 @@ if (
                             Unpaid
                         </span>
                     <?php endif; ?>
+                </div>
+
+                <div class="col-md-2">
+                    <div class="text-muted">
+                        Due Status
+                    </div>
+
+                    <span
+                        class="badge <?= htmlspecialchars(
+                                            (string) $paymentSummary['due_badge_class'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>">
+                        <?= htmlspecialchars(
+                            (string) $paymentSummary['due_label'],
+                            ENT_QUOTES,
+                            'UTF-8'
+                        ) ?>
+                    </span>
                 </div>
             </div>
 

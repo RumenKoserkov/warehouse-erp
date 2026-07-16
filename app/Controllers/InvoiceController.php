@@ -14,6 +14,7 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Services\AuthService;
 use App\Services\CreditNoteService;
+use App\Services\InvoiceDueService;
 use App\Services\InvoiceService;
 use App\Services\TaxService;
 use App\Services\InvoiceNumberService;
@@ -33,6 +34,7 @@ class InvoiceController extends Controller
 
     private AuthService $authService;
     private InvoiceService $invoiceService;
+    private InvoiceDueService $invoiceDueService;
     private CreditNoteService $creditNoteService;
     private PaymentService $paymentService;
     private TaxService $taxService;
@@ -51,6 +53,9 @@ class InvoiceController extends Controller
         $this->authService = new AuthService();
         $this->invoiceService =
             new InvoiceService();
+
+        $this->invoiceDueService =
+            new InvoiceDueService();
 
         $this->creditNoteService =
             new CreditNoteService();
@@ -85,6 +90,35 @@ class InvoiceController extends Controller
             );
         }
 
+        $dueFilter = 'all';
+
+        if (isset($_GET['due_filter'])) {
+            $requestedFilter = trim(
+                (string) $_GET['due_filter']
+            );
+
+            $allowedFilters = [
+                'all',
+                'overdue',
+                'due_today',
+                'due_soon',
+                'unpaid',
+                'partially_paid',
+                'paid',
+                'no_due_date',
+            ];
+
+            if (
+                in_array(
+                    $requestedFilter,
+                    $allowedFilters,
+                    true
+                )
+            ) {
+                $dueFilter = $requestedFilter;
+            }
+        }
+
         $companyId =
             (int) $currentUser['company_id'];
 
@@ -92,8 +126,20 @@ class InvoiceController extends Controller
             $this->invoiceModel
             ->allByCompany(
                 $companyId,
-                $search
+                $search,
+                $dueFilter
             );
+
+        foreach ($invoices as &$invoice) {
+            $invoice['due_information'] =
+                $this->invoiceDueService
+                ->information(
+                    $invoice,
+                    (float) $invoice['balance_due']
+                );
+        }
+
+        unset($invoice);
 
         $sequence =
             $this->invoiceNumberService
@@ -113,6 +159,7 @@ class InvoiceController extends Controller
             'title' => 'Invoices',
             'invoices' => $invoices,
             'search' => $search,
+            'dueFilter' => $dueFilter,
             'sequence' => $sequence,
 
             'canConfigureSequence' =>
@@ -137,7 +184,9 @@ class InvoiceController extends Controller
         $this->renderCreate(
             $companyId,
             [],
-            $this->emptyOldData()
+            $this->emptyOldData(
+                $companyId
+            )
         );
     }
 
@@ -170,6 +219,28 @@ class InvoiceController extends Controller
 
         $dueDate =
             $this->input('due_date');
+
+        if (
+            $dueDate === '' &&
+            preg_match(
+                '/^\d{4}-\d{2}-\d{2}$/',
+                $invoiceDate
+            ) === 1
+        ) {
+            try {
+                $dueDate =
+                    $this->invoiceDueService
+                    ->calculateDueDate(
+                        $companyId,
+                        $invoiceDate
+                    );
+            } catch (\InvalidArgumentException) {
+                /*
+                 * Validator-ът по-долу ще добави
+                 * грешката за невалидна дата.
+                 */
+            }
+        }
 
         $note = $this->input('note');
 
@@ -210,6 +281,10 @@ class InvoiceController extends Controller
                 'supply_date',
                 'Y-m-d',
                 'Supply date is invalid.'
+            )
+            ->required(
+                'due_date',
+                'Due date is required.'
             )
             ->date(
                 'due_date',
@@ -889,13 +964,23 @@ class InvoiceController extends Controller
         return $items;
     }
 
-    private function emptyOldData(): array
-    {
+    private function emptyOldData(
+        int $companyId
+    ): array {
+        $invoiceDate = date('Y-m-d');
+
+        $dueDate =
+            $this->invoiceDueService
+            ->calculateDueDate(
+                $companyId,
+                $invoiceDate
+            );
+
         return [
             'client_id' => '',
-            'invoice_date' => date('Y-m-d'),
-            'supply_date' => date('Y-m-d'),
-            'due_date' => '',
+            'invoice_date' => $invoiceDate,
+            'supply_date' => $invoiceDate,
+            'due_date' => $dueDate,
             'note' => '',
         ];
     }

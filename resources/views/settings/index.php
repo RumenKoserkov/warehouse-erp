@@ -36,8 +36,8 @@
                         name="company_name"
                         class="form-control"
                         value="<?= htmlspecialchars(
-                            $settings['company_name']
-                        ) ?>"
+                                    $settings['company_name']
+                                ) ?>"
                         required>
                 </div>
 
@@ -53,13 +53,13 @@
                         <?php foreach ($currencies as $currency): ?>
                             <option
                                 value="<?= htmlspecialchars(
-                                    $currency
-                                ) ?>"
+                                            $currency
+                                        ) ?>"
                                 <?php if (
                                     $settings['currency'] ===
                                     $currency
                                 ): ?>
-                                    selected
+                                selected
                                 <?php endif; ?>>
                                 <?= htmlspecialchars($currency) ?>
                             </option>
@@ -80,8 +80,8 @@
                         name="vat_rate"
                         class="form-control"
                         value="<?= htmlspecialchars(
-                            $settings['vat_rate']
-                        ) ?>"
+                                    $settings['vat_rate']
+                                ) ?>"
                         required>
                 </div>
             </div>
@@ -96,11 +96,9 @@
                             value="1"
                             class="form-check-input"
                             <?php if (
-                                (string) $settings[
-                                    'vat_registered'
-                                ] === '1'
+                                (string) $settings['vat_registered'] === '1'
                             ): ?>
-                                checked
+                            checked
                             <?php endif; ?>>
 
                         <label
@@ -120,11 +118,9 @@
                             value="1"
                             class="form-check-input"
                             <?php if (
-                                (string) $settings[
-                                    'sales_prices_include_vat'
-                                ] === '1'
+                                (string) $settings['sales_prices_include_vat'] === '1'
                             ): ?>
-                                checked
+                            checked
                             <?php endif; ?>>
 
                         <label
@@ -144,11 +140,9 @@
                             value="1"
                             class="form-check-input"
                             <?php if (
-                                (string) $settings[
-                                    'purchase_prices_include_vat'
-                                ] === '1'
+                                (string) $settings['purchase_prices_include_vat'] === '1'
                             ): ?>
-                                checked
+                            checked
                             <?php endif; ?>>
 
                         <label
@@ -176,8 +170,8 @@
                         name="invoice_prefix"
                         class="form-control"
                         value="<?= htmlspecialchars(
-                            $settings['invoice_prefix']
-                        ) ?>"
+                                    $settings['invoice_prefix']
+                                ) ?>"
                         required>
 
                     <small class="text-muted">
@@ -199,13 +193,13 @@
                         ): ?>
                             <option
                                 value="<?= htmlspecialchars(
-                                    $format
-                                ) ?>"
+                                            $format
+                                        ) ?>"
                                 <?php if (
                                     $settings['date_format'] ===
                                     $format
                                 ): ?>
-                                    selected
+                                selected
                                 <?php endif; ?>>
                                 <?= htmlspecialchars(
                                     $format . ' — ' . $example
@@ -213,6 +207,41 @@
                             </option>
                         <?php endforeach; ?>
                     </select>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label
+                        for="payment_terms_days"
+                        class="form-label">
+                        Default Payment Terms *
+                    </label>
+
+                    <div class="input-group">
+                        <input
+                            type="number"
+                            id="payment_terms_days"
+                            name="payment_terms_days"
+                            class="form-control"
+                            min="0"
+                            max="365"
+                            step="1"
+                            required
+                            value="<?= htmlspecialchars(
+                                        (string) $settings['payment_terms_days'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>">
+
+                        <span class="input-group-text">
+                            days
+                        </span>
+                    </div>
+
+                    <div class="form-text">
+                        Used to calculate the default due
+                        date for new invoices. Use 0 for
+                        immediate payment.
+                    </div>
                 </div>
             </div>
 
@@ -255,9 +284,7 @@
 
                 <td>
                     <?php if (
-                        (string) $settings[
-                            'vat_registered'
-                        ] === '1'
+                        (string) $settings['vat_registered'] === '1'
                     ): ?>
                         Yes
                     <?php else: ?>
@@ -281,9 +308,7 @@
 
                 <td>
                     <?php if (
-                        (string) $settings[
-                            'sales_prices_include_vat'
-                        ] === '1'
+                        (string) $settings['sales_prices_include_vat'] === '1'
                     ): ?>
                         VAT included
                     <?php else: ?>
@@ -297,9 +322,7 @@
 
                 <td>
                     <?php if (
-                        (string) $settings[
-                            'purchase_prices_include_vat'
-                        ] === '1'
+                        (string) $settings['purchase_prices_include_vat'] === '1'
                     ): ?>
                         VAT included
                     <?php else: ?>
@@ -315,6 +338,19 @@
                     <?= htmlspecialchars(
                         $settings['invoice_prefix']
                     ) ?>
+                </td>
+            </tr>
+
+            <tr>
+                <th>Default Payment Terms</th>
+
+                <td>
+                    <?= htmlspecialchars(
+                        (string) $settings['payment_terms_days'],
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ) ?>
+                    days
                 </td>
             </tr>
 
@@ -371,12 +407,12 @@
                         maxlength="255"
                         required
                         value="<?= htmlspecialchars(
-                            (string) (
-                                $company['legal_name'] ?? ''
-                            ),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>">
+                                    (string) (
+                                        $company['legal_name'] ?? ''
+                                    ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>">
                 </div>
 
                 <div class="col-md-4">
@@ -394,12 +430,12 @@
                         maxlength="20"
                         required
                         value="<?= htmlspecialchars(
-                            (string) (
-                                $company['eik'] ?? ''
-                            ),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>">
+                                    (string) (
+                                        $company['eik'] ?? ''
+                                    ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>">
                 </div>
 
                 <div class="col-md-4">
@@ -417,12 +453,12 @@
                         maxlength="30"
                         placeholder="BG123456789"
                         value="<?= htmlspecialchars(
-                            (string) (
-                                $company['vat_number'] ?? ''
-                            ),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>">
+                                    (string) (
+                                        $company['vat_number'] ?? ''
+                                    ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>">
                 </div>
 
                 <div class="col-md-8">
@@ -439,12 +475,12 @@
                         class="form-control"
                         maxlength="255"
                         value="<?= htmlspecialchars(
-                            (string) (
-                                $company['manager_name'] ?? ''
-                            ),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>">
+                                    (string) (
+                                        $company['manager_name'] ?? ''
+                                    ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>">
                 </div>
             </div>
 
@@ -470,14 +506,12 @@
                         maxlength="255"
                         required
                         value="<?= htmlspecialchars(
-                            (string) (
-                                $company[
-                                    'billing_address'
-                                ] ?? ''
-                            ),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>">
+                                    (string) (
+                                        $company['billing_address'] ?? ''
+                                    ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>">
                 </div>
 
                 <div class="col-md-4">
@@ -495,12 +529,12 @@
                         maxlength="100"
                         required
                         value="<?= htmlspecialchars(
-                            (string) (
-                                $company['billing_city'] ?? ''
-                            ),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>">
+                                    (string) (
+                                        $company['billing_city'] ?? ''
+                                    ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>">
                 </div>
 
                 <div class="col-md-4">
@@ -517,14 +551,12 @@
                         class="form-control"
                         maxlength="20"
                         value="<?= htmlspecialchars(
-                            (string) (
-                                $company[
-                                    'billing_postal_code'
-                                ] ?? ''
-                            ),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>">
+                                    (string) (
+                                        $company['billing_postal_code'] ?? ''
+                                    ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>">
                 </div>
 
                 <div class="col-md-4">
@@ -542,14 +574,12 @@
                         maxlength="100"
                         required
                         value="<?= htmlspecialchars(
-                            (string) (
-                                $company[
-                                    'billing_country'
-                                ] ?? 'Bulgaria'
-                            ),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>">
+                                    (string) (
+                                        $company['billing_country'] ?? 'Bulgaria'
+                                    ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>">
                 </div>
 
                 <div class="col-md-4">
@@ -566,14 +596,12 @@
                         class="form-control"
                         maxlength="50"
                         value="<?= htmlspecialchars(
-                            (string) (
-                                $company[
-                                    'billing_phone'
-                                ] ?? ''
-                            ),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>">
+                                    (string) (
+                                        $company['billing_phone'] ?? ''
+                                    ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>">
                 </div>
 
                 <div class="col-md-6">
@@ -591,14 +619,12 @@
                         maxlength="255"
                         required
                         value="<?= htmlspecialchars(
-                            (string) (
-                                $company[
-                                    'billing_email'
-                                ] ?? ''
-                            ),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>">
+                                    (string) (
+                                        $company['billing_email'] ?? ''
+                                    ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>">
                 </div>
 
                 <div class="col-md-6">
@@ -616,14 +642,12 @@
                         maxlength="255"
                         placeholder="https://example.com"
                         value="<?= htmlspecialchars(
-                            (string) (
-                                $company[
-                                    'billing_website'
-                                ] ?? ''
-                            ),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>">
+                                    (string) (
+                                        $company['billing_website'] ?? ''
+                                    ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>">
                 </div>
             </div>
 
@@ -648,12 +672,12 @@
                         class="form-control"
                         maxlength="255"
                         value="<?= htmlspecialchars(
-                            (string) (
-                                $company['bank_name'] ?? ''
-                            ),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>">
+                                    (string) (
+                                        $company['bank_name'] ?? ''
+                                    ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>">
                 </div>
 
                 <div class="col-md-4">
@@ -670,12 +694,12 @@
                         class="form-control"
                         maxlength="50"
                         value="<?= htmlspecialchars(
-                            (string) (
-                                $company['iban'] ?? ''
-                            ),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>">
+                                    (string) (
+                                        $company['iban'] ?? ''
+                                    ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>">
                 </div>
 
                 <div class="col-md-2">
@@ -692,12 +716,12 @@
                         class="form-control"
                         maxlength="20"
                         value="<?= htmlspecialchars(
-                            (string) (
-                                $company['bic'] ?? ''
-                            ),
-                            ENT_QUOTES,
-                            'UTF-8'
-                        ) ?>">
+                                    (string) (
+                                        $company['bic'] ?? ''
+                                    ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>">
                 </div>
             </div>
 

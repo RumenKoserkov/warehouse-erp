@@ -22,6 +22,8 @@ class PaymentService
 
     private AuditLogService $auditLogService;
 
+    private InvoiceDueService $invoiceDueService;
+
     public function __construct()
     {
         $this->db = Database::getConnection();
@@ -31,6 +33,9 @@ class PaymentService
 
         $this->auditLogService =
             new AuditLogService();
+
+        $this->invoiceDueService =
+            new InvoiceDueService();
     }
 
     public function methods(): array
@@ -87,7 +92,7 @@ class PaymentService
                 'amount' => null,
                 'remaining_balance' => null,
                 'error' =>
-                    'Payment amount must be a positive number with maximum 2 decimal places.',
+                'Payment amount must be a positive number with maximum 2 decimal places.',
             ];
         }
 
@@ -103,7 +108,7 @@ class PaymentService
                 'amount' => null,
                 'remaining_balance' => null,
                 'error' =>
-                    'Payment date is invalid.',
+                'Payment date is invalid.',
             ];
         }
 
@@ -114,7 +119,7 @@ class PaymentService
                 'amount' => null,
                 'remaining_balance' => null,
                 'error' =>
-                    'Payment date cannot be in the future.',
+                'Payment date cannot be in the future.',
             ];
         }
 
@@ -132,7 +137,7 @@ class PaymentService
                 'amount' => null,
                 'remaining_balance' => null,
                 'error' =>
-                    'Invalid payment method.',
+                'Invalid payment method.',
             ];
         }
 
@@ -145,7 +150,7 @@ class PaymentService
                 'amount' => null,
                 'remaining_balance' => null,
                 'error' =>
-                    'External reference must be maximum 100 characters.',
+                'External reference must be maximum 100 characters.',
             ];
         }
 
@@ -156,7 +161,7 @@ class PaymentService
                 'amount' => null,
                 'remaining_balance' => null,
                 'error' =>
-                    'Payment note must be maximum 2000 characters.',
+                'Payment note must be maximum 2000 characters.',
             ];
         }
 
@@ -185,9 +190,7 @@ class PaymentService
             }
 
             if (
-                (string) $invoice[
-                    'document_type'
-                ] !== 'invoice'
+                (string) $invoice['document_type'] !== 'invoice'
             ) {
                 throw new Exception(
                     'Payments can only be recorded for invoices.'
@@ -223,15 +226,15 @@ class PaymentService
             if ($amount > $balanceDue) {
                 throw new Exception(
                     'Payment amount cannot exceed the outstanding balance of ' .
-                    number_format(
-                        $balanceDue,
-                        2,
-                        '.',
-                        ''
-                    ) .
-                    ' ' .
-                    (string) $invoice['currency'] .
-                    '.'
+                        number_format(
+                            $balanceDue,
+                            2,
+                            '.',
+                            ''
+                        ) .
+                        ' ' .
+                        (string) $invoice['currency'] .
+                        '.'
                 );
             }
 
@@ -242,30 +245,28 @@ class PaymentService
                     'invoice_id' => $invoiceId,
 
                     'received_by_user_id' =>
-                        $userId,
+                    $userId,
 
                     'payment_date' =>
-                        $paymentDate,
+                    $paymentDate,
 
                     'amount' => $amount,
 
                     'currency' =>
-                        (string) $invoice[
-                            'currency'
-                        ],
+                    (string) $invoice['currency'],
 
                     'payment_method' =>
-                        $paymentMethod,
+                    $paymentMethod,
 
                     'external_reference' =>
-                        $this->nullableString(
-                            $externalReference
-                        ),
+                    $this->nullableString(
+                        $externalReference
+                    ),
 
                     'note' =>
-                        $this->nullableString(
-                            $note
-                        ),
+                    $this->nullableString(
+                        $note
+                    ),
                 ]);
 
             $remainingBalance = round(
@@ -280,9 +281,7 @@ class PaymentService
             }
 
             $invoiceNumber =
-                (string) $invoice[
-                    'invoice_number'
-                ];
+                (string) $invoice['invoice_number'];
 
             $this->auditLogService->log(
                 $companyId,
@@ -291,25 +290,25 @@ class PaymentService
                 'payment',
                 $paymentId,
                 'Recorded payment of ' .
-                number_format(
-                    $amount,
-                    2,
-                    '.',
-                    ''
-                ) .
-                ' ' .
-                (string) $invoice['currency'] .
-                ' for invoice ' .
-                $invoiceNumber .
-                '. Remaining balance: ' .
-                number_format(
-                    $remainingBalance,
-                    2,
-                    '.',
-                    ''
-                ) .
-                ' ' .
-                (string) $invoice['currency']
+                    number_format(
+                        $amount,
+                        2,
+                        '.',
+                        ''
+                    ) .
+                    ' ' .
+                    (string) $invoice['currency'] .
+                    ' for invoice ' .
+                    $invoiceNumber .
+                    '. Remaining balance: ' .
+                    number_format(
+                        $remainingBalance,
+                        2,
+                        '.',
+                        ''
+                    ) .
+                    ' ' .
+                    (string) $invoice['currency']
             );
 
             $this->db->commit();
@@ -320,7 +319,7 @@ class PaymentService
                 'amount' => $amount,
 
                 'remaining_balance' =>
-                    $remainingBalance,
+                $remainingBalance,
 
                 'error' => null,
             ];
@@ -335,7 +334,7 @@ class PaymentService
                 'amount' => null,
                 'remaining_balance' => null,
                 'error' =>
-                    $exception->getMessage(),
+                $exception->getMessage(),
             ];
         }
     }
@@ -353,7 +352,7 @@ class PaymentService
                 'success' => false,
                 'cancelled' => false,
                 'error' =>
-                    'Cancellation reason is required.',
+                'Cancellation reason is required.',
             ];
         }
 
@@ -362,7 +361,7 @@ class PaymentService
                 'success' => false,
                 'cancelled' => false,
                 'error' =>
-                    'Cancellation reason must be maximum 500 characters.',
+                'Cancellation reason must be maximum 500 characters.',
             ];
         }
 
@@ -378,7 +377,7 @@ class PaymentService
                 'success' => false,
                 'cancelled' => false,
                 'error' =>
-                    'Payment was not found.',
+                'Payment was not found.',
             ];
         }
 
@@ -460,9 +459,9 @@ class PaymentService
                 'payment',
                 $paymentId,
                 'Cancelled payment ' .
-                $reference .
-                '. Reason: ' .
-                $reason
+                    $reference .
+                    '. Reason: ' .
+                    $reason
             );
 
             $this->db->commit();
@@ -481,7 +480,7 @@ class PaymentService
                 'success' => false,
                 'cancelled' => false,
                 'error' =>
-                    $exception->getMessage(),
+                $exception->getMessage(),
             ];
         }
     }
@@ -562,30 +561,58 @@ class PaymentService
                 'partially_paid';
         }
 
+        $dueInformation =
+            $this->invoiceDueService
+            ->information(
+                $invoice,
+                $balanceDue
+            );
+
         return [
             'invoice_total' =>
-                $invoiceTotal,
+            $invoiceTotal,
 
             'credit_total' =>
-                $creditTotal,
+            $creditTotal,
 
             'adjusted_total' =>
-                $adjustedTotal,
+            $adjustedTotal,
 
             'paid_amount' =>
-                $paidAmount,
+            $paidAmount,
 
             'balance_due' =>
-                round($balanceDue, 2),
+            round($balanceDue, 2),
 
             'overpaid_amount' =>
-                round($overpaidAmount, 2),
+            round($overpaidAmount, 2),
 
             'payment_status' =>
-                $paymentStatus,
+            $paymentStatus,
 
             'currency' =>
-                (string) $invoice['currency'],
+            (string) $invoice['currency'],
+
+            'due_status' =>
+            $dueInformation['status'],
+
+            'due_label' =>
+            $dueInformation['label'],
+
+            'due_badge_class' =>
+            $dueInformation['badge_class'],
+
+            'is_overdue' =>
+            $dueInformation['is_overdue'],
+
+            'days_overdue' =>
+            $dueInformation['days_overdue'],
+
+            'days_until_due' =>
+            $dueInformation['days_until_due'],
+
+            'due_date' =>
+            $invoice['due_date'] ?? null,
         ];
     }
 

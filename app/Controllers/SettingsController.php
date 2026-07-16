@@ -105,6 +105,9 @@ class SettingsController extends Controller
         $currency = $this->input('currency');
         $vatRate = $this->input('vat_rate');
 
+        $paymentTermsDaysInput =
+            $this->input('payment_terms_days');
+
         $vatRegistered = isset(
             $_POST['vat_registered']
         ) ? '1' : '0';
@@ -167,6 +170,29 @@ class SettingsController extends Controller
                 'VAT rate cannot be greater than 100%.';
         }
 
+        $paymentTermsDays = null;
+
+        if (
+            preg_match(
+                '/^\d{1,3}$/',
+                $paymentTermsDaysInput
+            ) !== 1
+        ) {
+            $errors[] =
+                'Payment terms must be a whole number between 0 and 365 days.';
+        } else {
+            $paymentTermsDays =
+                (int) $paymentTermsDaysInput;
+
+            if (
+                $paymentTermsDays < 0 ||
+                $paymentTermsDays > 365
+            ) {
+                $errors[] =
+                    'Payment terms must be between 0 and 365 days.';
+            }
+        }
+
         if (
             $vatRegistered === '1' &&
             trim((string) $company['vat_number']) === ''
@@ -192,15 +218,26 @@ class SettingsController extends Controller
             $errors[] = 'Invalid date format.';
         }
 
+        $paymentTermsDaysValue =
+            $paymentTermsDays === null
+            ? $paymentTermsDaysInput
+            : (string) $paymentTermsDays;
+
         $settings = [
             'company_name' => $companyName,
             'currency' => $currency,
             'vat_registered' => $vatRegistered,
             'vat_rate' => $vatRate,
+
             'sales_prices_include_vat' =>
-                $salesPricesIncludeVat,
+            $salesPricesIncludeVat,
+
             'purchase_prices_include_vat' =>
-                $purchasePricesIncludeVat,
+            $purchasePricesIncludeVat,
+
+            'payment_terms_days' =>
+            $paymentTermsDaysValue,
+
             'invoice_prefix' => $invoicePrefix,
             'date_format' => $dateFormat,
         ];
@@ -426,48 +463,48 @@ class SettingsController extends Controller
     {
         $data = [
             'legal_name' =>
-                $this->input('legal_name'),
+            $this->input('legal_name'),
 
             'eik' =>
-                $this->input('eik'),
+            $this->input('eik'),
 
             'vat_number' =>
-                $this->input('vat_number'),
+            $this->input('vat_number'),
 
             'manager_name' =>
-                $this->input('manager_name'),
+            $this->input('manager_name'),
 
             'billing_address' =>
-                $this->input('billing_address'),
+            $this->input('billing_address'),
 
             'billing_city' =>
-                $this->input('billing_city'),
+            $this->input('billing_city'),
 
             'billing_postal_code' =>
-                $this->input(
-                    'billing_postal_code'
-                ),
+            $this->input(
+                'billing_postal_code'
+            ),
 
             'billing_country' =>
-                $this->input('billing_country'),
+            $this->input('billing_country'),
 
             'billing_phone' =>
-                $this->input('billing_phone'),
+            $this->input('billing_phone'),
 
             'billing_email' =>
-                $this->input('billing_email'),
+            $this->input('billing_email'),
 
             'billing_website' =>
-                $this->input('billing_website'),
+            $this->input('billing_website'),
 
             'bank_name' =>
-                $this->input('bank_name'),
+            $this->input('bank_name'),
 
             'iban' =>
-                $this->input('iban'),
+            $this->input('iban'),
 
             'bic' =>
-                $this->input('bic'),
+            $this->input('bic'),
         ];
 
         $data['vat_number'] = strtoupper(
@@ -531,17 +568,22 @@ class SettingsController extends Controller
         if (!isset(
             $settings['sales_prices_include_vat']
         )) {
-            $settings[
-                'sales_prices_include_vat'
-            ] = '0';
+            $settings['sales_prices_include_vat'] = '0';
         }
 
         if (!isset(
             $settings['purchase_prices_include_vat']
         )) {
-            $settings[
-                'purchase_prices_include_vat'
-            ] = '0';
+            $settings['purchase_prices_include_vat'] = '0';
+        }
+
+        if (
+            !isset(
+                $settings['payment_terms_days']
+            )
+        ) {
+            $settings['payment_terms_days'] =
+                '14';
         }
 
         if (!isset($settings['invoice_prefix'])) {

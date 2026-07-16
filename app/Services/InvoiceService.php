@@ -33,6 +33,7 @@ class InvoiceService
     private SaleItem $saleItemModel;
 
     private TaxService $taxService;
+    private InvoiceDueService $invoiceDueService;
     private AuditLogService $auditLogService;
 
     public function __construct()
@@ -50,6 +51,8 @@ class InvoiceService
         $this->saleItemModel = new SaleItem();
 
         $this->taxService = new TaxService();
+        $this->invoiceDueService =
+            new InvoiceDueService();
         $this->auditLogService =
             new AuditLogService();
     }
@@ -62,6 +65,28 @@ class InvoiceService
             $companyId = (int) $data['company_id'];
             $clientId = (int) $data['client_id'];
             $userId = (int) $data['user_id'];
+
+            $invoiceDate =
+                (string) $data['invoice_date'];
+
+            $dueDate = null;
+
+            if (
+                isset($data['due_date']) &&
+                $data['due_date'] !== null &&
+                trim((string) $data['due_date']) !== ''
+            ) {
+                $dueDate = trim(
+                    (string) $data['due_date']
+                );
+            } else {
+                $dueDate =
+                    $this->invoiceDueService
+                    ->calculateDueDate(
+                        $companyId,
+                        $invoiceDate
+                    );
+            }
 
             $company = $this->companyModel->findById(
                 $companyId
@@ -120,9 +145,9 @@ class InvoiceService
 
                 'document_type' => 'invoice',
                 'invoice_number' => null,
-                'invoice_date' => $data['invoice_date'],
+                'invoice_date' => $invoiceDate,
                 'supply_date' => $data['supply_date'],
-                'due_date' => $data['due_date'],
+                'due_date' => $dueDate,
                 'status' => 'draft',
                 'currency' => $currency,
 
@@ -428,6 +453,13 @@ class InvoiceService
 
             $invoiceDate = date('Y-m-d');
 
+            $dueDate =
+                $this->invoiceDueService
+                ->calculateDueDate(
+                    $companyId,
+                    $invoiceDate
+                );
+
             $supplyDate =
                 (string) $sale['sale_date'];
 
@@ -454,7 +486,7 @@ class InvoiceService
                     $supplyDate,
 
                     'due_date' =>
-                    null,
+                    $dueDate,
 
                     'status' =>
                     'draft',

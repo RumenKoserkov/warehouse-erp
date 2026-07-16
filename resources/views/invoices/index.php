@@ -124,7 +124,7 @@
     method="GET"
     action="/invoices"
     class="row g-2 mb-4">
-    <div class="col-md-10">
+    <div class="col-lg-7">
         <input
             type="text"
             name="search"
@@ -137,11 +137,60 @@
                     ) ?>">
     </div>
 
-    <div class="col-md-2 d-grid">
+    <div class="col-lg-3">
+        <select
+            name="due_filter"
+            class="form-select">
+            <?php
+            $dueFilters = [
+                'all' => 'All Documents',
+                'overdue' =>
+                'Overdue Invoices',
+                'due_today' =>
+                'Due Today',
+                'due_soon' =>
+                'Due Within 7 Days',
+                'unpaid' =>
+                'Unpaid',
+                'partially_paid' =>
+                'Partially Paid',
+                'paid' =>
+                'Paid',
+                'no_due_date' =>
+                'No Due Date',
+            ];
+            ?>
+
+            <?php foreach (
+                $dueFilters as
+                $value => $label
+            ): ?>
+                <option
+                    value="<?= htmlspecialchars(
+                                $value,
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>"
+                    <?php if (
+                        $dueFilter === $value
+                    ): ?>
+                    selected
+                    <?php endif; ?>>
+                    <?= htmlspecialchars(
+                        $label,
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+
+    <div class="col-lg-2 d-grid">
         <button
             type="submit"
             class="btn btn-outline-primary">
-            Search
+            Filter
         </button>
     </div>
 </form>
@@ -158,11 +207,14 @@
                 align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Type</th>
                         <th>Reference</th>
+                        <th>Type</th>
                         <th>Date</th>
+                        <th>Due Date</th>
                         <th>Client</th>
-                        <th>Status</th>
+                        <th>Document Status</th>
+                        <th>Balance</th>
+                        <th>Due Status</th>
                         <th>Total</th>
                         <th>Created By</th>
                         <th>Actions</th>
@@ -193,6 +245,16 @@
 
                         <tr>
                             <td>
+                                <strong>
+                                    <?= htmlspecialchars(
+                                        $reference,
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </strong>
+                            </td>
+
+                            <td>
                                 <?php if (
                                     (string) $invoice['document_type'] === 'credit_note'
                                 ): ?>
@@ -211,21 +273,29 @@
                             </td>
 
                             <td>
-                                <strong>
-                                    <?= htmlspecialchars(
-                                        $reference,
-                                        ENT_QUOTES,
-                                        'UTF-8'
-                                    ) ?>
-                                </strong>
-                            </td>
-
-                            <td>
                                 <?= htmlspecialchars(
                                     (string) $invoice['invoice_date'],
                                     ENT_QUOTES,
                                     'UTF-8'
                                 ) ?>
+                            </td>
+
+                            <td>
+                                <?php if (
+                                    isset($invoice['due_date']) &&
+                                    $invoice['due_date'] !== null &&
+                                    trim(
+                                        (string) $invoice['due_date']
+                                    ) !== ''
+                                ): ?>
+                                    <?= htmlspecialchars(
+                                        (string) $invoice['due_date'],
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                <?php else: ?>
+                                    —
+                                <?php endif; ?>
                             </td>
 
                             <td>
@@ -261,6 +331,76 @@
                                         text-bg-success">
                                         Issued
                                     </span>
+                                <?php endif; ?>
+                            </td>
+
+                            <td>
+                                <?php if (
+                                    (string) $invoice['document_type'] === 'invoice'
+                                ): ?>
+                                    <strong>
+                                        <?= number_format(
+                                            (float) $invoice['balance_due'],
+                                            2
+                                        ) ?>
+
+                                        <?= htmlspecialchars(
+                                            (string) $invoice['currency'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>
+                                    </strong>
+                                <?php else: ?>
+                                    —
+                                <?php endif; ?>
+                            </td>
+
+                            <td>
+                                <?php
+                                $dueInformation =
+                                    $invoice['due_information'];
+                                ?>
+
+                                <?php if (
+                                    $dueInformation['status'] ===
+                                    'not_applicable'
+                                ): ?>
+                                    —
+                                <?php else: ?>
+                                    <span
+                                        class="badge <?= htmlspecialchars(
+                                                            (string) $dueInformation['badge_class'],
+                                                            ENT_QUOTES,
+                                                            'UTF-8'
+                                                        ) ?>">
+                                        <?= htmlspecialchars(
+                                            (string) $dueInformation['label'],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>
+                                    </span>
+
+                                    <?php if (
+                                        $dueInformation['status'] ===
+                                        'overdue'
+                                    ): ?>
+                                        <div
+                                            class="small text-danger
+                                            mt-1">
+                                            <?= (int) $dueInformation['days_overdue'] ?>
+                                            day(s) overdue
+                                        </div>
+                                    <?php elseif (
+                                        $dueInformation['status'] ===
+                                        'due_soon'
+                                    ): ?>
+                                        <div
+                                            class="small text-muted
+                                            mt-1">
+                                            <?= (int) $dueInformation['days_until_due'] ?>
+                                            day(s) remaining
+                                        </div>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </td>
 
@@ -309,6 +449,7 @@
                                     </a>
                                 </div>
                             </td>
+                        </tr>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
