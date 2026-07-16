@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Flash;
+use App\Core\Session;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Services\AuthService;
@@ -141,8 +142,54 @@ class PaymentController extends Controller
             return;
         }
 
+        $old = [
+            'invoice_id' =>
+                (string) $invoiceId,
+
+            'amount' =>
+                number_format(
+                    (float) $summary[
+                        'balance_due'
+                    ],
+                    2,
+                    '.',
+                    ''
+                ),
+
+            'payment_date' =>
+                date('Y-m-d'),
+
+            'payment_method' =>
+                'bank_transfer',
+
+            'external_reference' =>
+                '',
+
+            'note' => '',
+        ];
+
+        $sessionOld = Session::get(
+            'payment_old'
+        );
+
+        Session::remove(
+            'payment_old'
+        );
+
+        if (
+            is_array($sessionOld) &&
+            isset($sessionOld['invoice_id']) &&
+            (int) $sessionOld['invoice_id'] ===
+                $invoiceId
+        ) {
+            $old = array_merge(
+                $old,
+                $sessionOld
+            );
+        }
+
         $this->view('payments/create', [
-            'title' => 'Record Full Payment',
+            'title' => 'Record Payment',
 
             'invoice' => $invoice,
             'summary' => $summary,
@@ -151,18 +198,7 @@ class PaymentController extends Controller
                 $this->paymentService
                     ->methods(),
 
-            'old' => [
-                'payment_date' =>
-                    date('Y-m-d'),
-
-                'payment_method' =>
-                    'bank_transfer',
-
-                'external_reference' =>
-                    '',
-
-                'note' => '',
-            ],
+            'old' => $old,
         ]);
     }
 
@@ -190,9 +226,28 @@ class PaymentController extends Controller
             return;
         }
 
+        $amount = $this->input(
+            'amount'
+        );
+
+        $paymentDate = $this->input(
+            'payment_date'
+        );
+
+        $paymentMethod = $this->input(
+            'payment_method'
+        );
+
+        $externalReference =
+            $this->input(
+                'external_reference'
+            );
+
+        $note = $this->input('note');
+
         $result =
             $this->paymentService
-                ->recordFullPayment(
+                ->recordPayment(
                     $invoiceId,
 
                     (int) $currentUser[
@@ -201,22 +256,39 @@ class PaymentController extends Controller
 
                     (int) $currentUser['id'],
 
-                    $this->input(
-                        'payment_date'
-                    ),
+                    $amount,
 
-                    $this->input(
-                        'payment_method'
-                    ),
+                    $paymentDate,
 
-                    $this->input(
-                        'external_reference'
-                    ),
+                    $paymentMethod,
 
-                    $this->input('note')
+                    $externalReference,
+
+                    $note
                 );
 
         if (!$result['success']) {
+            Session::set(
+                'payment_old',
+                [
+                    'invoice_id' =>
+                        (string) $invoiceId,
+
+                    'amount' => $amount,
+
+                    'payment_date' =>
+                        $paymentDate,
+
+                    'payment_method' =>
+                        $paymentMethod,
+
+                    'external_reference' =>
+                        $externalReference,
+
+                    'note' => $note,
+                ]
+            );
+
             Flash::danger(
                 (string) $result['error']
             );
@@ -229,9 +301,39 @@ class PaymentController extends Controller
             return;
         }
 
-        Flash::success(
-            'Full payment recorded successfully.'
+        $amountText = number_format(
+            (float) $result['amount'],
+            2,
+            '.',
+            ''
         );
+
+        $remainingBalance = (float) $result[
+            'remaining_balance'
+        ];
+
+        if ($remainingBalance > 0) {
+            Flash::success(
+                'Payment of ' .
+                $amountText .
+                ' recorded successfully. ' .
+                'Remaining balance: ' .
+                number_format(
+                    $remainingBalance,
+                    2,
+                    '.',
+                    ''
+                ) .
+                '.'
+            );
+        } else {
+            Flash::success(
+                'Payment of ' .
+                $amountText .
+                ' recorded successfully. ' .
+                'The invoice is now fully paid.'
+            );
+        }
 
         $this->redirect(
             '/payments/show?id=' .

@@ -711,7 +711,13 @@ if (
                 <a
                     href="/payments/create?invoice_id=<?= (int) $invoice['id'] ?>"
                     class="btn btn-sm btn-success">
-                    Record Full Payment
+                    <?php if (
+                        (float) $paymentSummary['paid_amount'] > 0
+                    ): ?>
+                        Record Another Payment
+                    <?php else: ?>
+                        Record Payment
+                    <?php endif; ?>
                 </a>
             <?php endif; ?>
         </div>
