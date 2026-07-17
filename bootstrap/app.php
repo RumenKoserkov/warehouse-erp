@@ -6,7 +6,6 @@ use App\Core\Environment;
 use App\Core\ErrorHandler;
 use Dotenv\Dotenv;
 
-
 $basePath = dirname(__DIR__);
 
 require_once $basePath .
@@ -191,6 +190,47 @@ if (
     );
 }
 
+$positiveSecuritySettings = [
+    'LOGIN_MAX_ATTEMPTS',
+    'LOGIN_LOCK_MINUTES',
+
+    'SESSION_IDLE_TIMEOUT',
+    'SESSION_ABSOLUTE_TIMEOUT',
+    'SESSION_RENEWAL_INTERVAL',
+    'SESSION_USER_RECHECK_INTERVAL',
+];
+
+foreach (
+    $positiveSecuritySettings as $setting
+) {
+    $value = Environment::integer(
+        $setting,
+        0
+    );
+
+    if ($value <= 0) {
+        throw new RuntimeException(
+            $setting .
+            ' must be a positive integer.'
+        );
+    }
+}
+
+if (
+    Environment::integer(
+        'SESSION_ABSOLUTE_TIMEOUT',
+        43200
+    ) <
+    Environment::integer(
+        'SESSION_IDLE_TIMEOUT',
+        1800
+    )
+) {
+    throw new RuntimeException(
+        'SESSION_ABSOLUTE_TIMEOUT cannot be shorter than SESSION_IDLE_TIMEOUT.'
+    );
+}
+
 $appConfig = require
     $basePath .
     '/config/app.php';
@@ -257,6 +297,32 @@ ini_set(
 ini_set(
     'session.cookie_samesite',
     $sameSite
+);
+
+ini_set(
+    'session.cookie_lifetime',
+    '0'
+);
+
+ini_set(
+    'session.cache_limiter',
+    'nocache'
+);
+
+$sessionGarbageLifetime = max(
+    Environment::integer(
+        'SESSION_IDLE_TIMEOUT',
+        1800
+    ),
+    Environment::integer(
+        'SESSION_ABSOLUTE_TIMEOUT',
+        43200
+    )
+);
+
+ini_set(
+    'session.gc_maxlifetime',
+    (string) $sessionGarbageLifetime
 );
 
 return [

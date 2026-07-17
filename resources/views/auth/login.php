@@ -12,14 +12,23 @@
                         <ul class="mb-0">
 
                             <?php foreach ($errors as $error): ?>
-                                <li><?= htmlspecialchars($error) ?></li>
+                                <li>
+                                    <?= htmlspecialchars(
+                                        (string) $error,
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </li>
                             <?php endforeach; ?>
 
                         </ul>
                     </div>
                 <?php endif; ?>
 
-                <form action="/login" method="POST">
+                <form
+                    action="/login"
+                    method="POST"
+                >
                     <?= \App\Core\Csrf::field() ?>
 
                     <div class="mb-3">
@@ -35,8 +44,18 @@
                             id="email"
                             name="email"
                             class="form-control"
-                            value="<?= htmlspecialchars($old['email'] ?? '') ?>"
+                            autocomplete="username"
+                            inputmode="email"
+                            maxlength="255"
                             required
+                            value="<?= htmlspecialchars(
+                                (string) (
+                                    $old['email'] ??
+                                    ''
+                                ),
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>"
                         >
                     </div>
 
@@ -53,6 +72,8 @@
                             id="password"
                             name="password"
                             class="form-control"
+                            autocomplete="current-password"
+                            maxlength="4096"
                             required
                         >
                     </div>

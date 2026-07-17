@@ -3,10 +3,12 @@
 declare(strict_types=1);
 
 use App\Core\Router;
+use App\Core\SecurityHeaders;
 
-require_once
-    __DIR__ .
-    '/../bootstrap/app.php';
+require_once __DIR__ . '/../bootstrap/app.php';
+
+SecurityHeaders::enforceTrustedHost();
+SecurityHeaders::send();
 
 $router = new Router();
 
@@ -39,20 +41,14 @@ $requestMethod = 'GET';
 
 if (
     isset(
-        $_SERVER[
-            'REQUEST_METHOD'
-        ]
+        $_SERVER['REQUEST_METHOD']
     ) &&
     is_string(
-        $_SERVER[
-            'REQUEST_METHOD'
-        ]
+        $_SERVER['REQUEST_METHOD']
     )
 ) {
     $requestMethod =
-        $_SERVER[
-            'REQUEST_METHOD'
-        ];
+        $_SERVER['REQUEST_METHOD'];
 }
 
 $router->dispatch(

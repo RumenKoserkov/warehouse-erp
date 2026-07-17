@@ -9,3 +9,7 @@
 
 /storage/uploads/*
 !/storage/uploads/.gitkeep
+
+/public/uploads/products/*
+!/public/uploads/.htaccess
+!/public/uploads/products/.gitkeep
