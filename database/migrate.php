@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Core\Database;
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../bootstrap/app.php';
 
 $pdo = Database::getConnection();
 
