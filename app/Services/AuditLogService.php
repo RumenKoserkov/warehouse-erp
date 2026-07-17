@@ -373,6 +373,7 @@ class AuditLogService
             'delete',
             'cancel',
             'issue',
+            'complete',
             'stock_in',
             'stock_out',
             'stock_transfer',
@@ -402,6 +403,7 @@ class AuditLogService
             'credit_note',
             'payment',
             'document_sequence',
+            'inventory_count',
         ];
     }
 

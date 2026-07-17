@@ -17,6 +17,7 @@ use App\Controllers\SettingsController;
 use App\Controllers\InvoiceController;
 use App\Controllers\PaymentController;
 use App\Controllers\ReceivableController;
+use App\Controllers\InventoryCountController;
 
 return [
     [
@@ -716,6 +717,99 @@ return [
         'action' => [
             ReceivableController::class,
             'index',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    // Inventory Counts
+
+    [
+        'method' => 'GET',
+        'uri' => '/inventory-counts',
+        'action' => [
+            InventoryCountController::class,
+            'index',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/inventory-counts/create',
+        'action' => [
+            InventoryCountController::class,
+            'create',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/inventory-counts/store',
+        'action' => [
+            InventoryCountController::class,
+            'store',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/inventory-counts/show',
+        'action' => [
+            InventoryCountController::class,
+            'show',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/inventory-counts/save',
+        'action' => [
+            InventoryCountController::class,
+            'save',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/inventory-counts/complete',
+        'action' => [
+            InventoryCountController::class,
+            'complete',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/inventory-counts/cancel',
+        'action' => [
+            InventoryCountController::class,
+            'cancel',
         ],
         'middleware' => [
             'auth',

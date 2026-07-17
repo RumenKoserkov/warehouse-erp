@@ -147,9 +147,9 @@ if (isset($title)) {
                             <a
                                 href="/dashboard"
                                 class="nav-link <?= navActive(
-                                                    $currentPath,
-                                                    '/dashboard'
-                                                ) ?>">
+                                    $currentPath,
+                                    '/dashboard'
+                                ) ?>">
                                 Dashboard
                             </a>
                         </li>
@@ -165,9 +165,9 @@ if (isset($title)) {
                                 <a
                                     href="/search"
                                     class="nav-link <?= navActive(
-                                                        $currentPath,
-                                                        '/search'
-                                                    ) ?>">
+                                        $currentPath,
+                                        '/search'
+                                    ) ?>">
                                     Search
                                 </a>
                             </li>
@@ -175,14 +175,14 @@ if (isset($title)) {
                             <li class="nav-item dropdown">
                                 <a
                                     class="nav-link dropdown-toggle <?= navGroupActive(
-                                                                        $currentPath,
-                                                                        [
-                                                                            '/products',
-                                                                            '/categories',
-                                                                            '/clients',
-                                                                            '/suppliers',
-                                                                        ]
-                                                                    ) ?>"
+                                        $currentPath,
+                                        [
+                                            '/products',
+                                            '/categories',
+                                            '/clients',
+                                            '/suppliers',
+                                        ]
+                                    ) ?>"
                                     href="#"
                                     role="button"
                                     data-bs-toggle="dropdown"
@@ -195,9 +195,9 @@ if (isset($title)) {
                                         <a
                                             href="/products"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/products'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/products'
+                                            ) ?>">
                                             Products
                                         </a>
                                     </li>
@@ -206,9 +206,9 @@ if (isset($title)) {
                                         <a
                                             href="/categories"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/categories'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/categories'
+                                            ) ?>">
                                             Categories
                                         </a>
                                     </li>
@@ -217,9 +217,9 @@ if (isset($title)) {
                                         <a
                                             href="/clients"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/clients'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/clients'
+                                            ) ?>">
                                             Clients
                                         </a>
                                     </li>
@@ -228,9 +228,9 @@ if (isset($title)) {
                                         <a
                                             href="/suppliers"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/suppliers'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/suppliers'
+                                            ) ?>">
                                             Suppliers
                                         </a>
                                     </li>
@@ -250,12 +250,13 @@ if (isset($title)) {
                             <li class="nav-item dropdown">
                                 <a
                                     class="nav-link dropdown-toggle <?= navGroupActive(
-                                                                        $currentPath,
-                                                                        [
-                                                                            '/warehouses',
-                                                                            '/stock',
-                                                                        ]
-                                                                    ) ?>"
+                                        $currentPath,
+                                        [
+                                            '/warehouses',
+                                            '/stock',
+                                            '/inventory-counts',
+                                        ]
+                                    ) ?>"
                                     href="#"
                                     role="button"
                                     data-bs-toggle="dropdown"
@@ -268,9 +269,9 @@ if (isset($title)) {
                                         <a
                                             href="/warehouses"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/warehouses'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/warehouses'
+                                            ) ?>">
                                             Warehouses
                                         </a>
                                     </li>
@@ -279,10 +280,23 @@ if (isset($title)) {
                                         <a
                                             href="/stock"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/stock'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/stock'
+                                            ) ?>">
                                             Current Stock
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a
+                                            href="/inventory-counts"
+                                            class="dropdown-item <?= navGroupActive(
+                                                $currentPath,
+                                                [
+                                                    '/inventory-counts',
+                                                ]
+                                            ) ?>">
+                                            Inventory Counts
                                         </a>
                                     </li>
 
@@ -294,9 +308,9 @@ if (isset($title)) {
                                         <a
                                             href="/stock/in"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/stock/in'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/stock/in'
+                                            ) ?>">
                                             Stock In
                                         </a>
                                     </li>
@@ -305,9 +319,9 @@ if (isset($title)) {
                                         <a
                                             href="/stock/out"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/stock/out'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/stock/out'
+                                            ) ?>">
                                             Stock Out
                                         </a>
                                     </li>
@@ -316,9 +330,9 @@ if (isset($title)) {
                                         <a
                                             href="/stock/transfer"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/stock/transfer'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/stock/transfer'
+                                            ) ?>">
                                             Transfer Stock
                                         </a>
                                     </li>
@@ -327,9 +341,9 @@ if (isset($title)) {
                                         <a
                                             href="/stock/history"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/stock/history'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/stock/history'
+                                            ) ?>">
                                             Stock History
                                         </a>
                                     </li>
@@ -339,9 +353,9 @@ if (isset($title)) {
                             <li class="nav-item dropdown">
                                 <a
                                     class="nav-link dropdown-toggle <?= navGroupActive(
-                                                                        $currentPath,
-                                                                        ['/sales']
-                                                                    ) ?>"
+                                        $currentPath,
+                                        ['/sales']
+                                    ) ?>"
                                     href="#"
                                     role="button"
                                     data-bs-toggle="dropdown"
@@ -354,9 +368,9 @@ if (isset($title)) {
                                         <a
                                             href="/sales"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/sales'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/sales'
+                                            ) ?>">
                                             All Sales
                                         </a>
                                     </li>
@@ -365,9 +379,9 @@ if (isset($title)) {
                                         <a
                                             href="/sales/create"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/sales/create'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/sales/create'
+                                            ) ?>">
                                             New Sale
                                         </a>
                                     </li>
@@ -386,9 +400,9 @@ if (isset($title)) {
                                             <a
                                                 href="/sales/report"
                                                 class="dropdown-item <?= navActive(
-                                                                            $currentPath,
-                                                                            '/sales/report'
-                                                                        ) ?>">
+                                                    $currentPath,
+                                                    '/sales/report'
+                                                ) ?>">
                                                 Sales Report
                                             </a>
                                         </li>
@@ -408,9 +422,9 @@ if (isset($title)) {
                             <li class="nav-item dropdown">
                                 <a
                                     class="nav-link dropdown-toggle <?= navGroupActive(
-                                                                        $currentPath,
-                                                                        ['/purchases']
-                                                                    ) ?>"
+                                        $currentPath,
+                                        ['/purchases']
+                                    ) ?>"
                                     href="#"
                                     role="button"
                                     data-bs-toggle="dropdown"
@@ -423,9 +437,9 @@ if (isset($title)) {
                                         <a
                                             href="/purchases"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/purchases'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/purchases'
+                                            ) ?>">
                                             All Purchases
                                         </a>
                                     </li>
@@ -434,9 +448,9 @@ if (isset($title)) {
                                         <a
                                             href="/purchases/create"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/purchases/create'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/purchases/create'
+                                            ) ?>">
                                             New Purchase
                                         </a>
                                     </li>
@@ -446,9 +460,9 @@ if (isset($title)) {
                             <li class="nav-item dropdown">
                                 <a
                                     class="nav-link dropdown-toggle <?= navGroupActive(
-                                                                        $currentPath,
-                                                                        ['/invoices']
-                                                                    ) ?>"
+                                        $currentPath,
+                                        ['/invoices']
+                                    ) ?>"
                                     href="#"
                                     role="button"
                                     data-bs-toggle="dropdown"
@@ -461,9 +475,9 @@ if (isset($title)) {
                                         <a
                                             href="/invoices"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/invoices'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/invoices'
+                                            ) ?>">
                                             All Invoices
                                         </a>
                                     </li>
@@ -472,9 +486,9 @@ if (isset($title)) {
                                         <a
                                             href="/invoices/create"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/invoices/create'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/invoices/create'
+                                            ) ?>">
                                             Create Invoice Draft
                                         </a>
                                     </li>
@@ -485,9 +499,9 @@ if (isset($title)) {
                                 <a
                                     href="/payments"
                                     class="nav-link <?= navActive(
-                                                        $currentPath,
-                                                        '/payments'
-                                                    ) ?>">
+                                        $currentPath,
+                                        '/payments'
+                                    ) ?>">
                                     Payments
                                 </a>
                             </li>
@@ -495,13 +509,13 @@ if (isset($title)) {
                             <li class="nav-item dropdown">
                                 <a
                                     class="nav-link dropdown-toggle <?= navGroupActive(
-                                                                        $currentPath,
-                                                                        [
-                                                                            '/stock/report',
-                                                                            '/product-movement/report',
-                                                                            '/receivables',
-                                                                        ]
-                                                                    ) ?>"
+                                        $currentPath,
+                                        [
+                                            '/stock/report',
+                                            '/product-movement/report',
+                                            '/receivables',
+                                        ]
+                                    ) ?>"
                                     href="#"
                                     role="button"
                                     data-bs-toggle="dropdown"
@@ -514,9 +528,9 @@ if (isset($title)) {
                                         <a
                                             href="/stock/report"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/stock/report'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/stock/report'
+                                            ) ?>">
                                             Stock Report
                                         </a>
                                     </li>
@@ -525,9 +539,9 @@ if (isset($title)) {
                                         <a
                                             href="/product-movement/report"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/product-movement/report'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/product-movement/report'
+                                            ) ?>">
                                             Product Movement
                                         </a>
                                     </li>
@@ -536,9 +550,9 @@ if (isset($title)) {
                                         <a
                                             href="/receivables"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/receivables'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/receivables'
+                                            ) ?>">
                                             Receivables
                                         </a>
                                     </li>
@@ -556,13 +570,13 @@ if (isset($title)) {
                             <li class="nav-item dropdown">
                                 <a
                                     class="nav-link dropdown-toggle <?= navGroupActive(
-                                                                        $currentPath,
-                                                                        [
-                                                                            '/users',
-                                                                            '/settings',
-                                                                            '/audit-logs',
-                                                                        ]
-                                                                    ) ?>"
+                                        $currentPath,
+                                        [
+                                            '/users',
+                                            '/settings',
+                                            '/audit-logs',
+                                        ]
+                                    ) ?>"
                                     href="#"
                                     role="button"
                                     data-bs-toggle="dropdown"
@@ -575,9 +589,9 @@ if (isset($title)) {
                                         <a
                                             href="/users"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/users'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/users'
+                                            ) ?>">
                                             Users
                                         </a>
                                     </li>
@@ -586,9 +600,9 @@ if (isset($title)) {
                                         <a
                                             href="/settings"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/settings'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/settings'
+                                            ) ?>">
                                             Settings
                                         </a>
                                     </li>
@@ -597,9 +611,9 @@ if (isset($title)) {
                                         <a
                                             href="/audit-logs"
                                             class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/audit-logs'
-                                                                    ) ?>">
+                                                $currentPath,
+                                                '/audit-logs'
+                                            ) ?>">
                                             Audit Logs
                                         </a>
                                     </li>
@@ -653,9 +667,9 @@ if (isset($title)) {
                             <a
                                 href="/login"
                                 class="nav-link <?= navActive(
-                                                    $currentPath,
-                                                    '/login'
-                                                ) ?>">
+                                    $currentPath,
+                                    '/login'
+                                ) ?>">
                                 Login
                             </a>
                         </li>
@@ -674,10 +688,10 @@ if (isset($title)) {
             <?php foreach ($messages as $message): ?>
                 <div
                     class="alert alert-<?= htmlspecialchars(
-                                            (string) $type,
-                                            ENT_QUOTES,
-                                            'UTF-8'
-                                        ) ?> alert-dismissible fade show"
+                        (string) $type,
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ) ?> alert-dismissible fade show"
                     role="alert">
                     <?= htmlspecialchars(
                         (string) $message,

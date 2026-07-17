@@ -203,4 +203,77 @@ class WarehouseTransaction extends Model
             'adjustment',
         ];
     }
+
+    public function latestIdForWarehouse(
+        int $companyId,
+        int $warehouseId
+    ): int {
+        $sql = "
+        SELECT COALESCE(
+            MAX(id),
+            0
+        )
+        FROM warehouse_transactions
+        WHERE company_id = :company_id
+        AND (
+            from_warehouse_id =
+                :from_warehouse_id
+
+            OR to_warehouse_id =
+                :to_warehouse_id
+        )
+    ";
+
+        $statement = $this->db->prepare($sql);
+
+        $statement->execute([
+            'company_id' => $companyId,
+
+            'from_warehouse_id' =>
+            $warehouseId,
+
+            'to_warehouse_id' =>
+            $warehouseId,
+        ]);
+
+        return (int) $statement->fetchColumn();
+    }
+
+    public function existsForWarehouseAfterId(
+        int $companyId,
+        int $warehouseId,
+        int $transactionId
+    ): bool {
+        $sql = "
+        SELECT id
+        FROM warehouse_transactions
+        WHERE company_id = :company_id
+        AND id > :transaction_id
+        AND (
+            from_warehouse_id =
+                :from_warehouse_id
+
+            OR to_warehouse_id =
+                :to_warehouse_id
+        )
+        LIMIT 1
+    ";
+
+        $statement = $this->db->prepare($sql);
+
+        $statement->execute([
+            'company_id' => $companyId,
+
+            'transaction_id' =>
+            $transactionId,
+
+            'from_warehouse_id' =>
+            $warehouseId,
+
+            'to_warehouse_id' =>
+            $warehouseId,
+        ]);
+
+        return $statement->fetch() !== false;
+    }
 }

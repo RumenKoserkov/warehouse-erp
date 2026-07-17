@@ -193,4 +193,66 @@ class StockLevel extends Model
 
         return (float)$stockLevel['quantity'] >= $quantity;
     }
+
+    public function lockForUpdate(
+        int $companyId,
+        int $productId,
+        int $warehouseId
+    ): array {
+        $insertSql = "
+        INSERT IGNORE INTO stock_levels
+        (
+            company_id,
+            product_id,
+            warehouse_id,
+            quantity
+        )
+        VALUES
+        (
+            :company_id,
+            :product_id,
+            :warehouse_id,
+            0
+        )
+    ";
+
+        $insertStatement =
+            $this->db->prepare($insertSql);
+
+        $insertStatement->execute([
+            'company_id' => $companyId,
+            'product_id' => $productId,
+            'warehouse_id' => $warehouseId,
+        ]);
+
+        $selectSql = "
+        SELECT *
+        FROM stock_levels
+        WHERE company_id = :company_id
+        AND product_id = :product_id
+        AND warehouse_id = :warehouse_id
+        LIMIT 1
+        FOR UPDATE
+    ";
+
+        $selectStatement =
+            $this->db->prepare($selectSql);
+
+        $selectStatement->execute([
+            'company_id' => $companyId,
+            'product_id' => $productId,
+            'warehouse_id' => $warehouseId,
+        ]);
+
+        $stockLevel =
+            $selectStatement->fetch();
+
+        if ($stockLevel === false) {
+            throw new \RuntimeException(
+                'Stock level could not be locked.'
+            );
+        }
+
+        return $stockLevel;
+    }
 }
