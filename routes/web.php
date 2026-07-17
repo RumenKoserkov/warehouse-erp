@@ -440,11 +440,32 @@ return [
     ],
 
     // Audit
+    // Audit
+
     [
         'method' => 'GET',
         'uri' => '/audit-logs',
-        'action' => [AuditLogController::class, 'index'],
-        'middleware' => ['auth', 'role:administrator'],
+        'action' => [
+            AuditLogController::class,
+            'index',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/audit-logs/show',
+        'action' => [
+            AuditLogController::class,
+            'show',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator',
+        ],
     ],
 
     // Settings

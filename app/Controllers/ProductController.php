@@ -431,6 +431,8 @@ class ProductController extends Controller
 
         if ($id <= 0) {
             $this->abort(404);
+
+            return;
         }
 
         $product = $this->productModel->findByIdAndCompany(
@@ -440,6 +442,8 @@ class ProductController extends Controller
 
         if ($product === null) {
             $this->abort(404);
+
+            return;
         }
 
         $data = $this->getFormData();
@@ -454,10 +458,12 @@ class ProductController extends Controller
             $this->view('products/edit', [
                 'title' => 'Edit Product',
                 'product' => $product,
-                'categories' => $this->categoryModel->activeByCompany(
+                'categories' =>
+                $this->categoryModel->activeByCompany(
                     (int) $currentUser['company_id']
                 ),
-                'suppliers' => $this->supplierModel->activeByCompany(
+                'suppliers' =>
+                $this->supplierModel->activeByCompany(
                     (int) $currentUser['company_id']
                 ),
                 'errors' => $errors,
@@ -474,19 +480,26 @@ class ProductController extends Controller
             $imageFile = $_FILES['image'];
         }
 
-        $imageResult = $this->productImageService->upload($imageFile);
+        $imageResult =
+            $this->productImageService->upload(
+                $imageFile
+            );
 
         if (!$imageResult['success']) {
             $this->view('products/edit', [
                 'title' => 'Edit Product',
                 'product' => $product,
-                'categories' => $this->categoryModel->activeByCompany(
+                'categories' =>
+                $this->categoryModel->activeByCompany(
                     (int) $currentUser['company_id']
                 ),
-                'suppliers' => $this->supplierModel->activeByCompany(
+                'suppliers' =>
+                $this->supplierModel->activeByCompany(
                     (int) $currentUser['company_id']
                 ),
-                'errors' => [$imageResult['error']],
+                'errors' => [
+                    $imageResult['error'],
+                ],
                 'old' => $data,
                 'units' => $this->units(),
             ]);
@@ -494,17 +507,27 @@ class ProductController extends Controller
             return;
         }
 
-        $data['company_id'] = (int) $currentUser['company_id'];
-        $data['image_path'] = $product['image_path'];
+        $data['company_id'] =
+            (int) $currentUser['company_id'];
+
+        $data['image_path'] =
+            $product['image_path'];
 
         if ($imageResult['path'] !== null) {
-            $data['image_path'] = $imageResult['path'];
+            $data['image_path'] =
+                $imageResult['path'];
         }
 
-        $updated = $this->productModel->update($id, $data);
+        $updated =
+            $this->productModel->update(
+                $id,
+                $data
+            );
 
         if (!$updated) {
-            Flash::danger('Could not update product.');
+            Flash::danger(
+                'Could not update product.'
+            );
 
             $this->redirect('/products');
 
@@ -517,10 +540,98 @@ class ProductController extends Controller
             'update',
             'product',
             $id,
-            'Updated product: ' . $data['name']
+            'Updated product: ' .
+                $data['name'],
+            [
+                'before' => [
+                    'name' =>
+                    (string) $product['name'],
+
+                    'category_id' =>
+                    (int) $product['category_id'],
+
+                    'supplier_id' =>
+                    $product['supplier_id'] !== null
+                        ? (int) $product['supplier_id']
+                        : null,
+
+                    'barcode' =>
+                    $product['barcode'] !== null
+                        ? (string) $product['barcode']
+                        : null,
+
+                    'unit' =>
+                    (string) $product['unit'],
+
+                    'purchase_price' =>
+                    (float) $product['purchase_price'],
+
+                    'selling_price' =>
+                    (float) $product['selling_price'],
+
+                    'min_stock' =>
+                    (float) $product['min_stock'],
+
+                    'description' =>
+                    (string) (
+                        $product['description'] ?? ''
+                    ),
+
+                    'is_active' =>
+                    (int) $product['is_active'],
+
+                    'image_path' =>
+                    $product['image_path'] !== null
+                        ? (string) $product['image_path']
+                        : null,
+                ],
+
+                'after' => [
+                    'name' =>
+                    (string) $data['name'],
+
+                    'category_id' =>
+                    (int) $data['category_id'],
+
+                    'supplier_id' =>
+                    $data['supplier_id'] !== null
+                        ? (int) $data['supplier_id']
+                        : null,
+
+                    'barcode' =>
+                    $data['barcode'] !== null
+                        ? (string) $data['barcode']
+                        : null,
+
+                    'unit' =>
+                    (string) $data['unit'],
+
+                    'purchase_price' =>
+                    (float) $data['purchase_price'],
+
+                    'selling_price' =>
+                    (float) $data['selling_price'],
+
+                    'min_stock' =>
+                    (float) $data['min_stock'],
+
+                    'description' =>
+                    (string) $data['description'],
+
+                    'is_active' =>
+                    (int) $data['is_active'],
+
+                    'image_path' =>
+                    $data['image_path'] !== null
+                        ? (string) $data['image_path']
+                        : null,
+                ],
+            ]
         );
 
-        Flash::success('Product updated successfully.');
+        Flash::success(
+            'Product updated successfully.'
+        );
 
         $this->redirect('/products');
     }
