@@ -19,6 +19,7 @@ use App\Controllers\PaymentController;
 use App\Controllers\ReceivableController;
 use App\Controllers\InventoryCountController;
 use App\Controllers\InventoryAdjustmentController;
+use App\Controllers\SalesReturnController;
 
 return [
     [
@@ -391,6 +392,99 @@ return [
         'uri' => '/sales/cancel',
         'action' => [SaleController::class, 'cancel'],
         'middleware' => ['auth', 'role:administrator,manager'],
+    ],
+
+    // Sales Returns
+
+    [
+        'method' => 'GET',
+        'uri' => '/sales-returns',
+        'action' => [
+            SalesReturnController::class,
+            'index',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/sales-returns/create',
+        'action' => [
+            SalesReturnController::class,
+            'create',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/sales-returns/store',
+        'action' => [
+            SalesReturnController::class,
+            'store',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/sales-returns/show',
+        'action' => [
+            SalesReturnController::class,
+            'show',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/sales-returns/update',
+        'action' => [
+            SalesReturnController::class,
+            'update',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/sales-returns/complete',
+        'action' => [
+            SalesReturnController::class,
+            'complete',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/sales-returns/cancel',
+        'action' => [
+            SalesReturnController::class,
+            'cancel',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
     ],
 
     // Purchase CRUD

@@ -1,64 +1,106 @@
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div
+    class="d-flex justify-content-between
+    align-items-center mb-4"
+>
     <h1 class="mb-0">
-        Sale <?= htmlspecialchars(
-                    (string) $sale['sale_number'],
-                    ENT_QUOTES,
-                    'UTF-8'
-                ) ?>
+        Sale
+        <?= htmlspecialchars(
+            (string) $sale['sale_number'],
+            ENT_QUOTES,
+            'UTF-8'
+        ) ?>
     </h1>
 
-    <div class="d-flex gap-2">
+    <div class="d-flex flex-wrap gap-2">
         <?php if ($existingInvoice !== null): ?>
             <a
                 href="/invoices/show?id=<?= (int) $existingInvoice['id'] ?>"
-                class="btn btn-outline-primary">
+                class="btn btn-outline-primary"
+            >
                 View Invoice
             </a>
         <?php elseif (
-            (string) $sale['status'] === 'completed' &&
+            (string) $sale['status'] ===
+                'completed' &&
             isset($sale['client_id']) &&
             (int) $sale['client_id'] > 0
         ): ?>
             <form
                 method="POST"
                 action="/invoices/from-sale"
-                class="d-inline">
+                class="d-inline"
+            >
                 <?= \App\Core\Csrf::field() ?>
 
                 <input
                     type="hidden"
                     name="sale_id"
-                    value="<?= (int) $sale['id'] ?>">
+                    value="<?= (int) $sale['id'] ?>"
+                >
 
                 <button
                     type="submit"
-                    class="btn btn-primary">
+                    class="btn btn-primary"
+                >
                     Generate Invoice
                 </button>
             </form>
         <?php endif; ?>
 
-        <?php if ($sale['status'] === 'completed'): ?>
+        <?php if (
+            (string) $sale['status'] ===
+                'completed' &&
+            $returnSummary[
+                'has_returnable_items'
+            ] &&
+            !$returnSummary['has_draft']
+        ): ?>
+            <a
+                href="/sales-returns/create?sale_id=<?= (int) $sale['id'] ?>"
+                class="btn btn-warning"
+            >
+                Create Sales Return
+            </a>
+        <?php endif; ?>
+
+        <?php if ($returnSummary['has_draft']): ?>
+            <span
+                class="badge text-bg-warning
+                d-flex align-items-center p-2"
+            >
+                Open Return Draft
+            </span>
+        <?php endif; ?>
+
+        <?php if (
+            (string) $sale['status'] ===
+            'completed'
+        ): ?>
             <form
                 action="/sales/cancel"
                 method="POST"
-                onsubmit="return confirm(
-                    'Are you sure you want to cancel this sale and return the stock?'
-                );">
+                onsubmit="
+                    return confirm(
+                        'Are you sure you want to cancel this sale and return the stock?'
+                    );
+                "
+            >
                 <?= \App\Core\Csrf::field() ?>
 
                 <input
                     type="hidden"
                     name="id"
                     value="<?= htmlspecialchars(
-                                (string) $sale['id'],
-                                ENT_QUOTES,
-                                'UTF-8'
-                            ) ?>">
+                        (string) $sale['id'],
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ) ?>"
+                >
 
                 <button
                     type="submit"
-                    class="btn btn-danger">
+                    class="btn btn-danger"
+                >
                     Cancel Sale
                 </button>
             </form>
@@ -66,7 +108,8 @@
 
         <a
             href="/sales"
-            class="btn btn-outline-secondary">
+            class="btn btn-outline-secondary"
+        >
             Back to Sales
         </a>
     </div>
@@ -74,7 +117,8 @@
 
 <?php if (
     $existingInvoice === null &&
-    (string) $sale['status'] === 'completed' &&
+    (string) $sale['status'] ===
+        'completed' &&
     (
         !isset($sale['client_id']) ||
         (int) $sale['client_id'] <= 0
@@ -94,13 +138,17 @@
             </div>
 
             <div class="card-body">
-                <table class="table table-borderless mb-0">
+                <table
+                    class="table table-borderless mb-0"
+                >
                     <tr>
                         <th>Sale Number</th>
 
                         <td>
                             <?= htmlspecialchars(
-                                (string) $sale['sale_number'],
+                                (string) $sale[
+                                    'sale_number'
+                                ],
                                 ENT_QUOTES,
                                 'UTF-8'
                             ) ?>
@@ -112,7 +160,9 @@
 
                         <td>
                             <?= htmlspecialchars(
-                                (string) $sale['sale_date'],
+                                (string) $sale[
+                                    'sale_date'
+                                ],
                                 ENT_QUOTES,
                                 'UTF-8'
                             ) ?>
@@ -128,7 +178,9 @@
                                 'completed'
                             ): ?>
                                 <span
-                                    class="badge text-bg-success">
+                                    class="badge
+                                    text-bg-success"
+                                >
                                     Completed
                                 </span>
                             <?php elseif (
@@ -136,14 +188,20 @@
                                 'cancelled'
                             ): ?>
                                 <span
-                                    class="badge text-bg-danger">
+                                    class="badge
+                                    text-bg-danger"
+                                >
                                     Cancelled
                                 </span>
                             <?php else: ?>
                                 <span
-                                    class="badge text-bg-secondary">
+                                    class="badge
+                                    text-bg-secondary"
+                                >
                                     <?= htmlspecialchars(
-                                        (string) $sale['status'],
+                                        (string) $sale[
+                                            'status'
+                                        ],
                                         ENT_QUOTES,
                                         'UTF-8'
                                     ) ?>
@@ -157,10 +215,16 @@
 
                         <td>
                             <?php if (
-                                !empty($sale['payment_method'])
+                                !empty(
+                                    $sale[
+                                        'payment_method'
+                                    ]
+                                )
                             ): ?>
                                 <?= htmlspecialchars(
-                                    (string) $sale['payment_method'],
+                                    (string) $sale[
+                                        'payment_method'
+                                    ],
                                     ENT_QUOTES,
                                     'UTF-8'
                                 ) ?>
@@ -177,7 +241,9 @@
 
                         <td>
                             <?php if (
-                                (int) $sale['vat_registered'] === 1
+                                (int) $sale[
+                                    'vat_registered'
+                                ] === 1
                             ): ?>
                                 Yes
                             <?php else: ?>
@@ -191,11 +257,15 @@
 
                         <td>
                             <?php if (
-                                (int) $sale['vat_registered'] !== 1
+                                (int) $sale[
+                                    'vat_registered'
+                                ] !== 1
                             ): ?>
                                 VAT not charged
                             <?php elseif (
-                                (int) $sale['prices_include_vat'] === 1
+                                (int) $sale[
+                                    'prices_include_vat'
+                                ] === 1
                             ): ?>
                                 VAT included
                             <?php else: ?>
@@ -209,7 +279,9 @@
 
                         <td>
                             <?= number_format(
-                                (float) $sale['default_vat_rate'],
+                                (float) $sale[
+                                    'default_vat_rate'
+                                ],
                                 2
                             ) ?>%
                         </td>
@@ -220,10 +292,14 @@
 
                         <td>
                             <?php if (
-                                !empty($sale['user_name'])
+                                !empty(
+                                    $sale['user_name']
+                                )
                             ): ?>
                                 <?= htmlspecialchars(
-                                    (string) $sale['user_name'],
+                                    (string) $sale[
+                                        'user_name'
+                                    ],
                                     ENT_QUOTES,
                                     'UTF-8'
                                 ) ?>
@@ -240,7 +316,9 @@
 
                         <td>
                             <?= htmlspecialchars(
-                                (string) $sale['created_at'],
+                                (string) $sale[
+                                    'created_at'
+                                ],
                                 ENT_QUOTES,
                                 'UTF-8'
                             ) ?>
@@ -254,32 +332,46 @@
     <div class="col-md-6">
         <div class="card shadow-sm h-100">
             <div class="card-header">
-                Client & Warehouse
+                Client &amp; Warehouse
             </div>
 
             <div class="card-body">
-                <table class="table table-borderless mb-0">
+                <table
+                    class="table table-borderless mb-0"
+                >
                     <tr>
                         <th>Client</th>
 
                         <td>
                             <?php if (
-                                !empty($sale['client_name'])
+                                !empty(
+                                    $sale[
+                                        'client_name'
+                                    ]
+                                )
                             ): ?>
                                 <?= htmlspecialchars(
-                                    (string) $sale['client_name'],
+                                    (string) $sale[
+                                        'client_name'
+                                    ],
                                     ENT_QUOTES,
                                     'UTF-8'
                                 ) ?>
 
                                 <?php if (
-                                    !empty($sale['client_company_name'])
+                                    !empty(
+                                        $sale[
+                                            'client_company_name'
+                                        ]
+                                    )
                                 ): ?>
                                     <br>
 
                                     <small class="text-muted">
                                         <?= htmlspecialchars(
-                                            (string) $sale['client_company_name'],
+                                            (string) $sale[
+                                                'client_company_name'
+                                            ],
                                             ENT_QUOTES,
                                             'UTF-8'
                                         ) ?>
@@ -298,10 +390,16 @@
 
                         <td>
                             <?php if (
-                                !empty($sale['client_phone'])
+                                !empty(
+                                    $sale[
+                                        'client_phone'
+                                    ]
+                                )
                             ): ?>
                                 <?= htmlspecialchars(
-                                    (string) $sale['client_phone'],
+                                    (string) $sale[
+                                        'client_phone'
+                                    ],
                                     ENT_QUOTES,
                                     'UTF-8'
                                 ) ?>
@@ -318,10 +416,16 @@
 
                         <td>
                             <?php if (
-                                !empty($sale['client_email'])
+                                !empty(
+                                    $sale[
+                                        'client_email'
+                                    ]
+                                )
                             ): ?>
                                 <?= htmlspecialchars(
-                                    (string) $sale['client_email'],
+                                    (string) $sale[
+                                        'client_email'
+                                    ],
                                     ENT_QUOTES,
                                     'UTF-8'
                                 ) ?>
@@ -338,10 +442,16 @@
 
                         <td>
                             <?php if (
-                                !empty($sale['client_eik'])
+                                !empty(
+                                    $sale[
+                                        'client_eik'
+                                    ]
+                                )
                             ): ?>
                                 <?= htmlspecialchars(
-                                    (string) $sale['client_eik'],
+                                    (string) $sale[
+                                        'client_eik'
+                                    ],
                                     ENT_QUOTES,
                                     'UTF-8'
                                 ) ?>
@@ -358,9 +468,13 @@
 
                         <td>
                             <?= htmlspecialchars(
-                                (string) $sale['warehouse_code'] .
-                                    ' - ' .
-                                    (string) $sale['warehouse_name'],
+                                (string) $sale[
+                                    'warehouse_code'
+                                ] .
+                                ' - ' .
+                                (string) $sale[
+                                    'warehouse_name'
+                                ],
                                 ENT_QUOTES,
                                 'UTF-8'
                             ) ?>
@@ -385,7 +499,9 @@
         <?php else: ?>
             <div class="table-responsive">
                 <table
-                    class="table table-striped table-hover align-middle mb-0">
+                    class="table table-striped
+                    table-hover align-middle mb-0"
+                >
                     <thead>
                         <tr>
                             <th>Image</th>
@@ -410,17 +526,28 @@
                             <tr>
                                 <td>
                                     <?php if (
-                                        !empty($item['image_path'])
+                                        !empty(
+                                            $item[
+                                                'image_path'
+                                            ]
+                                        )
                                     ): ?>
                                         <img
                                             src="<?= htmlspecialchars(
-                                                        (string) $item['image_path'],
-                                                        ENT_QUOTES,
-                                                        'UTF-8'
-                                                    ) ?>"
+                                                (string) $item[
+                                                    'image_path'
+                                                ],
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            ) ?>"
                                             alt="Product image"
-                                            style="width: 50px; height: 50px; object-fit: cover;"
-                                            class="rounded border">
+                                            style="
+                                                width: 50px;
+                                                height: 50px;
+                                                object-fit: cover;
+                                            "
+                                            class="rounded border"
+                                        >
                                     <?php else: ?>
                                         <span class="text-muted">
                                             No image
@@ -430,9 +557,13 @@
 
                                 <td>
                                     <span
-                                        class="badge text-bg-secondary">
+                                        class="badge
+                                        text-bg-secondary"
+                                    >
                                         <?= htmlspecialchars(
-                                            (string) $item['product_internal_code'],
+                                            (string) $item[
+                                                'product_internal_code'
+                                            ],
                                             ENT_QUOTES,
                                             'UTF-8'
                                         ) ?>
@@ -441,7 +572,9 @@
 
                                 <td>
                                     <?= htmlspecialchars(
-                                        (string) $item['product_name'],
+                                        (string) $item[
+                                            'product_name'
+                                        ],
                                         ENT_QUOTES,
                                         'UTF-8'
                                     ) ?>
@@ -449,10 +582,14 @@
 
                                 <td>
                                     <?php if (
-                                        !empty($item['barcode'])
+                                        !empty(
+                                            $item['barcode']
+                                        )
                                     ): ?>
                                         <?= htmlspecialchars(
-                                            (string) $item['barcode'],
+                                            (string) $item[
+                                                'barcode'
+                                            ],
                                             ENT_QUOTES,
                                             'UTF-8'
                                         ) ?>
@@ -465,7 +602,9 @@
 
                                 <td>
                                     <?= htmlspecialchars(
-                                        (string) $item['quantity'],
+                                        (string) $item[
+                                            'quantity'
+                                        ],
                                         ENT_QUOTES,
                                         'UTF-8'
                                     ) ?>
@@ -473,7 +612,9 @@
 
                                 <td>
                                     <?= htmlspecialchars(
-                                        (string) $item['unit'],
+                                        (string) $item[
+                                            'unit'
+                                        ],
                                         ENT_QUOTES,
                                         'UTF-8'
                                     ) ?>
@@ -481,35 +622,45 @@
 
                                 <td>
                                     <?= number_format(
-                                        (float) $item['unit_price'],
+                                        (float) $item[
+                                            'unit_price'
+                                        ],
                                         2
                                     ) ?>
                                 </td>
 
                                 <td>
                                     <?= number_format(
-                                        (float) $item['discount_amount'],
+                                        (float) $item[
+                                            'discount_amount'
+                                        ],
                                         2
                                     ) ?>
                                 </td>
 
                                 <td>
                                     <?= number_format(
-                                        (float) $item['net_amount'],
+                                        (float) $item[
+                                            'net_amount'
+                                        ],
                                         2
                                     ) ?>
                                 </td>
 
                                 <td>
                                     <?= number_format(
-                                        (float) $item['vat_rate'],
+                                        (float) $item[
+                                            'vat_rate'
+                                        ],
                                         2
                                     ) ?>%
                                 </td>
 
                                 <td>
                                     <?= number_format(
-                                        (float) $item['tax_amount'],
+                                        (float) $item[
+                                            'tax_amount'
+                                        ],
                                         2
                                     ) ?>
                                 </td>
@@ -517,7 +668,9 @@
                                 <td>
                                     <strong>
                                         <?= number_format(
-                                            (float) $item['total_price'],
+                                            (float) $item[
+                                                'total_price'
+                                            ],
                                             2
                                         ) ?>
                                     </strong>
@@ -529,6 +682,225 @@
             </div>
         <?php endif; ?>
     </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div
+        class="card-header d-flex
+        justify-content-between
+        align-items-center"
+    >
+        <h2 class="h5 mb-0">
+            Sales Returns
+        </h2>
+
+        <a
+            href="/sales-returns"
+            class="btn btn-sm
+            btn-outline-secondary"
+        >
+            All Returns
+        </a>
+    </div>
+
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="text-muted small">
+                    Completed Returns
+                </div>
+
+                <div class="fs-4 fw-bold">
+                    <?= (int) $returnSummary[
+                        'return_count'
+                    ] ?>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="text-muted small">
+                    Returned Quantity
+                </div>
+
+                <div class="fs-4 fw-bold">
+                    <?= number_format(
+                        (float) $returnSummary[
+                            'returned_quantity'
+                        ],
+                        3
+                    ) ?>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="text-muted small">
+                    Restocked Quantity
+                </div>
+
+                <div class="fs-4 fw-bold">
+                    <?= number_format(
+                        (float) $returnSummary[
+                            'restocked_quantity'
+                        ],
+                        3
+                    ) ?>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="text-muted small">
+                    Return Value
+                </div>
+
+                <div class="fs-4 fw-bold">
+                    <?= number_format(
+                        (float) $returnSummary[
+                            'returned_total'
+                        ],
+                        2
+                    ) ?>
+                </div>
+            </div>
+        </div>
+
+        <?php if (
+            (float) $returnSummary[
+                'remaining_quantity'
+            ] > 0.0005
+        ): ?>
+            <div
+                class="alert alert-light
+                border mt-3 mb-0"
+            >
+                Remaining returnable quantity:
+
+                <strong>
+                    <?= number_format(
+                        (float) $returnSummary[
+                            'remaining_quantity'
+                        ],
+                        3
+                    ) ?>
+                </strong>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <?php if (!empty($salesReturns)): ?>
+        <div class="table-responsive">
+            <table
+                class="table table-hover
+                align-middle mb-0"
+            >
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Total</th>
+                        <th>Created By</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <?php foreach (
+                        $salesReturns as
+                        $salesReturn
+                    ): ?>
+                        <tr>
+                            <td class="font-monospace">
+                                <?= htmlspecialchars(
+                                    (string) $salesReturn[
+                                        'return_number'
+                                    ],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </td>
+
+                            <td>
+                                <?= htmlspecialchars(
+                                    (string) $salesReturn[
+                                        'return_date'
+                                    ],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </td>
+
+                            <td>
+                                <?php if (
+                                    (string) $salesReturn[
+                                        'status'
+                                    ] === 'completed'
+                                ): ?>
+                                    <span
+                                        class="badge
+                                        text-bg-success"
+                                    >
+                                        Completed
+                                    </span>
+                                <?php elseif (
+                                    (string) $salesReturn[
+                                        'status'
+                                    ] === 'cancelled'
+                                ): ?>
+                                    <span
+                                        class="badge
+                                        text-bg-danger"
+                                    >
+                                        Cancelled
+                                    </span>
+                                <?php else: ?>
+                                    <span
+                                        class="badge
+                                        text-bg-warning"
+                                    >
+                                        Draft
+                                    </span>
+                                <?php endif; ?>
+                            </td>
+
+                            <td>
+                                <?= number_format(
+                                    (float) $salesReturn[
+                                        'total_amount'
+                                    ],
+                                    2
+                                ) ?>
+                            </td>
+
+                            <td>
+                                <?= htmlspecialchars(
+                                    (string) $salesReturn[
+                                        'created_by_user_name'
+                                    ],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </td>
+
+                            <td>
+                                <a
+                                    href="/sales-returns/show?id=<?= (int) $salesReturn['id'] ?>"
+                                    class="btn btn-sm
+                                    btn-outline-primary"
+                                >
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php else: ?>
+        <div class="card-footer text-muted">
+            No sales returns have been created
+            for this sale.
+        </div>
+    <?php endif; ?>
 </div>
 
 <div class="row justify-content-end">
@@ -545,7 +917,9 @@
 
                         <td class="text-end">
                             <?= number_format(
-                                (float) $sale['subtotal'],
+                                (float) $sale[
+                                    'subtotal'
+                                ],
                                 2
                             ) ?>
                         </td>
@@ -556,7 +930,9 @@
 
                         <td class="text-end">
                             <?= number_format(
-                                (float) $sale['discount_amount'],
+                                (float) $sale[
+                                    'discount_amount'
+                                ],
                                 2
                             ) ?>
                         </td>
@@ -567,7 +943,9 @@
 
                         <td class="text-end">
                             <?= number_format(
-                                (float) $sale['tax_amount'],
+                                (float) $sale[
+                                    'tax_amount'
+                                ],
                                 2
                             ) ?>
                         </td>
@@ -579,7 +957,9 @@
                         <td class="text-end">
                             <strong>
                                 <?= number_format(
-                                    (float) $sale['total_amount'],
+                                    (float) $sale[
+                                        'total_amount'
+                                    ],
                                     2
                                 ) ?>
                             </strong>

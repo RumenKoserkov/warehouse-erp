@@ -405,6 +405,7 @@ class AuditLogService
             'document_sequence',
             'inventory_count',
             'inventory_adjustment',
+            'sales_return',
         ];
     }
 
