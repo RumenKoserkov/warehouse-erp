@@ -404,6 +404,7 @@ class AuditLogService
             'payment',
             'document_sequence',
             'inventory_count',
+            'inventory_adjustment',
         ];
     }
 

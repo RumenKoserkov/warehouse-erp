@@ -18,6 +18,7 @@ use App\Controllers\InvoiceController;
 use App\Controllers\PaymentController;
 use App\Controllers\ReceivableController;
 use App\Controllers\InventoryCountController;
+use App\Controllers\InventoryAdjustmentController;
 
 return [
     [
@@ -809,6 +810,113 @@ return [
         'uri' => '/inventory-counts/cancel',
         'action' => [
             InventoryCountController::class,
+            'cancel',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+
+    // Inventory Adjustments
+
+    [
+        'method' => 'GET',
+        'uri' => '/inventory-adjustments',
+        'action' => [
+            InventoryAdjustmentController::class,
+            'index',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/inventory-adjustments/create',
+        'action' => [
+            InventoryAdjustmentController::class,
+            'create',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/inventory-adjustments/store',
+        'action' => [
+            InventoryAdjustmentController::class,
+            'store',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/inventory-adjustments/show',
+        'action' => [
+            InventoryAdjustmentController::class,
+            'show',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/inventory-adjustments/items/store',
+        'action' => [
+            InventoryAdjustmentController::class,
+            'addItem',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/inventory-adjustments/items/delete',
+        'action' => [
+            InventoryAdjustmentController::class,
+            'deleteItem',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/inventory-adjustments/complete',
+        'action' => [
+            InventoryAdjustmentController::class,
+            'complete',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/inventory-adjustments/cancel',
+        'action' => [
+            InventoryAdjustmentController::class,
             'cancel',
         ],
         'middleware' => [
