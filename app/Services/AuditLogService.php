@@ -418,6 +418,7 @@ class AuditLogService
             'inventory_adjustment',
             'sales_return',
             'purchase_return',
+            'promotion',
         ];
     }
 

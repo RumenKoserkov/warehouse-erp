@@ -486,6 +486,85 @@
     </div>
 </div>
 
+
+<?php if (
+    (int) (
+        $sale['promotion_id'] ?? 0
+    ) > 0
+): ?>
+    <div class="card border-success shadow-sm mb-4">
+        <div class="card-header">
+            <strong>
+                Applied Promotion
+            </strong>
+        </div>
+
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="text-muted small">
+                        Promotion
+                    </div>
+
+                    <div class="fw-semibold">
+                        <?= htmlspecialchars(
+                            (string) $sale[
+                                'promotion_name'
+                            ],
+                            ENT_QUOTES,
+                            'UTF-8'
+                        ) ?>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="text-muted small">
+                        Code
+                    </div>
+
+                    <div class="font-monospace">
+                        <?php if (
+                            trim(
+                                (string) (
+                                    $sale[
+                                        'promotion_code'
+                                    ] ?? ''
+                                )
+                            ) !== ''
+                        ): ?>
+                            <?= htmlspecialchars(
+                                (string) $sale[
+                                    'promotion_code'
+                                ],
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>
+                        <?php else: ?>
+                            Automatic
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="text-muted small">
+                        Promotion Discount
+                    </div>
+
+                    <div class="fw-bold text-success">
+                        -
+                        <?= number_format(
+                            (float) $sale[
+                                'promotion_discount_amount'
+                            ],
+                            2
+                        ) ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
+
 <div class="card shadow-sm mb-4">
     <div class="card-header">
         Sale Items
@@ -512,6 +591,7 @@
                             <th>Unit</th>
                             <th>Unit Price</th>
                             <th>Discount</th>
+                            <th>Promotion Discount</th>
                             <th>Net</th>
                             <th>VAT %</th>
                             <th>VAT</th>
@@ -634,6 +714,17 @@
                                         (float) $item[
                                             'discount_amount'
                                         ],
+                                        2
+                                    ) ?>
+                                </td>
+
+                                <td>
+                                    <?= number_format(
+                                        (float) (
+                                            $item[
+                                                'promotion_discount_amount'
+                                            ] ?? 0
+                                        ),
                                         2
                                     ) ?>
                                 </td>
@@ -937,6 +1028,33 @@
                             ) ?>
                         </td>
                     </tr>
+
+                    <?php if (
+                        (float) (
+                            $sale[
+                                'promotion_discount_amount'
+                            ] ?? 0
+                        ) > 0
+                    ): ?>
+                        <tr>
+                            <th>
+                                Promotion Discount
+                            </th>
+
+                            <td
+                                class="text-end
+                                text-success"
+                            >
+                                -
+                                <?= number_format(
+                                    (float) $sale[
+                                        'promotion_discount_amount'
+                                    ],
+                                    2
+                                ) ?>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
 
                     <tr>
                         <th>VAT</th>

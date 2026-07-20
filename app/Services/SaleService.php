@@ -17,6 +17,7 @@ use PDO;
 class SaleService
 {
     private PDO $db;
+
     private Sale $saleModel;
     private SaleItem $saleItemModel;
     private SalesReturn $salesReturnModel;
@@ -28,6 +29,7 @@ class SaleService
 
     private AuditLogService $auditLogService;
     private TaxService $taxService;
+    private PromotionService $promotionService;
 
     public function __construct()
     {
@@ -57,6 +59,9 @@ class SaleService
 
         $this->taxService =
             new TaxService();
+
+        $this->promotionService =
+            new PromotionService();
     }
 
     public function createSale(array $data): array
@@ -92,6 +97,24 @@ class SaleService
                     $data['items'],
                     $taxConfiguration
                 );
+
+            $appliedPromotion =
+                $this->promotionService
+                ->applyToItems(
+                    (int) (
+                        $data['promotion_id'] ?? 0
+                    ),
+
+                    (string) (
+                        $data['promotion_code'] ?? ''
+                    ),
+
+                    $companyId,
+                    $items
+                );
+
+            $items =
+                $appliedPromotion['items'];
 
             $totals =
                 $this->calculateTotals(
@@ -180,6 +203,9 @@ class SaleService
                         'discount_amount' =>
                         $item['discount_amount'],
 
+                        'promotion_discount_amount' =>
+                        $item['promotion_discount_amount'] ?? 0,
+
                         'vat_rate' =>
                         $item['vat_rate'],
 
@@ -242,6 +268,13 @@ class SaleService
                             $saleNumber,
                     ]);
             }
+
+            $this->promotionService
+                ->recordUsage(
+                    $saleId,
+                    $companyId,
+                    $appliedPromotion
+                );
 
             $this->auditLogService
                 ->log(
@@ -386,6 +419,12 @@ class SaleService
                     ]);
             }
 
+            $this->promotionService
+                ->releaseForCancelledSale(
+                    $saleId,
+                    $companyId
+                );
+
             $this->saleModel
                 ->cancel(
                     $saleId,
@@ -514,6 +553,9 @@ class SaleService
 
                 'discount_amount' =>
                 $taxResult['discount_amount'],
+
+                'promotion_discount_amount' =>
+                0.00,
 
                 'subtotal' =>
                 $taxResult['subtotal'],

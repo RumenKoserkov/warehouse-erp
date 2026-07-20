@@ -1,4 +1,3 @@
-
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Create Sale</h1>
 
@@ -104,7 +103,9 @@
                                             'UTF-8'
                                         ) ?>"
                                 <?php if (
-                                    (string) $old['client_id'] ===
+                                    (string) (
+                                        $old['client_id'] ?? ''
+                                    ) ===
                                     (string) $client['id']
                                 ): ?>
                                 selected
@@ -157,7 +158,9 @@
                                             'UTF-8'
                                         ) ?>"
                                 <?php if (
-                                    (string) $old['warehouse_id'] ===
+                                    (string) (
+                                        $old['warehouse_id'] ?? ''
+                                    ) ===
                                     (string) $warehouse['id']
                                 ): ?>
                                 selected
@@ -183,8 +186,7 @@
                         name="payment_method"
                         class="form-select">
                         <?php foreach (
-                            $paymentMethods
-                            as $paymentMethod
+                            $paymentMethods as $paymentMethod
                         ): ?>
                             <option
                                 value="<?= htmlspecialchars(
@@ -193,7 +195,10 @@
                                             'UTF-8'
                                         ) ?>"
                                 <?php if (
-                                    $old['payment_method'] === $paymentMethod
+                                    (
+                                        $old['payment_method'] ?? ''
+                                    ) ===
+                                    $paymentMethod
                                 ): ?>
                                 selected
                                 <?php endif; ?>>
@@ -217,7 +222,9 @@
                         name="note"
                         class="form-control"
                         value="<?= htmlspecialchars(
-                                    $old['note'],
+                                    (string) (
+                                        $old['note'] ?? ''
+                                    ),
                                     ENT_QUOTES,
                                     'UTF-8'
                                 ) ?>"
@@ -413,6 +420,122 @@
         </div>
     </div>
 
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">
+            <h2 class="h5 mb-0">
+                Discount &amp; Promotion
+            </h2>
+        </div>
+
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-7">
+                    <label
+                        for="promotion_id"
+                        class="form-label">
+                        Promotion
+                    </label>
+
+                    <select
+                        id="promotion_id"
+                        name="promotion_id"
+                        class="form-select">
+                        <option value="0">
+                            No Promotion
+                        </option>
+
+                        <?php foreach (
+                            $promotions as $promotion
+                        ): ?>
+                            <option
+                                value="<?= (int) $promotion['id'] ?>"
+                                <?= (int) (
+                                    $old['promotion_id'] ?? 0
+                                ) ===
+                                    (int) $promotion['id']
+                                    ? 'selected'
+                                    : '' ?>>
+                                <?= htmlspecialchars(
+                                    (string) $promotion['name'],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+
+                                —
+
+                                <?php if (
+                                    $promotion['discount_type'] === 'percentage'
+                                ): ?>
+                                    <?= number_format(
+                                        (float) $promotion['discount_value'],
+                                        2
+                                    ) ?>%
+                                <?php else: ?>
+                                    <?= number_format(
+                                        (float) $promotion['discount_value'],
+                                        2
+                                    ) ?>
+                                <?php endif; ?>
+
+                                <?php if (
+                                    $promotion['code'] !== null
+                                ): ?>
+                                    — Code required
+                                <?php endif; ?>
+
+                                <?php if (
+                                    (float) $promotion['minimum_order_amount'] > 0
+                                ): ?>
+                                    — Min:
+                                    <?= number_format(
+                                        (float) $promotion['minimum_order_amount'],
+                                        2
+                                    ) ?>
+                                <?php endif; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="col-md-5">
+                    <label
+                        for="promotion_code"
+                        class="form-label">
+                        Promotion Code
+                    </label>
+
+                    <input
+                        type="text"
+                        id="promotion_code"
+                        name="promotion_code"
+                        class="form-control text-uppercase"
+                        maxlength="100"
+                        placeholder="Required only for coded promotions"
+                        value="<?= htmlspecialchars(
+                                    (string) (
+                                        $old['promotion_code'] ?? ''
+                                    ),
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>">
+                </div>
+            </div>
+
+            <div class="form-text mt-3">
+                The promotion is calculated on the
+                server after manual line discounts
+                and before VAT.
+            </div>
+
+            <div class="alert alert-light border mt-3 mb-0">
+                The totals shown above include only
+                the current line discounts. The final
+                promotion discount and recalculated VAT
+                will be applied when the sale is saved.
+            </div>
+        </div>
+    </div>
+
     <button type="submit" class="btn btn-success">
         Save Sale
     </button>
@@ -515,6 +638,7 @@
         }
 
         const netSubtotal = lineAmount;
+
         const netDiscount = money(
             safeDiscount
         );

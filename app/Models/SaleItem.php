@@ -22,6 +22,7 @@ class SaleItem extends Model
             unit,
             unit_price,
             discount_amount,
+            promotion_discount_amount,
             vat_rate,
             net_amount,
             tax_amount,
@@ -29,7 +30,7 @@ class SaleItem extends Model
         )
         VALUES
         (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
         )
     ");
 
@@ -43,6 +44,7 @@ class SaleItem extends Model
             $data['unit'],
             $data['unit_price'],
             $data['discount_amount'],
+            $data['promotion_discount_amount'] ?? 0,
             $data['vat_rate'],
             $data['net_amount'],
             $data['tax_amount'],

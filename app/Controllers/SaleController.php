@@ -10,6 +10,7 @@ use App\Core\Validator;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Product;
+use App\Models\Promotion;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Models\SalesReturn;
@@ -26,6 +27,7 @@ class SaleController extends Controller
     private Invoice $invoiceModel;
     private Client $clientModel;
     private Product $productModel;
+    private Promotion $promotionModel;
     private Warehouse $warehouseModel;
     private AuthService $authService;
     private SaleService $saleService;
@@ -54,6 +56,9 @@ class SaleController extends Controller
 
         $this->productModel =
             new Product();
+
+        $this->promotionModel =
+            new Promotion();
 
         $this->warehouseModel =
             new Warehouse();
@@ -123,6 +128,12 @@ class SaleController extends Controller
                             $companyId
                         ),
 
+                'promotions' =>
+                    $this->promotionModel
+                        ->availableByCompany(
+                            $companyId
+                        ),
+
                 'paymentMethods' =>
                     $this->paymentMethods(),
 
@@ -156,6 +167,8 @@ class SaleController extends Controller
 
         $clientId = null;
         $warehouseId = 0;
+        $promotionId = 0;
+        $promotionCode = '';
         $saleDate = '';
         $paymentMethod = '';
         $note = '';
@@ -173,6 +186,26 @@ class SaleController extends Controller
                 (int) $_POST[
                     'warehouse_id'
                 ];
+        }
+
+        if (isset($_POST['promotion_id'])) {
+            $promotionId =
+                (int) $_POST[
+                    'promotion_id'
+                ];
+        }
+
+        if (
+            isset($_POST['promotion_code']) &&
+            is_scalar(
+                $_POST['promotion_code']
+            )
+        ) {
+            $promotionCode = trim(
+                (string) $_POST[
+                    'promotion_code'
+                ]
+            );
         }
 
         if (isset($_POST['sale_date'])) {
@@ -226,6 +259,19 @@ class SaleController extends Controller
         if ($warehouseId <= 0) {
             $errors[] =
                 'Please select a valid warehouse.';
+        }
+
+        if ($promotionId < 0) {
+            $errors[] =
+                'Please select a valid promotion.';
+        }
+
+        if (
+            mb_strlen($promotionCode) >
+            100
+        ) {
+            $errors[] =
+                'Promotion code must be maximum 100 characters.';
         }
 
         if (
@@ -309,6 +355,12 @@ class SaleController extends Controller
                                 $companyId
                             ),
 
+                    'promotions' =>
+                        $this->promotionModel
+                            ->availableByCompany(
+                                $companyId
+                            ),
+
                     'paymentMethods' =>
                         $this->paymentMethods(),
 
@@ -324,6 +376,12 @@ class SaleController extends Controller
 
                         'warehouse_id' =>
                             (string) $warehouseId,
+
+                        'promotion_id' =>
+                            (string) $promotionId,
+
+                        'promotion_code' =>
+                            $promotionCode,
 
                         'payment_method' =>
                             $paymentMethod,
@@ -363,6 +421,12 @@ class SaleController extends Controller
                     'note' =>
                         $note,
 
+                    'promotion_id' =>
+                        $promotionId,
+
+                    'promotion_code' =>
+                        $promotionCode,
+
                     'items' =>
                         $items,
                 ]);
@@ -401,6 +465,12 @@ class SaleController extends Controller
                                 $companyId
                             ),
 
+                    'promotions' =>
+                        $this->promotionModel
+                            ->availableByCompany(
+                                $companyId
+                            ),
+
                     'paymentMethods' =>
                         $this->paymentMethods(),
 
@@ -417,6 +487,12 @@ class SaleController extends Controller
 
                         'warehouse_id' =>
                             (string) $warehouseId,
+
+                        'promotion_id' =>
+                            (string) $promotionId,
+
+                        'promotion_code' =>
+                            $promotionCode,
 
                         'payment_method' =>
                             $paymentMethod,
@@ -828,6 +904,12 @@ class SaleController extends Controller
                 '',
 
             'warehouse_id' =>
+                '',
+
+            'promotion_id' =>
+                '0',
+
+            'promotion_code' =>
                 '',
 
             'payment_method' =>

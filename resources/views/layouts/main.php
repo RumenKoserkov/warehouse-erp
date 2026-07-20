@@ -401,6 +401,7 @@ if (isset($title)) {
                                         [
                                             '/sales',
                                             '/sales-returns',
+                                            '/promotions',
                                         ]
                                     ) ?>"
                                     href="#"
@@ -456,6 +457,20 @@ if (isset($title)) {
                                             'manager',
                                         ])
                                     ): ?>
+                                        <li>
+                                            <a
+                                                href="/promotions"
+                                                class="dropdown-item <?= navGroupActive(
+                                                    $currentPath,
+                                                    [
+                                                        '/promotions',
+                                                    ]
+                                                ) ?>"
+                                            >
+                                                Promotions
+                                            </a>
+                                        </li>
+
                                         <li>
                                             <hr class="dropdown-divider">
                                         </li>

@@ -21,6 +21,7 @@ use App\Controllers\InventoryCountController;
 use App\Controllers\InventoryAdjustmentController;
 use App\Controllers\SalesReturnController;
 use App\Controllers\PurchaseReturnController;
+use App\Controllers\PromotionController;
 
 return [
     [
@@ -393,6 +394,86 @@ return [
         'uri' => '/sales/cancel',
         'action' => [SaleController::class, 'cancel'],
         'middleware' => ['auth', 'role:administrator,manager'],
+    ],
+
+    // Promotions
+
+    [
+        'method' => 'GET',
+        'uri' => '/promotions',
+        'action' => [
+            PromotionController::class,
+            'index',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/promotions/create',
+        'action' => [
+            PromotionController::class,
+            'create',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/promotions/store',
+        'action' => [
+            PromotionController::class,
+            'store',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/promotions/edit',
+        'action' => [
+            PromotionController::class,
+            'edit',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/promotions/update',
+        'action' => [
+            PromotionController::class,
+            'update',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/promotions/toggle',
+        'action' => [
+            PromotionController::class,
+            'toggle',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
     ],
 
     // Sales Returns
