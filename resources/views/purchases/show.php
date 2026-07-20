@@ -7,14 +7,40 @@
         ) ?>
     </h1>
 
-    <div class="d-flex gap-2">
-        <?php if ($purchase['status'] === 'completed'): ?>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+        <?php if (
+            (string) $purchase['status'] ===
+                'completed' &&
+            $returnSummary[
+                'has_returnable_items'
+            ] &&
+            !$returnSummary['has_draft']
+        ): ?>
+            <a
+                href="/purchase-returns/create?purchase_id=<?= (int) $purchase['id'] ?>"
+                class="btn btn-warning"
+            >
+                Create Purchase Return
+            </a>
+        <?php endif; ?>
+
+        <?php if ($returnSummary['has_draft']): ?>
+            <span class="badge text-bg-warning p-2">
+                Open Return Draft
+            </span>
+        <?php endif; ?>
+
+        <?php if (
+            $purchase['status'] ===
+            'completed'
+        ): ?>
             <form
                 action="/purchases/cancel"
                 method="POST"
                 onsubmit="return confirm(
                     'Are you sure you want to cancel this purchase and decrease the stock?'
-                );">
+                );"
+            >
                 <?= \App\Core\Csrf::field() ?>
 
                 <input
@@ -24,11 +50,13 @@
                         (string) $purchase['id'],
                         ENT_QUOTES,
                         'UTF-8'
-                    ) ?>">
+                    ) ?>"
+                >
 
                 <button
                     type="submit"
-                    class="btn btn-danger">
+                    class="btn btn-danger"
+                >
                     Cancel Purchase
                 </button>
             </form>
@@ -36,7 +64,8 @@
 
         <a
             href="/purchases"
-            class="btn btn-outline-secondary">
+            class="btn btn-outline-secondary"
+        >
             Back to Purchases
         </a>
     </div>
@@ -398,7 +427,8 @@
         <?php else: ?>
             <div class="table-responsive">
                 <table
-                    class="table table-striped table-hover align-middle mb-0">
+                    class="table table-striped table-hover align-middle mb-0"
+                >
                     <thead>
                         <tr>
                             <th>Image</th>
@@ -439,7 +469,8 @@
                                             ) ?>"
                                             alt="Product image"
                                             style="width: 50px; height: 50px; object-fit: cover;"
-                                            class="rounded border">
+                                            class="rounded border"
+                                        >
                                     <?php else: ?>
                                         <span class="text-muted">
                                             No image
@@ -639,6 +670,172 @@
             </div>
         </div>
     </div>
+</div>
+
+<div class="card shadow-sm mt-4">
+    <div
+        class="card-header d-flex justify-content-between align-items-center"
+    >
+        <h2 class="h5 mb-0">
+            Purchase Returns
+        </h2>
+
+        <a
+            href="/purchase-returns"
+            class="btn btn-sm btn-outline-secondary"
+        >
+            All Returns
+        </a>
+    </div>
+
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="text-muted small">
+                    Completed Returns
+                </div>
+
+                <div class="fs-4 fw-bold">
+                    <?= (int) $returnSummary[
+                        'return_count'
+                    ] ?>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="text-muted small">
+                    Returned Quantity
+                </div>
+
+                <div class="fs-4 fw-bold">
+                    <?= number_format(
+                        (float) $returnSummary[
+                            'returned_quantity'
+                        ],
+                        3
+                    ) ?>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="text-muted small">
+                    Return Value
+                </div>
+
+                <div class="fs-4 fw-bold">
+                    <?= number_format(
+                        (float) $returnSummary[
+                            'returned_total'
+                        ],
+                        2
+                    ) ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php if (!empty($purchaseReturns)): ?>
+        <div class="table-responsive">
+            <table
+                class="table table-hover align-middle mb-0"
+            >
+                <thead>
+                    <tr>
+                        <th>Reference</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Total</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <?php foreach (
+                        $purchaseReturns as
+                        $purchaseReturn
+                    ): ?>
+                        <?php
+                        $returnStatus =
+                            (string) $purchaseReturn[
+                                'status'
+                            ];
+
+                        $statusClass = match (
+                            $returnStatus
+                        ) {
+                            'completed' =>
+                                'text-bg-success',
+
+                            'cancelled' =>
+                                'text-bg-danger',
+
+                            default =>
+                                'text-bg-warning',
+                        };
+                        ?>
+
+                        <tr>
+                            <td class="font-monospace">
+                                <?= htmlspecialchars(
+                                    (string) $purchaseReturn[
+                                        'return_number'
+                                    ],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </td>
+
+                            <td>
+                                <?= htmlspecialchars(
+                                    (string) $purchaseReturn[
+                                        'return_date'
+                                    ],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>
+                            </td>
+
+                            <td>
+                                <span
+                                    class="badge <?= $statusClass ?>"
+                                >
+                                    <?= htmlspecialchars(
+                                        ucfirst(
+                                            $returnStatus
+                                        ),
+                                        ENT_QUOTES,
+                                        'UTF-8'
+                                    ) ?>
+                                </span>
+                            </td>
+
+                            <td>
+                                <?= number_format(
+                                    (float) $purchaseReturn[
+                                        'total_amount'
+                                    ],
+                                    2
+                                ) ?>
+                            </td>
+
+                            <td class="text-end">
+                                <a
+                                    href="/purchase-returns/show?id=<?= (int) $purchaseReturn['id'] ?>"
+                                    class="btn btn-sm btn-outline-primary"
+                                >
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+    <?php else: ?>
+        <div class="card-footer text-muted">
+            No purchase returns have been created.
+        </div>
+    <?php endif; ?>
 </div>
 
 <?php if (!empty($purchase['note'])): ?>

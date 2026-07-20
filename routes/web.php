@@ -20,6 +20,7 @@ use App\Controllers\ReceivableController;
 use App\Controllers\InventoryCountController;
 use App\Controllers\InventoryAdjustmentController;
 use App\Controllers\SalesReturnController;
+use App\Controllers\PurchaseReturnController;
 
 return [
     [
@@ -517,6 +518,99 @@ return [
         'uri' => '/purchases/cancel',
         'action' => [PurchaseController::class, 'cancel'],
         'middleware' => ['auth', 'role:administrator,manager'],
+    ],
+
+    // Purchase Returns
+
+    [
+        'method' => 'GET',
+        'uri' => '/purchase-returns',
+        'action' => [
+            PurchaseReturnController::class,
+            'index',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/purchase-returns/create',
+        'action' => [
+            PurchaseReturnController::class,
+            'create',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/purchase-returns/store',
+        'action' => [
+            PurchaseReturnController::class,
+            'store',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/purchase-returns/show',
+        'action' => [
+            PurchaseReturnController::class,
+            'show',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/purchase-returns/update',
+        'action' => [
+            PurchaseReturnController::class,
+            'update',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/purchase-returns/complete',
+        'action' => [
+            PurchaseReturnController::class,
+            'complete',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/purchase-returns/cancel',
+        'action' => [
+            PurchaseReturnController::class,
+            'cancel',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
     ],
 
     // Product movement

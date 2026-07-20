@@ -10,100 +10,144 @@ use App\Core\Validator;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
+use App\Models\PurchaseReturn;
 use App\Models\Supplier;
 use App\Models\Warehouse;
 use App\Services\AuthService;
+use App\Services\PurchaseReturnService;
 use App\Services\PurchaseService;
 use App\Services\TaxService;
 
 class PurchaseController extends Controller
 {
     private Purchase $purchaseModel;
-    private Supplier $supplierModel;
-    private Product $productModel;
-    private Warehouse $warehouseModel;
-    private AuthService $authService;
-    private PurchaseService $purchaseService;
+
     private PurchaseItem $purchaseItemModel;
+
+    private PurchaseReturn $purchaseReturnModel;
+
+    private Supplier $supplierModel;
+
+    private Product $productModel;
+
+    private Warehouse $warehouseModel;
+
+    private AuthService $authService;
+
+    private PurchaseService $purchaseService;
+
+    private PurchaseReturnService
+        $purchaseReturnService;
+
     private TaxService $taxService;
 
     public function __construct()
     {
-        $this->purchaseModel = new Purchase();
-        $this->purchaseItemModel = new PurchaseItem();
-        $this->supplierModel = new Supplier();
-        $this->productModel = new Product();
-        $this->warehouseModel = new Warehouse();
-        $this->authService = new AuthService();
-        $this->purchaseService = new PurchaseService();
-        $this->taxService = new TaxService();
+        $this->purchaseModel =
+            new Purchase();
+
+        $this->purchaseItemModel =
+            new PurchaseItem();
+
+        $this->purchaseReturnModel =
+            new PurchaseReturn();
+
+        $this->supplierModel =
+            new Supplier();
+
+        $this->productModel =
+            new Product();
+
+        $this->warehouseModel =
+            new Warehouse();
+
+        $this->authService =
+            new AuthService();
+
+        $this->purchaseService =
+            new PurchaseService();
+
+        $this->purchaseReturnService =
+            new PurchaseReturnService();
+
+        $this->taxService =
+            new TaxService();
     }
 
     public function create(): void
     {
-        $currentUser = $this->authService->user();
+        $currentUser =
+            $this->authService->user();
 
         $companyId =
             (int) $currentUser['company_id'];
 
         $taxConfiguration =
             $this->taxService
-            ->purchaseConfiguration(
-                $companyId
-            );
-
-        $this->view('purchases/create', [
-            'title' => 'Create Purchase',
-
-            'purchaseNumber' =>
-            $this->purchaseModel
-                ->generateNextPurchaseNumber(
+                ->purchaseConfiguration(
                     $companyId
-                ),
+                );
 
-            'purchaseDate' => date('Y-m-d'),
+        $this->view(
+            'purchases/create',
+            [
+                'title' =>
+                    'Create Purchase',
 
-            'suppliers' =>
-            $this->supplierModel
-                ->activeByCompany(
-                    $companyId
-                ),
+                'purchaseNumber' =>
+                    $this->purchaseModel
+                        ->generateNextPurchaseNumber(
+                            $companyId
+                        ),
 
-            'warehouses' =>
-            $this->warehouseModel
-                ->activeByCompany(
-                    $companyId
-                ),
+                'purchaseDate' =>
+                    date('Y-m-d'),
 
-            'products' =>
-            $this->productModel
-                ->activeByCompany(
-                    $companyId
-                ),
+                'suppliers' =>
+                    $this->supplierModel
+                        ->activeByCompany(
+                            $companyId
+                        ),
 
-            'paymentMethods' =>
-            $this->paymentMethods(),
+                'warehouses' =>
+                    $this->warehouseModel
+                        ->activeByCompany(
+                            $companyId
+                        ),
 
-            'taxConfiguration' =>
-            $taxConfiguration,
+                'products' =>
+                    $this->productModel
+                        ->activeByCompany(
+                            $companyId
+                        ),
 
-            'errors' => [],
-            'old' => $this->emptyOldData(),
-        ]);
+                'paymentMethods' =>
+                    $this->paymentMethods(),
+
+                'taxConfiguration' =>
+                    $taxConfiguration,
+
+                'errors' => [],
+
+                'old' =>
+                    $this->emptyOldData(),
+            ]
+        );
     }
 
     public function store(): void
     {
-        $currentUser = $this->authService->user();
+        $currentUser =
+            $this->authService->user();
 
         $companyId =
             (int) $currentUser['company_id'];
 
         $taxConfiguration =
             $this->taxService
-            ->purchaseConfiguration(
-                $companyId
-            );
+                ->purchaseConfiguration(
+                    $companyId
+                );
 
         $supplierId = null;
         $warehouseId = 0;
@@ -126,13 +170,17 @@ class PurchaseController extends Controller
 
         if (isset($_POST['purchase_date'])) {
             $purchaseDate = trim(
-                (string) $_POST['purchase_date']
+                (string) $_POST[
+                    'purchase_date'
+                ]
             );
         }
 
         if (isset($_POST['payment_method'])) {
             $paymentMethod = trim(
-                (string) $_POST['payment_method']
+                (string) $_POST[
+                    'payment_method'
+                ]
             );
         }
 
@@ -142,7 +190,8 @@ class PurchaseController extends Controller
             );
         }
 
-        $validator = new Validator($_POST);
+        $validator =
+            new Validator($_POST);
 
         $validator
             ->required(
@@ -158,18 +207,21 @@ class PurchaseController extends Controller
                 'Payment method is required.'
             );
 
-        $errors = $validator->all();
+        $errors =
+            $validator->all();
 
         if ($warehouseId <= 0) {
             $errors[] =
                 'Please select a valid warehouse.';
         }
 
-        if (!in_array(
-            $paymentMethod,
-            $this->paymentMethods(),
-            true
-        )) {
+        if (
+            !in_array(
+                $paymentMethod,
+                $this->paymentMethods(),
+                true
+            )
+        ) {
             $errors[] =
                 'Invalid payment method.';
         }
@@ -177,10 +229,10 @@ class PurchaseController extends Controller
         if ($warehouseId > 0) {
             $warehouse =
                 $this->warehouseModel
-                ->findByIdAndCompany(
-                    $warehouseId,
-                    $companyId
-                );
+                    ->findByIdAndCompany(
+                        $warehouseId,
+                        $companyId
+                    );
 
             if ($warehouse === null) {
                 $errors[] =
@@ -191,10 +243,10 @@ class PurchaseController extends Controller
         if ($supplierId !== null) {
             $supplier =
                 $this->supplierModel
-                ->findByIdAndCompany(
-                    $supplierId,
-                    $companyId
-                );
+                    ->findByIdAndCompany(
+                        $supplierId,
+                        $companyId
+                    );
 
             if ($supplier === null) {
                 $errors[] =
@@ -202,7 +254,8 @@ class PurchaseController extends Controller
             }
         }
 
-        $items = $this->getItemsFromRequest();
+        $items =
+            $this->getItemsFromRequest();
 
         if (empty($items)) {
             $errors[] =
@@ -210,140 +263,156 @@ class PurchaseController extends Controller
         }
 
         if (!empty($errors)) {
-            $this->view('purchases/create', [
-                'title' => 'Create Purchase',
+            $this->view(
+                'purchases/create',
+                [
+                    'title' =>
+                        'Create Purchase',
 
-                'purchaseNumber' =>
-                $this->purchaseModel
-                    ->generateNextPurchaseNumber(
-                        $companyId
-                    ),
+                    'purchaseNumber' =>
+                        $this->purchaseModel
+                            ->generateNextPurchaseNumber(
+                                $companyId
+                            ),
 
-                'purchaseDate' =>
-                $purchaseDate,
+                    'purchaseDate' =>
+                        $purchaseDate,
 
-                'suppliers' =>
-                $this->supplierModel
-                    ->activeByCompany(
-                        $companyId
-                    ),
+                    'suppliers' =>
+                        $this->supplierModel
+                            ->activeByCompany(
+                                $companyId
+                            ),
 
-                'warehouses' =>
-                $this->warehouseModel
-                    ->activeByCompany(
-                        $companyId
-                    ),
+                    'warehouses' =>
+                        $this->warehouseModel
+                            ->activeByCompany(
+                                $companyId
+                            ),
 
-                'products' =>
-                $this->productModel
-                    ->activeByCompany(
-                        $companyId
-                    ),
+                    'products' =>
+                        $this->productModel
+                            ->activeByCompany(
+                                $companyId
+                            ),
 
-                'paymentMethods' =>
-                $this->paymentMethods(),
+                    'paymentMethods' =>
+                        $this->paymentMethods(),
 
-                'taxConfiguration' =>
-                $taxConfiguration,
+                    'taxConfiguration' =>
+                        $taxConfiguration,
 
-                'errors' => $errors,
+                    'errors' =>
+                        $errors,
 
-                'old' => [
-                    'supplier_id' =>
-                    (string) $supplierId,
+                    'old' => [
+                        'supplier_id' =>
+                            (string) $supplierId,
 
-                    'warehouse_id' =>
-                    (string) $warehouseId,
+                        'warehouse_id' =>
+                            (string) $warehouseId,
 
-                    'payment_method' =>
-                    $paymentMethod,
+                        'payment_method' =>
+                            $paymentMethod,
 
-                    'note' => $note,
-                ],
-            ]);
+                        'note' =>
+                            $note,
+                    ],
+                ]
+            );
 
             return;
         }
 
         $result =
             $this->purchaseService
-            ->createPurchase([
-                'company_id' =>
-                $companyId,
+                ->createPurchase([
+                    'company_id' =>
+                        $companyId,
 
-                'supplier_id' =>
-                $supplierId,
-
-                'warehouse_id' =>
-                $warehouseId,
-
-                'user_id' =>
-                (int) $currentUser['id'],
-
-                'purchase_date' =>
-                $purchaseDate,
-
-                'payment_method' =>
-                $paymentMethod,
-
-                'note' => $note,
-                'items' => $items,
-            ]);
-
-        if (!$result['success']) {
-            $this->view('purchases/create', [
-                'title' => 'Create Purchase',
-
-                'purchaseNumber' =>
-                $this->purchaseModel
-                    ->generateNextPurchaseNumber(
-                        $companyId
-                    ),
-
-                'purchaseDate' =>
-                $purchaseDate,
-
-                'suppliers' =>
-                $this->supplierModel
-                    ->activeByCompany(
-                        $companyId
-                    ),
-
-                'warehouses' =>
-                $this->warehouseModel
-                    ->activeByCompany(
-                        $companyId
-                    ),
-
-                'products' =>
-                $this->productModel
-                    ->activeByCompany(
-                        $companyId
-                    ),
-
-                'paymentMethods' =>
-                $this->paymentMethods(),
-
-                'taxConfiguration' =>
-                $taxConfiguration,
-
-                'errors' => [
-                    $result['error'],
-                ],
-
-                'old' => [
                     'supplier_id' =>
-                    (string) $supplierId,
+                        $supplierId,
 
                     'warehouse_id' =>
-                    (string) $warehouseId,
+                        $warehouseId,
+
+                    'user_id' =>
+                        (int) $currentUser['id'],
+
+                    'purchase_date' =>
+                        $purchaseDate,
 
                     'payment_method' =>
-                    $paymentMethod,
+                        $paymentMethod,
 
-                    'note' => $note,
-                ],
-            ]);
+                    'note' =>
+                        $note,
+
+                    'items' =>
+                        $items,
+                ]);
+
+        if (!$result['success']) {
+            $this->view(
+                'purchases/create',
+                [
+                    'title' =>
+                        'Create Purchase',
+
+                    'purchaseNumber' =>
+                        $this->purchaseModel
+                            ->generateNextPurchaseNumber(
+                                $companyId
+                            ),
+
+                    'purchaseDate' =>
+                        $purchaseDate,
+
+                    'suppliers' =>
+                        $this->supplierModel
+                            ->activeByCompany(
+                                $companyId
+                            ),
+
+                    'warehouses' =>
+                        $this->warehouseModel
+                            ->activeByCompany(
+                                $companyId
+                            ),
+
+                    'products' =>
+                        $this->productModel
+                            ->activeByCompany(
+                                $companyId
+                            ),
+
+                    'paymentMethods' =>
+                        $this->paymentMethods(),
+
+                    'taxConfiguration' =>
+                        $taxConfiguration,
+
+                    'errors' => [
+                        (string) $result[
+                            'error'
+                        ],
+                    ],
+
+                    'old' => [
+                        'supplier_id' =>
+                            (string) $supplierId,
+
+                        'warehouse_id' =>
+                            (string) $warehouseId,
+
+                        'payment_method' =>
+                            $paymentMethod,
+
+                        'note' =>
+                            $note,
+                    ],
+                ]
+            );
 
             return;
         }
@@ -357,7 +426,8 @@ class PurchaseController extends Controller
 
     public function show(): void
     {
-        $currentUser = $this->authService->user();
+        $currentUser =
+            $this->authService->user();
 
         $id = 0;
 
@@ -367,40 +437,72 @@ class PurchaseController extends Controller
 
         if ($id <= 0) {
             $this->abort(404);
-
             return;
         }
 
+        $companyId =
+            (int) $currentUser[
+                'company_id'
+            ];
+
         $purchase =
             $this->purchaseModel
-            ->findByIdAndCompany(
-                $id,
-                (int) $currentUser['company_id']
-            );
+                ->findByIdAndCompany(
+                    $id,
+                    $companyId
+                );
 
         if ($purchase === null) {
             $this->abort(404);
-
             return;
         }
 
         $items =
             $this->purchaseItemModel
-            ->allByPurchase(
-                $id,
-                (int) $currentUser['company_id']
-            );
+                ->allByPurchase(
+                    $id,
+                    $companyId
+                );
 
-        $this->view('purchases/show', [
-            'title' => 'Purchase Details',
-            'purchase' => $purchase,
-            'items' => $items,
-        ]);
+        $returnSummary =
+            $this->purchaseReturnService
+                ->summaryForPurchase(
+                    $id,
+                    $companyId
+                );
+
+        $purchaseReturns =
+            $this->purchaseReturnModel
+                ->allByPurchase(
+                    $id,
+                    $companyId
+                );
+
+        $this->view(
+            'purchases/show',
+            [
+                'title' =>
+                    'Purchase Details',
+
+                'purchase' =>
+                    $purchase,
+
+                'items' =>
+                    $items,
+
+                'returnSummary' =>
+                    $returnSummary,
+
+                'purchaseReturns' =>
+                    $purchaseReturns,
+            ]
+        );
     }
 
     public function index(): void
     {
-        $currentUser = $this->authService->user();
+        $currentUser =
+            $this->authService->user();
 
         $search = '';
 
@@ -412,21 +514,32 @@ class PurchaseController extends Controller
 
         $purchases =
             $this->purchaseModel
-            ->allByCompany(
-                (int) $currentUser['company_id'],
-                $search
-            );
+                ->allByCompany(
+                    (int) $currentUser[
+                        'company_id'
+                    ],
+                    $search
+                );
 
-        $this->view('purchases/index', [
-            'title' => 'Purchases',
-            'purchases' => $purchases,
-            'search' => $search,
-        ]);
+        $this->view(
+            'purchases/index',
+            [
+                'title' =>
+                    'Purchases',
+
+                'purchases' =>
+                    $purchases,
+
+                'search' =>
+                    $search,
+            ]
+        );
     }
 
     public function cancel(): void
     {
-        $currentUser = $this->authService->user();
+        $currentUser =
+            $this->authService->user();
 
         $id = 0;
 
@@ -436,25 +549,27 @@ class PurchaseController extends Controller
 
         if ($id <= 0) {
             $this->abort(404);
-
             return;
         }
 
         $result =
             $this->purchaseService
-            ->cancelPurchase(
-                $id,
-                (int) $currentUser['company_id'],
-                (int) $currentUser['id']
-            );
+                ->cancelPurchase(
+                    $id,
+                    (int) $currentUser[
+                        'company_id'
+                    ],
+                    (int) $currentUser['id']
+                );
 
         if (!$result['success']) {
             Flash::danger(
-                $result['error']
+                (string) $result['error']
             );
 
             $this->redirect(
-                '/purchases/show?id=' . $id
+                '/purchases/show?id=' .
+                $id
             );
 
             return;
@@ -465,7 +580,8 @@ class PurchaseController extends Controller
         );
 
         $this->redirect(
-            '/purchases/show?id=' . $id
+            '/purchases/show?id=' .
+            $id
         );
     }
 
@@ -481,10 +597,12 @@ class PurchaseController extends Controller
             return $items;
         }
 
-        $productIds = $_POST['product_id'];
+        $productIds =
+            $_POST['product_id'];
 
         foreach (
-            $productIds as $index => $productId
+            $productIds as
+            $index => $productId
         ) {
             $quantity = 0;
             $unitCost = 0;
@@ -492,29 +610,41 @@ class PurchaseController extends Controller
 
             if (
                 isset(
-                    $_POST['quantity'][$index]
+                    $_POST['quantity'][
+                        $index
+                    ]
                 )
             ) {
                 $quantity =
-                    (float) $_POST['quantity'][$index];
+                    (float) $_POST[
+                        'quantity'
+                    ][$index];
             }
 
             if (
                 isset(
-                    $_POST['unit_cost'][$index]
+                    $_POST['unit_cost'][
+                        $index
+                    ]
                 )
             ) {
                 $unitCost =
-                    (float) $_POST['unit_cost'][$index];
+                    (float) $_POST[
+                        'unit_cost'
+                    ][$index];
             }
 
             if (
                 isset(
-                    $_POST['discount_amount'][$index]
+                    $_POST[
+                        'discount_amount'
+                    ][$index]
                 )
             ) {
                 $discountAmount =
-                    (float) $_POST['discount_amount'][$index];
+                    (float) $_POST[
+                        'discount_amount'
+                    ][$index];
             }
 
             if ((int) $productId <= 0) {
@@ -523,16 +653,16 @@ class PurchaseController extends Controller
 
             $items[] = [
                 'product_id' =>
-                (int) $productId,
+                    (int) $productId,
 
                 'quantity' =>
-                $quantity,
+                    $quantity,
 
                 'unit_cost' =>
-                $unitCost,
+                    $unitCost,
 
                 'discount_amount' =>
-                $discountAmount,
+                    $discountAmount,
             ];
         }
 
@@ -555,7 +685,7 @@ class PurchaseController extends Controller
             'supplier_id' => '',
             'warehouse_id' => '',
             'payment_method' =>
-            'bank_transfer',
+                'bank_transfer',
             'note' => '',
         ];
     }

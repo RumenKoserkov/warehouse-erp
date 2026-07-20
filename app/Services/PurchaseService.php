@@ -8,6 +8,7 @@ use App\Core\Database;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
+use App\Models\PurchaseReturn;
 use App\Models\StockLevel;
 use App\Models\WarehouseTransaction;
 use Exception;
@@ -16,24 +17,43 @@ use PDO;
 class PurchaseService
 {
     private PDO $db;
+
     private Purchase $purchaseModel;
+
     private PurchaseItem $purchaseItemModel;
+
+    private PurchaseReturn $purchaseReturnModel;
+
     private Product $productModel;
+
     private StockLevel $stockLevelModel;
 
     private WarehouseTransaction
         $warehouseTransactionModel;
 
     private AuditLogService $auditLogService;
+
     private TaxService $taxService;
 
     public function __construct()
     {
-        $this->db = Database::getConnection();
-        $this->purchaseModel = new Purchase();
-        $this->purchaseItemModel = new PurchaseItem();
-        $this->productModel = new Product();
-        $this->stockLevelModel = new StockLevel();
+        $this->db =
+            Database::getConnection();
+
+        $this->purchaseModel =
+            new Purchase();
+
+        $this->purchaseItemModel =
+            new PurchaseItem();
+
+        $this->purchaseReturnModel =
+            new PurchaseReturn();
+
+        $this->productModel =
+            new Product();
+
+        $this->stockLevelModel =
+            new StockLevel();
 
         $this->warehouseTransactionModel =
             new WarehouseTransaction();
@@ -41,11 +61,13 @@ class PurchaseService
         $this->auditLogService =
             new AuditLogService();
 
-        $this->taxService = new TaxService();
+        $this->taxService =
+            new TaxService();
     }
 
-    public function createPurchase(array $data): array
-    {
+    public function createPurchase(
+        array $data
+    ): array {
         try {
             $this->db->beginTransaction();
 
@@ -70,18 +92,23 @@ class PurchaseService
                     $companyId
                 );
 
-            $items = $this->prepareItems(
-                $companyId,
-                $data['items'],
-                $taxConfiguration
-            );
+            $items =
+                $this->prepareItems(
+                    $companyId,
+                    $data['items'],
+                    $taxConfiguration
+                );
 
             $totals =
-                $this->calculateTotals($items);
+                $this->calculateTotals(
+                    $items
+                );
 
             $purchaseId =
-                $this->purchaseModel->create([
-                    'company_id' => $companyId,
+                $this->purchaseModel
+                ->create([
+                    'company_id' =>
+                    $companyId,
 
                     'supplier_id' =>
                     $data['supplier_id'],
@@ -89,7 +116,8 @@ class PurchaseService
                     'warehouse_id' =>
                     $warehouseId,
 
-                    'user_id' => $userId,
+                    'user_id' =>
+                    $userId,
 
                     'purchase_number' =>
                     $purchaseNumber,
@@ -97,7 +125,8 @@ class PurchaseService
                     'purchase_date' =>
                     $data['purchase_date'],
 
-                    'status' => 'completed',
+                    'status' =>
+                    'completed',
 
                     'vat_registered' =>
                     $taxConfiguration['vat_registered'] ? 1 : 0,
@@ -123,57 +152,60 @@ class PurchaseService
                     'payment_method' =>
                     $data['payment_method'],
 
-                    'note' => $data['note'],
+                    'note' =>
+                    $data['note'],
                 ]);
 
             foreach ($items as $item) {
-                $this->purchaseItemModel->create([
-                    'purchase_id' =>
-                    $purchaseId,
+                $this->purchaseItemModel
+                    ->create([
+                        'purchase_id' =>
+                        $purchaseId,
 
-                    'company_id' =>
-                    $companyId,
+                        'company_id' =>
+                        $companyId,
 
-                    'product_id' =>
-                    $item['product_id'],
+                        'product_id' =>
+                        $item['product_id'],
 
-                    'product_name' =>
-                    $item['product_name'],
+                        'product_name' =>
+                        $item['product_name'],
 
-                    'product_internal_code' =>
-                    $item['product_internal_code'],
+                        'product_internal_code' =>
+                        $item['product_internal_code'],
 
-                    'quantity' =>
-                    $item['quantity'],
+                        'quantity' =>
+                        $item['quantity'],
 
-                    'unit' =>
-                    $item['unit'],
+                        'unit' =>
+                        $item['unit'],
 
-                    'unit_cost' =>
-                    $item['unit_cost'],
+                        'unit_cost' =>
+                        $item['unit_cost'],
 
-                    'discount_amount' =>
-                    $item['discount_amount'],
+                        'discount_amount' =>
+                        $item['discount_amount'],
 
-                    'vat_rate' =>
-                    $item['vat_rate'],
+                        'vat_rate' =>
+                        $item['vat_rate'],
 
-                    'net_amount' =>
-                    $item['net_amount'],
+                        'net_amount' =>
+                        $item['net_amount'],
 
-                    'tax_amount' =>
-                    $item['tax_amount'],
+                        'tax_amount' =>
+                        $item['tax_amount'],
 
-                    'total_price' =>
-                    $item['total_price'],
-                ]);
+                        'total_price' =>
+                        $item['total_price'],
+                    ]);
 
-                $this->stockLevelModel->increase(
-                    $companyId,
-                    $item['product_id'],
-                    $warehouseId,
-                    $item['quantity']
-                );
+                $this->stockLevelModel
+                    ->increase(
+                        $companyId,
+                        (int) $item['product_id'],
+                        $warehouseId,
+                        (float) $item['quantity']
+                    );
 
                 $this->warehouseTransactionModel
                     ->create([
@@ -181,7 +213,7 @@ class PurchaseService
                         $companyId,
 
                         'product_id' =>
-                        $item['product_id'],
+                        (int) $item['product_id'],
 
                         'from_warehouse_id' =>
                         null,
@@ -196,7 +228,7 @@ class PurchaseService
                         'purchase',
 
                         'quantity' =>
-                        $item['quantity'],
+                        (float) $item['quantity'],
 
                         'reference_type' =>
                         'purchase',
@@ -224,7 +256,8 @@ class PurchaseService
 
             return [
                 'success' => true,
-                'purchase_id' => $purchaseId,
+                'purchase_id' =>
+                $purchaseId,
                 'error' => null,
             ];
         } catch (Exception $exception) {
@@ -251,7 +284,7 @@ class PurchaseService
 
             $purchase =
                 $this->purchaseModel
-                ->findByIdAndCompany(
+                ->findForUpdate(
                     $purchaseId,
                     $companyId
                 );
@@ -263,7 +296,7 @@ class PurchaseService
             }
 
             if (
-                $purchase['status'] ===
+                (string) $purchase['status'] ===
                 'cancelled'
             ) {
                 throw new Exception(
@@ -272,11 +305,23 @@ class PurchaseService
             }
 
             if (
-                $purchase['status'] !==
+                (string) $purchase['status'] !==
                 'completed'
             ) {
                 throw new Exception(
                     'Only completed purchases can be cancelled.'
+                );
+            }
+
+            if (
+                $this->purchaseReturnModel
+                ->hasActiveForPurchase(
+                    $purchaseId,
+                    $companyId
+                )
+            ) {
+                throw new Exception(
+                    'A purchase with draft or completed purchase returns cannot be cancelled.'
                 );
             }
 
@@ -309,7 +354,7 @@ class PurchaseService
                 if (!$hasEnoughStock) {
                     throw new Exception(
                         'Not enough stock to cancel purchase for product: ' .
-                            $item['product_name']
+                            (string) $item['product_name']
                     );
                 }
             }
@@ -327,7 +372,7 @@ class PurchaseService
                 if (!$decreased) {
                     throw new Exception(
                         'Could not decrease stock for product: ' .
-                            $item['product_name']
+                            (string) $item['product_name']
                     );
                 }
 
@@ -362,14 +407,22 @@ class PurchaseService
 
                         'note' =>
                         'Cancel purchase ' .
-                            $purchase['purchase_number'],
+                            (string) $purchase['purchase_number'],
                     ]);
             }
 
-            $this->purchaseModel->cancel(
-                $purchaseId,
-                $companyId
-            );
+            $cancelled =
+                $this->purchaseModel
+                ->cancel(
+                    $purchaseId,
+                    $companyId
+                );
+
+            if (!$cancelled) {
+                throw new Exception(
+                    'Purchase could not be cancelled.'
+                );
+            }
 
             $this->auditLogService->log(
                 $companyId,
@@ -378,7 +431,7 @@ class PurchaseService
                 'purchase',
                 $purchaseId,
                 'Cancelled purchase ' .
-                    $purchase['purchase_number']
+                    (string) $purchase['purchase_number']
             );
 
             $this->db->commit();
@@ -410,17 +463,20 @@ class PurchaseService
         foreach ($items as $item) {
             $productId =
                 (int) (
-                    $item['product_id'] ?? 0
+                    $item['product_id'] ??
+                    0
                 );
 
             $quantity =
                 (float) (
-                    $item['quantity'] ?? 0
+                    $item['quantity'] ??
+                    0
                 );
 
             $unitCost =
                 (float) (
-                    $item['unit_cost'] ?? 0
+                    $item['unit_cost'] ??
+                    0
                 );
 
             $discountAmount =
@@ -529,7 +585,10 @@ class PurchaseService
             round($subtotal, 2),
 
             'discount_amount' =>
-            round($discountAmount, 2),
+            round(
+                $discountAmount,
+                2
+            ),
 
             'tax_amount' =>
             round($taxAmount, 2),

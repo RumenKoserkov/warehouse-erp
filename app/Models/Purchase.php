@@ -203,6 +203,35 @@ class Purchase extends Model
         return $purchase;
     }
 
+    public function findForUpdate(
+        int $id,
+        int $companyId
+    ): ?array {
+        $statement = $this->db->prepare(
+            "
+        SELECT *
+        FROM purchases
+        WHERE id = :id
+        AND company_id = :company_id
+        LIMIT 1
+        FOR UPDATE
+        "
+        );
+
+        $statement->execute([
+            'id' => $id,
+            'company_id' => $companyId,
+        ]);
+
+        $purchase = $statement->fetch();
+
+        if ($purchase === false) {
+            return null;
+        }
+
+        return $purchase;
+    }
+
     public function updateTotals(int $id, int $companyId, array $totals): bool
     {
         $stmt = $this->db->prepare("

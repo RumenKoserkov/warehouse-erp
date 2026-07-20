@@ -96,26 +96,35 @@ class AuditLogService
             'user_id' => $userId,
             'action' => $action,
             'severity' => $normalizedSeverity,
+
             'entity_type' =>
-            $entityType === ''
-                ? null
-                : $entityType,
+                $entityType === ''
+                    ? null
+                    : $entityType,
+
             'entity_id' => $entityId,
+
             'description' =>
-            $description === ''
-                ? null
-                : $description,
+                $description === ''
+                    ? null
+                    : $description,
+
             'request_id' =>
-            $this->getRequestId(),
+                $this->getRequestId(),
+
             'request_method' =>
-            $this->getRequestMethod(),
+                $this->getRequestMethod(),
+
             'request_uri' =>
-            $this->getRequestUri(),
+                $this->getRequestUri(),
+
             'context' => $contextJson,
+
             'ip_address' =>
-            $this->getIpAddress(),
+                $this->getIpAddress(),
+
             'user_agent' =>
-            $this->getUserAgent(),
+                $this->getUserAgent(),
         ]);
     }
 
@@ -324,19 +333,21 @@ class AuditLogService
 
         return [
             'total_count' =>
-            (int) $summary['total_count'],
+                (int) $summary['total_count'],
 
             'today_count' =>
-            (int) $summary['today_count'],
+                (int) $summary['today_count'],
 
             'last_seven_days_count' =>
-            (int) $summary['last_seven_days_count'],
+                (int) $summary[
+                    'last_seven_days_count'
+                ],
 
             'warning_count' =>
-            (int) $summary['warning_count'],
+                (int) $summary['warning_count'],
 
             'error_count' =>
-            (int) $summary['error_count'],
+                (int) $summary['error_count'],
         ];
     }
 
@@ -406,6 +417,7 @@ class AuditLogService
             'inventory_count',
             'inventory_adjustment',
             'sales_return',
+            'purchase_return',
         ];
     }
 
@@ -459,7 +471,8 @@ class AuditLogService
                     :filter_entity_type
             ";
 
-            $parameters['filter_entity_type'] = $filters['entity_type'];
+            $parameters['filter_entity_type'] =
+                $filters['entity_type'];
         }
 
         if (
@@ -472,7 +485,8 @@ class AuditLogService
                     :filter_entity_id
             ";
 
-            $parameters['filter_entity_id'] = $filters['entity_id'];
+            $parameters['filter_entity_id'] =
+                $filters['entity_id'];
         }
 
         if (
@@ -550,18 +564,23 @@ class AuditLogService
                 $filters['search'] .
                 '%';
 
-            $parameters['search_description'] = $searchValue;
+            $parameters['search_description'] =
+                $searchValue;
 
-            $parameters['search_user_name'] = $searchValue;
+            $parameters['search_user_name'] =
+                $searchValue;
 
-            $parameters['search_user_email'] = $searchValue;
+            $parameters['search_user_email'] =
+                $searchValue;
 
             $parameters['search_ip'] =
                 $searchValue;
 
-            $parameters['search_request_id'] = $searchValue;
+            $parameters['search_request_id'] =
+                $searchValue;
 
-            $parameters['search_request_uri'] = $searchValue;
+            $parameters['search_request_uri'] =
+                $searchValue;
         }
 
         return $sql;
@@ -649,7 +668,7 @@ class AuditLogService
         if ($depth >= 5) {
             return [
                 '_truncated' =>
-                'Maximum context depth reached.',
+                    'Maximum context depth reached.',
             ];
         }
 
@@ -865,7 +884,9 @@ class AuditLogService
             )
         ) {
             return $this->limitText(
-                (string) $_SERVER['HTTP_USER_AGENT'],
+                (string) $_SERVER[
+                    'HTTP_USER_AGENT'
+                ],
                 255
             );
         }

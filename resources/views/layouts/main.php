@@ -488,7 +488,10 @@ if (isset($title)) {
                                 <a
                                     class="nav-link dropdown-toggle <?= navGroupActive(
                                         $currentPath,
-                                        ['/purchases']
+                                        [
+                                            '/purchases',
+                                            '/purchase-returns',
+                                        ]
                                     ) ?>"
                                     href="#"
                                     role="button"
@@ -520,6 +523,20 @@ if (isset($title)) {
                                             ) ?>"
                                         >
                                             New Purchase
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a
+                                            href="/purchase-returns"
+                                            class="dropdown-item <?= navGroupActive(
+                                                $currentPath,
+                                                [
+                                                    '/purchase-returns',
+                                                ]
+                                            ) ?>"
+                                        >
+                                            Purchase Returns
                                         </a>
                                     </li>
                                 </ul>
@@ -735,8 +752,7 @@ if (isset($title)) {
 
                             <button
                                 type="submit"
-                                class="btn btn-outline-light
-                                btn-sm"
+                                class="btn btn-outline-light btn-sm"
                             >
                                 Logout
                             </button>
