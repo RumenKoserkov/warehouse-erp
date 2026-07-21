@@ -22,6 +22,7 @@ use App\Controllers\InventoryAdjustmentController;
 use App\Controllers\SalesReturnController;
 use App\Controllers\PurchaseReturnController;
 use App\Controllers\PromotionController;
+use App\Controllers\ProfitReportController;
 
 return [
     [
@@ -986,6 +987,21 @@ return [
         'uri' => '/receivables',
         'action' => [
             ReceivableController::class,
+            'index',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    // Profit Reports
+
+    [
+        'method' => 'GET',
+        'uri' => '/reports/profit',
+        'action' => [
+            ProfitReportController::class,
             'index',
         ],
         'middleware' => [
