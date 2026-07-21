@@ -21,6 +21,7 @@ class WarehouseTransaction extends Model
                 type,
                 quantity,
 
+                cost_method,
                 unit_cost,
                 total_cost,
 
@@ -53,6 +54,7 @@ class WarehouseTransaction extends Model
                 :type,
                 :quantity,
 
+                :cost_method,
                 :unit_cost,
                 :total_cost,
 
@@ -106,11 +108,17 @@ class WarehouseTransaction extends Model
             'quantity' =>
                 $data['quantity'],
 
+            'cost_method' =>
+                $data['cost_method'] ??
+                null,
+
             'unit_cost' =>
-                $data['unit_cost'] ?? null,
+                $data['unit_cost'] ??
+                null,
 
             'total_cost' =>
-                $data['total_cost'] ?? null,
+                $data['total_cost'] ??
+                null,
 
             'from_quantity_before' =>
                 $data[
@@ -197,6 +205,7 @@ class WarehouseTransaction extends Model
                 warehouse_transactions.type,
                 warehouse_transactions.quantity,
 
+                warehouse_transactions.cost_method,
                 warehouse_transactions.unit_cost,
                 warehouse_transactions.total_cost,
 
@@ -302,7 +311,8 @@ class WarehouseTransaction extends Model
                 AND warehouse_transactions.product_id = ?
             ";
 
-            $params[] = $filters['product_id'];
+            $params[] =
+                $filters['product_id'];
         }
 
         if (!empty($filters['warehouse_id'])) {

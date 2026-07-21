@@ -34,13 +34,15 @@ class InventoryCostService
     ): array {
         $this->requireTransaction();
 
-        $this->validateQuantity($quantity);
-
-        if ($unitCost < 0) {
-            throw new Exception(
-                'Unit cost cannot be negative.'
+        $quantity =
+            $this->normalizeQuantity(
+                $quantity
             );
-        }
+
+        $unitCost =
+            $this->normalizeCost(
+                $unitCost
+            );
 
         $stockLevel =
             $this->stockLevelModel
@@ -51,9 +53,11 @@ class InventoryCostService
                 );
 
         $before =
-            $this->state($stockLevel);
+            $this->normalizeState(
+                $stockLevel
+            );
 
-        $incomingCost = round(
+        $incomingValue = round(
             $quantity * $unitCost,
             4
         );
@@ -66,7 +70,7 @@ class InventoryCostService
 
         $inventoryValueAfter = round(
             $before['inventory_value'] +
-            $incomingCost,
+            $incomingValue,
             4
         );
 
@@ -77,26 +81,30 @@ class InventoryCostService
                     $quantityAfter,
                     4
                 )
-                : 0.0;
+                : $unitCost;
 
-        $updated =
-            $this->stockLevelModel
-                ->updateCostState(
-                    $companyId,
-                    $productId,
-                    $warehouseId,
-                    $quantityAfter,
-                    $averageCostAfter,
-                    $inventoryValueAfter
-                );
-
-        if (!$updated) {
-            throw new Exception(
-                'Inventory cost state could not be updated.'
-            );
-        }
+        $this->saveState(
+            $companyId,
+            $productId,
+            $warehouseId,
+            $quantityAfter,
+            $averageCostAfter,
+            $inventoryValueAfter
+        );
 
         return [
+            'direction' =>
+                'incoming',
+
+            'quantity' =>
+                $quantity,
+
+            'unit_cost' =>
+                $unitCost,
+
+            'total_cost' =>
+                $incomingValue,
+
             'quantity_before' =>
                 $before['quantity'],
 
@@ -104,22 +112,20 @@ class InventoryCostService
                 $quantityAfter,
 
             'average_cost_before' =>
-                $before['average_unit_cost'],
+                $before[
+                    'average_unit_cost'
+                ],
 
             'average_cost_after' =>
                 $averageCostAfter,
 
             'inventory_value_before' =>
-                $before['inventory_value'],
+                $before[
+                    'inventory_value'
+                ],
 
             'inventory_value_after' =>
                 $inventoryValueAfter,
-
-            'unit_cost' =>
-                round($unitCost, 4),
-
-            'total_cost' =>
-                $incomingCost,
         ];
     }
 
@@ -131,7 +137,10 @@ class InventoryCostService
     ): array {
         $this->requireTransaction();
 
-        $this->validateQuantity($quantity);
+        $quantity =
+            $this->normalizeQuantity(
+                $quantity
+            );
 
         $stockLevel =
             $this->stockLevelModel
@@ -142,31 +151,38 @@ class InventoryCostService
                 );
 
         $before =
-            $this->state($stockLevel);
+            $this->normalizeState(
+                $stockLevel
+            );
 
         if (
             $quantity >
             $before['quantity'] + 0.0005
         ) {
             throw new Exception(
-                'Not enough stock.'
+                'Insufficient stock. Available: ' .
+                number_format(
+                    $before['quantity'],
+                    3,
+                    '.',
+                    ''
+                ) .
+                '.'
             );
         }
 
-        $effectiveAverageCost =
+        $unitCost =
             $before['quantity'] > 0
                 ? round(
-                    $before['inventory_value'] /
+                    $before[
+                        'inventory_value'
+                    ] /
                     $before['quantity'],
                     4
                 )
-                : $before['average_unit_cost'];
-
-        $totalCost = round(
-            $quantity *
-            $effectiveAverageCost,
-            4
-        );
+                : $before[
+                    'average_unit_cost'
+                ];
 
         $quantityAfter = round(
             $before['quantity'] -
@@ -174,45 +190,72 @@ class InventoryCostService
             3
         );
 
-        if ($quantityAfter <= 0.0005) {
-            $quantityAfter = 0.0;
-            $inventoryValueAfter = 0.0;
-            $averageCostAfter = 0.0;
-        } else {
-            $inventoryValueAfter = round(
-                max(
-                    0,
-                    $before['inventory_value'] -
-                    $totalCost
-                ),
-                4
-            );
+        $fullIssue =
+            abs(
+                $quantity -
+                $before['quantity']
+            ) <= 0.0005;
 
-            $averageCostAfter = round(
-                $inventoryValueAfter /
-                $quantityAfter,
-                4
-            );
-        }
-
-        $updated =
-            $this->stockLevelModel
-                ->updateCostState(
-                    $companyId,
-                    $productId,
-                    $warehouseId,
-                    $quantityAfter,
-                    $averageCostAfter,
-                    $inventoryValueAfter
+        $totalCost =
+            $fullIssue
+                ? $before[
+                    'inventory_value'
+                ]
+                : round(
+                    $quantity *
+                    $unitCost,
+                    4
                 );
 
-        if (!$updated) {
-            throw new Exception(
-                'Inventory cost state could not be updated.'
-            );
-        }
+        $inventoryValueAfter =
+            $fullIssue
+                ? 0.0
+                : round(
+                    max(
+                        0,
+                        $before[
+                            'inventory_value'
+                        ] -
+                        $totalCost
+                    ),
+                    4
+                );
+
+        /*
+         * При нулева наличност пазим
+         * последната средна цена.
+         */
+        $averageCostAfter =
+            $quantityAfter > 0
+                ? round(
+                    $inventoryValueAfter /
+                    $quantityAfter,
+                    4
+                )
+                : $unitCost;
+
+        $this->saveState(
+            $companyId,
+            $productId,
+            $warehouseId,
+            $quantityAfter,
+            $averageCostAfter,
+            $inventoryValueAfter
+        );
 
         return [
+            'direction' =>
+                'outgoing',
+
+            'quantity' =>
+                $quantity,
+
+            'unit_cost' =>
+                $unitCost,
+
+            'total_cost' =>
+                round($totalCost, 4),
+
             'quantity_before' =>
                 $before['quantity'],
 
@@ -220,22 +263,20 @@ class InventoryCostService
                 $quantityAfter,
 
             'average_cost_before' =>
-                $before['average_unit_cost'],
+                $before[
+                    'average_unit_cost'
+                ],
 
             'average_cost_after' =>
                 $averageCostAfter,
 
             'inventory_value_before' =>
-                $before['inventory_value'],
+                $before[
+                    'inventory_value'
+                ],
 
             'inventory_value_after' =>
                 $inventoryValueAfter,
-
-            'unit_cost' =>
-                $effectiveAverageCost,
-
-            'total_cost' =>
-                $totalCost,
         ];
     }
 
@@ -271,18 +312,29 @@ class InventoryCostService
                 $productId,
                 $toWarehouseId,
                 $quantity,
-                (float) $outgoing['unit_cost']
+                (float) $outgoing[
+                    'unit_cost'
+                ]
             );
 
         return [
-            'outgoing' => $outgoing,
-            'incoming' => $incoming,
+            'direction' =>
+                'transfer',
+
+            'quantity' =>
+                $outgoing['quantity'],
 
             'unit_cost' =>
                 $outgoing['unit_cost'],
 
             'total_cost' =>
                 $outgoing['total_cost'],
+
+            'outgoing' =>
+                $outgoing,
+
+            'incoming' =>
+                $incoming,
         ];
     }
 
@@ -290,6 +342,9 @@ class InventoryCostService
         array $movement
     ): array {
         return [
+            'cost_method' =>
+                'weighted_average',
+
             'unit_cost' =>
                 $movement['unit_cost'],
 
@@ -303,10 +358,14 @@ class InventoryCostService
                 null,
 
             'to_quantity_before' =>
-                $movement['quantity_before'],
+                $movement[
+                    'quantity_before'
+                ],
 
             'to_quantity_after' =>
-                $movement['quantity_after'],
+                $movement[
+                    'quantity_after'
+                ],
 
             'from_average_cost_before' =>
                 null,
@@ -315,10 +374,14 @@ class InventoryCostService
                 null,
 
             'to_average_cost_before' =>
-                $movement['average_cost_before'],
+                $movement[
+                    'average_cost_before'
+                ],
 
             'to_average_cost_after' =>
-                $movement['average_cost_after'],
+                $movement[
+                    'average_cost_after'
+                ],
 
             'from_inventory_value_before' =>
                 null,
@@ -327,10 +390,14 @@ class InventoryCostService
                 null,
 
             'to_inventory_value_before' =>
-                $movement['inventory_value_before'],
+                $movement[
+                    'inventory_value_before'
+                ],
 
             'to_inventory_value_after' =>
-                $movement['inventory_value_after'],
+                $movement[
+                    'inventory_value_after'
+                ],
         ];
     }
 
@@ -338,6 +405,9 @@ class InventoryCostService
         array $movement
     ): array {
         return [
+            'cost_method' =>
+                'weighted_average',
+
             'unit_cost' =>
                 $movement['unit_cost'],
 
@@ -345,10 +415,14 @@ class InventoryCostService
                 $movement['total_cost'],
 
             'from_quantity_before' =>
-                $movement['quantity_before'],
+                $movement[
+                    'quantity_before'
+                ],
 
             'from_quantity_after' =>
-                $movement['quantity_after'],
+                $movement[
+                    'quantity_after'
+                ],
 
             'to_quantity_before' =>
                 null,
@@ -357,10 +431,14 @@ class InventoryCostService
                 null,
 
             'from_average_cost_before' =>
-                $movement['average_cost_before'],
+                $movement[
+                    'average_cost_before'
+                ],
 
             'from_average_cost_after' =>
-                $movement['average_cost_after'],
+                $movement[
+                    'average_cost_after'
+                ],
 
             'to_average_cost_before' =>
                 null,
@@ -369,10 +447,14 @@ class InventoryCostService
                 null,
 
             'from_inventory_value_before' =>
-                $movement['inventory_value_before'],
+                $movement[
+                    'inventory_value_before'
+                ],
 
             'from_inventory_value_after' =>
-                $movement['inventory_value_after'],
+                $movement[
+                    'inventory_value_after'
+                ],
 
             'to_inventory_value_before' =>
                 null,
@@ -392,6 +474,9 @@ class InventoryCostService
             $movement['incoming'];
 
         return [
+            'cost_method' =>
+                'weighted_average',
+
             'unit_cost' =>
                 $movement['unit_cost'],
 
@@ -399,66 +484,93 @@ class InventoryCostService
                 $movement['total_cost'],
 
             'from_quantity_before' =>
-                $outgoing['quantity_before'],
+                $outgoing[
+                    'quantity_before'
+                ],
 
             'from_quantity_after' =>
-                $outgoing['quantity_after'],
+                $outgoing[
+                    'quantity_after'
+                ],
 
             'to_quantity_before' =>
-                $incoming['quantity_before'],
+                $incoming[
+                    'quantity_before'
+                ],
 
             'to_quantity_after' =>
-                $incoming['quantity_after'],
+                $incoming[
+                    'quantity_after'
+                ],
 
             'from_average_cost_before' =>
-                $outgoing['average_cost_before'],
+                $outgoing[
+                    'average_cost_before'
+                ],
 
             'from_average_cost_after' =>
-                $outgoing['average_cost_after'],
+                $outgoing[
+                    'average_cost_after'
+                ],
 
             'to_average_cost_before' =>
-                $incoming['average_cost_before'],
+                $incoming[
+                    'average_cost_before'
+                ],
 
             'to_average_cost_after' =>
-                $incoming['average_cost_after'],
+                $incoming[
+                    'average_cost_after'
+                ],
 
             'from_inventory_value_before' =>
-                $outgoing['inventory_value_before'],
+                $outgoing[
+                    'inventory_value_before'
+                ],
 
             'from_inventory_value_after' =>
-                $outgoing['inventory_value_after'],
+                $outgoing[
+                    'inventory_value_after'
+                ],
 
             'to_inventory_value_before' =>
-                $incoming['inventory_value_before'],
+                $incoming[
+                    'inventory_value_before'
+                ],
 
             'to_inventory_value_after' =>
-                $incoming['inventory_value_after'],
+                $incoming[
+                    'inventory_value_after'
+                ],
         ];
     }
 
-    private function state(
+    private function normalizeState(
         array $stockLevel
     ): array {
         $quantity = round(
             (float) (
-                $stockLevel['quantity'] ??
-                0
+                $stockLevel[
+                    'quantity'
+                ] ?? 0
             ),
             3
         );
 
         $averageUnitCost = round(
             (float) (
-                $stockLevel['average_unit_cost'] ??
-                0
+                $stockLevel[
+                    'average_unit_cost'
+                ] ?? 0
             ),
             4
         );
 
         $inventoryValue = round(
             (float) (
-                $stockLevel['inventory_value'] ??
-                0
+                $stockLevel[
+                    'inventory_value'
+                ] ?? 0
             ),
             4
         );
@@ -475,6 +587,17 @@ class InventoryCostService
             );
         }
 
+        if (
+            $quantity > 0 &&
+            $inventoryValue > 0
+        ) {
+            $averageUnitCost = round(
+                $inventoryValue /
+                $quantity,
+                4
+            );
+        }
+
         return [
             'quantity' =>
                 $quantity,
@@ -487,14 +610,64 @@ class InventoryCostService
         ];
     }
 
-    private function validateQuantity(
-        float $quantity
+    private function saveState(
+        int $companyId,
+        int $productId,
+        int $warehouseId,
+        float $quantity,
+        float $averageUnitCost,
+        float $inventoryValue
     ): void {
+        $updated =
+            $this->stockLevelModel
+                ->updateCostState(
+                    $companyId,
+                    $productId,
+                    $warehouseId,
+                    $quantity,
+                    $averageUnitCost,
+                    $inventoryValue
+                );
+
+        if (!$updated) {
+            throw new Exception(
+                'Inventory cost state could not be updated.'
+            );
+        }
+    }
+
+    private function normalizeQuantity(
+        float $quantity
+    ): float {
+        $quantity = round(
+            $quantity,
+            3
+        );
+
         if ($quantity <= 0) {
             throw new Exception(
                 'Quantity must be greater than zero.'
             );
         }
+
+        return $quantity;
+    }
+
+    private function normalizeCost(
+        float $unitCost
+    ): float {
+        $unitCost = round(
+            $unitCost,
+            4
+        );
+
+        if ($unitCost < 0) {
+            throw new Exception(
+                'Unit cost cannot be negative.'
+            );
+        }
+
+        return $unitCost;
     }
 
     private function requireTransaction(): void
