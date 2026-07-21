@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Core\Database;
-use App\Models\StockLevel;
 use App\Models\WarehouseTransaction;
 use Exception;
 use PDO;
@@ -13,42 +12,126 @@ use PDO;
 class StockService
 {
     private PDO $db;
-    private StockLevel $stockLevelModel;
-    private WarehouseTransaction $transactionModel;
+
+    private WarehouseTransaction
+        $transactionModel;
+
+    private InventoryCostService
+        $inventoryCostService;
 
     public function __construct()
     {
-        $this->db = Database::getConnection();
-        $this->stockLevelModel = new StockLevel();
-        $this->transactionModel = new WarehouseTransaction();
+        $this->db =
+            Database::getConnection();
+
+        $this->transactionModel =
+            new WarehouseTransaction();
+
+        $this->inventoryCostService =
+            new InventoryCostService();
     }
 
-    public function increase(array $data): bool
-    {
+    public function increase(
+        array $data
+    ): bool {
         try {
-            $this->validatePositiveQuantity((float)$data['quantity']);
+            $quantity =
+                (float) $data['quantity'];
+
+            $unitCost =
+                (float) $data['unit_cost'];
+
+            $this->validatePositiveQuantity(
+                $quantity
+            );
+
+            if ($unitCost < 0) {
+                throw new Exception(
+                    'Unit cost cannot be negative.'
+                );
+            }
 
             $this->db->beginTransaction();
 
-            $this->stockLevelModel->increase(
-                (int)$data['company_id'],
-                (int)$data['product_id'],
-                (int)$data['warehouse_id'],
-                (float)$data['quantity']
-            );
+            $movement =
+                $this->inventoryCostService
+                    ->receive(
+                        (int) $data[
+                            'company_id'
+                        ],
+                        (int) $data[
+                            'product_id'
+                        ],
+                        (int) $data[
+                            'warehouse_id'
+                        ],
+                        $quantity,
+                        $unitCost
+                    );
 
-            $this->transactionModel->create([
-                'company_id' => (int)$data['company_id'],
-                'product_id' => (int)$data['product_id'],
-                'from_warehouse_id' => null,
-                'to_warehouse_id' => (int)$data['warehouse_id'],
-                'user_id' => $data['user_id'],
-                'type' => $data['type'],
-                'quantity' => (float)$data['quantity'],
-                'reference_type' => $data['reference_type'],
-                'reference_id' => $data['reference_id'],
-                'note' => $data['note'],
-            ]);
+            $transactionData = [
+                'company_id' =>
+                    (int) $data[
+                        'company_id'
+                    ],
+
+                'product_id' =>
+                    (int) $data[
+                        'product_id'
+                    ],
+
+                'from_warehouse_id' =>
+                    null,
+
+                'to_warehouse_id' =>
+                    (int) $data[
+                        'warehouse_id'
+                    ],
+
+                'user_id' =>
+                    (int) $data[
+                        'user_id'
+                    ],
+
+                'type' =>
+                    (string) $data['type'],
+
+                'quantity' =>
+                    $quantity,
+
+                'reference_type' =>
+                    $data[
+                        'reference_type'
+                    ] ?? null,
+
+                'reference_id' =>
+                    $data[
+                        'reference_id'
+                    ] ?? null,
+
+                'note' =>
+                    $data['note'] ?? null,
+            ];
+
+            $created =
+                $this->transactionModel
+                    ->create(
+                        array_merge(
+                            $transactionData,
+
+                            $this
+                                ->inventoryCostService
+                                ->incomingTransactionFields(
+                                    $movement
+                                )
+                        )
+                    );
+
+            if (!$created) {
+                throw new Exception(
+                    'Warehouse transaction could not be created.'
+                );
+            }
 
             $this->db->commit();
 
@@ -62,47 +145,97 @@ class StockService
         }
     }
 
-    public function decrease(array $data): bool
-    {
+    public function decrease(
+        array $data
+    ): bool {
         try {
-            $this->validatePositiveQuantity((float)$data['quantity']);
+            $quantity =
+                (float) $data['quantity'];
+
+            $this->validatePositiveQuantity(
+                $quantity
+            );
 
             $this->db->beginTransaction();
 
-            $hasEnoughStock = $this->stockLevelModel->hasEnoughStock(
-                (int)$data['company_id'],
-                (int)$data['product_id'],
-                (int)$data['warehouse_id'],
-                (float)$data['quantity']
-            );
+            $movement =
+                $this->inventoryCostService
+                    ->issue(
+                        (int) $data[
+                            'company_id'
+                        ],
+                        (int) $data[
+                            'product_id'
+                        ],
+                        (int) $data[
+                            'warehouse_id'
+                        ],
+                        $quantity
+                    );
 
-            if (!$hasEnoughStock) {
-                throw new Exception('Not enough stock.');
+            $transactionData = [
+                'company_id' =>
+                    (int) $data[
+                        'company_id'
+                    ],
+
+                'product_id' =>
+                    (int) $data[
+                        'product_id'
+                    ],
+
+                'from_warehouse_id' =>
+                    (int) $data[
+                        'warehouse_id'
+                    ],
+
+                'to_warehouse_id' =>
+                    null,
+
+                'user_id' =>
+                    (int) $data[
+                        'user_id'
+                    ],
+
+                'type' =>
+                    (string) $data['type'],
+
+                'quantity' =>
+                    $quantity,
+
+                'reference_type' =>
+                    $data[
+                        'reference_type'
+                    ] ?? null,
+
+                'reference_id' =>
+                    $data[
+                        'reference_id'
+                    ] ?? null,
+
+                'note' =>
+                    $data['note'] ?? null,
+            ];
+
+            $created =
+                $this->transactionModel
+                    ->create(
+                        array_merge(
+                            $transactionData,
+
+                            $this
+                                ->inventoryCostService
+                                ->outgoingTransactionFields(
+                                    $movement
+                                )
+                        )
+                    );
+
+            if (!$created) {
+                throw new Exception(
+                    'Warehouse transaction could not be created.'
+                );
             }
-
-            $decreased = $this->stockLevelModel->decrease(
-                (int)$data['company_id'],
-                (int)$data['product_id'],
-                (int)$data['warehouse_id'],
-                (float)$data['quantity']
-            );
-
-            if (!$decreased) {
-                throw new Exception('Could not decrease stock.');
-            }
-
-            $this->transactionModel->create([
-                'company_id' => (int)$data['company_id'],
-                'product_id' => (int)$data['product_id'],
-                'from_warehouse_id' => (int)$data['warehouse_id'],
-                'to_warehouse_id' => null,
-                'user_id' => $data['user_id'],
-                'type' => $data['type'],
-                'quantity' => (float)$data['quantity'],
-                'reference_type' => $data['reference_type'],
-                'reference_id' => $data['reference_id'],
-                'note' => $data['note'],
-            ]);
 
             $this->db->commit();
 
@@ -116,58 +249,113 @@ class StockService
         }
     }
 
-    public function transfer(array $data): bool
-    {
+    public function transfer(
+        array $data
+    ): bool {
         try {
-            $this->validatePositiveQuantity((float)$data['quantity']);
+            $quantity =
+                (float) $data['quantity'];
 
-            if ((int)$data['from_warehouse_id'] === (int)$data['to_warehouse_id']) {
-                return false;
+            $fromWarehouseId =
+                (int) $data[
+                    'from_warehouse_id'
+                ];
+
+            $toWarehouseId =
+                (int) $data[
+                    'to_warehouse_id'
+                ];
+
+            $this->validatePositiveQuantity(
+                $quantity
+            );
+
+            if (
+                $fromWarehouseId ===
+                $toWarehouseId
+            ) {
+                throw new Exception(
+                    'Source and destination warehouses must be different.'
+                );
             }
 
             $this->db->beginTransaction();
 
-            $hasEnoughStock = $this->stockLevelModel->hasEnoughStock(
-                (int)$data['company_id'],
-                (int)$data['product_id'],
-                (int)$data['from_warehouse_id'],
-                (float)$data['quantity']
-            );
+            $movement =
+                $this->inventoryCostService
+                    ->transfer(
+                        (int) $data[
+                            'company_id'
+                        ],
+                        (int) $data[
+                            'product_id'
+                        ],
+                        $fromWarehouseId,
+                        $toWarehouseId,
+                        $quantity
+                    );
 
-            if (!$hasEnoughStock) {
-                throw new Exception('Not enough stock for transfer.');
+            $transactionData = [
+                'company_id' =>
+                    (int) $data[
+                        'company_id'
+                    ],
+
+                'product_id' =>
+                    (int) $data[
+                        'product_id'
+                    ],
+
+                'from_warehouse_id' =>
+                    $fromWarehouseId,
+
+                'to_warehouse_id' =>
+                    $toWarehouseId,
+
+                'user_id' =>
+                    (int) $data[
+                        'user_id'
+                    ],
+
+                'type' =>
+                    'transfer',
+
+                'quantity' =>
+                    $quantity,
+
+                'reference_type' =>
+                    $data[
+                        'reference_type'
+                    ] ?? null,
+
+                'reference_id' =>
+                    $data[
+                        'reference_id'
+                    ] ?? null,
+
+                'note' =>
+                    $data['note'] ?? null,
+            ];
+
+            $created =
+                $this->transactionModel
+                    ->create(
+                        array_merge(
+                            $transactionData,
+
+                            $this
+                                ->inventoryCostService
+                                ->transferTransactionFields(
+                                    $movement
+                                )
+                        )
+                    );
+
+            if (!$created) {
+                throw new Exception(
+                    'Warehouse transaction could not be created.'
+                );
             }
-
-            $decreased = $this->stockLevelModel->decrease(
-                (int)$data['company_id'],
-                (int)$data['product_id'],
-                (int)$data['from_warehouse_id'],
-                (float)$data['quantity']
-            );
-
-            if (!$decreased) {
-                throw new Exception('Could not decrease source warehouse stock.');
-            }
-
-            $this->stockLevelModel->increase(
-                (int)$data['company_id'],
-                (int)$data['product_id'],
-                (int)$data['to_warehouse_id'],
-                (float)$data['quantity']
-            );
-
-            $this->transactionModel->create([
-                'company_id' => (int)$data['company_id'],
-                'product_id' => (int)$data['product_id'],
-                'from_warehouse_id' => (int)$data['from_warehouse_id'],
-                'to_warehouse_id' => (int)$data['to_warehouse_id'],
-                'user_id' => $data['user_id'],
-                'type' => 'transfer',
-                'quantity' => (float)$data['quantity'],
-                'reference_type' => $data['reference_type'],
-                'reference_id' => $data['reference_id'],
-                'note' => $data['note'],
-            ]);
 
             $this->db->commit();
 
@@ -181,10 +369,13 @@ class StockService
         }
     }
 
-    private function validatePositiveQuantity(float $quantity): void
-    {
+    private function validatePositiveQuantity(
+        float $quantity
+    ): void {
         if ($quantity <= 0) {
-            throw new Exception('Quantity must be greater than zero.');
+            throw new Exception(
+                'Quantity must be greater than zero.'
+            );
         }
     }
 }

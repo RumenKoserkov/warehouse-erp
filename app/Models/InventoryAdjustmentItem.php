@@ -24,6 +24,10 @@ class InventoryAdjustmentItem extends Model
 
                 direction,
                 quantity,
+
+                unit_cost,
+                total_cost,
+
                 stock_quantity_at_add,
                 item_note
             )
@@ -40,16 +44,53 @@ class InventoryAdjustmentItem extends Model
 
                 :direction,
                 :quantity,
+
+                :unit_cost,
+                :total_cost,
+
                 :stock_quantity_at_add,
                 :item_note
             )
         ";
 
-        $statement = $this->db->prepare($sql);
+        $statement =
+            $this->db->prepare($sql);
+
+        $unitCost = null;
+
+        if (
+            array_key_exists(
+                'unit_cost',
+                $data
+            ) &&
+            $data['unit_cost'] !== null
+        ) {
+            $unitCost = round(
+                (float) $data['unit_cost'],
+                4
+            );
+        }
+
+        $totalCost = null;
+
+        if (
+            array_key_exists(
+                'total_cost',
+                $data
+            ) &&
+            $data['total_cost'] !== null
+        ) {
+            $totalCost = round(
+                (float) $data['total_cost'],
+                4
+            );
+        }
 
         $statement->execute([
             'inventory_adjustment_id' =>
-                $data['inventory_adjustment_id'],
+                $data[
+                    'inventory_adjustment_id'
+                ],
 
             'company_id' =>
                 $data['company_id'],
@@ -61,7 +102,9 @@ class InventoryAdjustmentItem extends Model
                 $data['product_name'],
 
             'product_internal_code' =>
-                $data['product_internal_code'],
+                $data[
+                    'product_internal_code'
+                ],
 
             'product_barcode' =>
                 $data['product_barcode'],
@@ -75,14 +118,23 @@ class InventoryAdjustmentItem extends Model
             'quantity' =>
                 $data['quantity'],
 
+            'unit_cost' =>
+                $unitCost,
+
+            'total_cost' =>
+                $totalCost,
+
             'stock_quantity_at_add' =>
-                $data['stock_quantity_at_add'],
+                $data[
+                    'stock_quantity_at_add'
+                ],
 
             'item_note' =>
                 $data['item_note'],
         ]);
 
-        return (int) $this->db->lastInsertId();
+        return (int)
+            $this->db->lastInsertId();
     }
 
     public function allByAdjustment(
@@ -92,15 +144,19 @@ class InventoryAdjustmentItem extends Model
         $sql = "
             SELECT *
             FROM inventory_adjustment_items
+
             WHERE inventory_adjustment_id =
                 :inventory_adjustment_id
+
             AND company_id = :company_id
+
             ORDER BY
                 product_name ASC,
                 id ASC
         ";
 
-        $statement = $this->db->prepare($sql);
+        $statement =
+            $this->db->prepare($sql);
 
         $statement->execute([
             'inventory_adjustment_id' =>
@@ -120,14 +176,19 @@ class InventoryAdjustmentItem extends Model
         $sql = "
             SELECT *
             FROM inventory_adjustment_items
+
             WHERE inventory_adjustment_id =
                 :inventory_adjustment_id
+
             AND company_id = :company_id
+
             ORDER BY product_id ASC
+
             FOR UPDATE
         ";
 
-        $statement = $this->db->prepare($sql);
+        $statement =
+            $this->db->prepare($sql);
 
         $statement->execute([
             'inventory_adjustment_id' =>
@@ -148,6 +209,7 @@ class InventoryAdjustmentItem extends Model
         $sql = "
             SELECT *
             FROM inventory_adjustment_items
+
             WHERE id = :id
 
             AND inventory_adjustment_id =
@@ -158,10 +220,12 @@ class InventoryAdjustmentItem extends Model
             LIMIT 1
         ";
 
-        $statement = $this->db->prepare($sql);
+        $statement =
+            $this->db->prepare($sql);
 
         $statement->execute([
-            'id' => $id,
+            'id' =>
+                $id,
 
             'inventory_adjustment_id' =>
                 $adjustmentId,
@@ -187,14 +251,18 @@ class InventoryAdjustmentItem extends Model
         $sql = "
             SELECT id
             FROM inventory_adjustment_items
+
             WHERE inventory_adjustment_id =
                 :inventory_adjustment_id
+
             AND company_id = :company_id
             AND product_id = :product_id
+
             LIMIT 1
         ";
 
-        $statement = $this->db->prepare($sql);
+        $statement =
+            $this->db->prepare($sql);
 
         $statement->execute([
             'inventory_adjustment_id' =>
@@ -217,6 +285,7 @@ class InventoryAdjustmentItem extends Model
     ): bool {
         $sql = "
             DELETE FROM inventory_adjustment_items
+
             WHERE id = :id
 
             AND inventory_adjustment_id =
@@ -225,10 +294,12 @@ class InventoryAdjustmentItem extends Model
             AND company_id = :company_id
         ";
 
-        $statement = $this->db->prepare($sql);
+        $statement =
+            $this->db->prepare($sql);
 
         $statement->execute([
-            'id' => $id,
+            'id' =>
+                $id,
 
             'inventory_adjustment_id' =>
                 $adjustmentId,
@@ -248,6 +319,7 @@ class InventoryAdjustmentItem extends Model
     ): bool {
         $sql = "
             UPDATE inventory_adjustment_items
+
             SET
                 quantity_before =
                     :quantity_before,
@@ -261,17 +333,95 @@ class InventoryAdjustmentItem extends Model
             AND company_id = :company_id
         ";
 
-        $statement = $this->db->prepare($sql);
+        $statement =
+            $this->db->prepare($sql);
 
         $statement->execute([
             'quantity_before' =>
-                $quantityBefore,
+                round(
+                    $quantityBefore,
+                    3
+                ),
 
             'quantity_after' =>
-                $quantityAfter,
+                round(
+                    $quantityAfter,
+                    3
+                ),
 
-            'id' => $id,
-            'company_id' => $companyId,
+            'id' =>
+                $id,
+
+            'company_id' =>
+                $companyId,
+        ]);
+
+        return $statement->rowCount() === 1;
+    }
+
+    public function markCostApplied(
+        int $id,
+        int $companyId,
+        float $quantityBefore,
+        float $quantityAfter,
+        float $unitCost,
+        float $totalCost
+    ): bool {
+        $sql = "
+            UPDATE inventory_adjustment_items
+
+            SET
+                quantity_before =
+                    :quantity_before,
+
+                quantity_after =
+                    :quantity_after,
+
+                unit_cost =
+                    :unit_cost,
+
+                total_cost =
+                    :total_cost,
+
+                updated_at = NOW()
+
+            WHERE id = :id
+            AND company_id = :company_id
+        ";
+
+        $statement =
+            $this->db->prepare($sql);
+
+        $statement->execute([
+            'quantity_before' =>
+                round(
+                    $quantityBefore,
+                    3
+                ),
+
+            'quantity_after' =>
+                round(
+                    $quantityAfter,
+                    3
+                ),
+
+            'unit_cost' =>
+                round(
+                    $unitCost,
+                    4
+                ),
+
+            'total_cost' =>
+                round(
+                    $totalCost,
+                    4
+                ),
+
+            'id' =>
+                $id,
+
+            'company_id' =>
+                $companyId,
         ]);
 
         return $statement->rowCount() === 1;
@@ -289,18 +439,27 @@ class InventoryAdjustmentItem extends Model
                 internal_code,
                 barcode,
                 unit,
+                purchase_price,
+                last_purchase_cost,
                 is_active
+
             FROM products
+
             WHERE id = :id
             AND company_id = :company_id
+
             LIMIT 1
         ";
 
-        $statement = $this->db->prepare($sql);
+        $statement =
+            $this->db->prepare($sql);
 
         $statement->execute([
-            'id' => $productId,
-            'company_id' => $companyId,
+            'id' =>
+                $productId,
+
+            'company_id' =>
+                $companyId,
         ]);
 
         $product = $statement->fetch();
@@ -324,12 +483,24 @@ class InventoryAdjustmentItem extends Model
                 products.internal_code,
                 products.barcode,
                 products.unit,
+                products.purchase_price,
+                products.last_purchase_cost,
                 products.is_active,
 
                 COALESCE(
                     stock_levels.quantity,
                     0
-                ) AS current_quantity
+                ) AS current_quantity,
+
+                COALESCE(
+                    stock_levels.average_unit_cost,
+                    0
+                ) AS average_unit_cost,
+
+                COALESCE(
+                    stock_levels.inventory_value,
+                    0
+                ) AS inventory_value
 
             FROM products
 
@@ -357,8 +528,11 @@ class InventoryAdjustmentItem extends Model
         ";
 
         $parameters = [
-            'warehouse_id' => $warehouseId,
-            'company_id' => $companyId,
+            'warehouse_id' =>
+                $warehouseId,
+
+            'company_id' =>
+                $companyId,
         ];
 
         if ($search !== '') {
@@ -393,9 +567,12 @@ class InventoryAdjustmentItem extends Model
             LIMIT 100
         ";
 
-        $statement = $this->db->prepare($sql);
+        $statement =
+            $this->db->prepare($sql);
 
-        $statement->execute($parameters);
+        $statement->execute(
+            $parameters
+        );
 
         return $statement->fetchAll();
     }

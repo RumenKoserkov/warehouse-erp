@@ -376,6 +376,38 @@ class Product extends Model
         ]);
     }
 
+    public function updateLastPurchaseCost(
+        int $id,
+        int $companyId,
+        float $unitCost
+    ): bool {
+        $sql = "
+        UPDATE products
+        SET
+            last_purchase_cost =
+                :last_purchase_cost,
+
+            last_purchase_at = NOW()
+
+        WHERE id = :id
+        AND company_id = :company_id
+    ";
+
+        $statement =
+            $this->db->prepare($sql);
+
+        return $statement->execute([
+            'last_purchase_cost' =>
+            round($unitCost, 4),
+
+            'id' =>
+            $id,
+
+            'company_id' =>
+            $companyId,
+        ]);
+    }
+
     public function deactivate(
         int $id,
         int $companyId

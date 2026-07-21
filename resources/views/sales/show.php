@@ -1,3 +1,57 @@
+<?php
+
+$showCosts =
+    (bool) ($canViewCosts ?? false);
+
+$totalCostOfGoods = 0.0;
+$totalGrossProfit = 0.0;
+$totalNetRevenue = 0.0;
+
+foreach ($items as $summaryItem) {
+    $itemTotalCost =
+        (float) (
+            $summaryItem['total_cost'] ?? 0
+        );
+
+    $itemNetRevenue =
+        (float) (
+            $summaryItem['net_amount'] ?? 0
+        );
+
+    $itemGrossProfit =
+        array_key_exists(
+            'gross_profit',
+            $summaryItem
+        ) &&
+        $summaryItem['gross_profit'] !== null
+            ? (float) $summaryItem[
+                'gross_profit'
+            ]
+            : $itemNetRevenue -
+                $itemTotalCost;
+
+    $totalCostOfGoods +=
+        $itemTotalCost;
+
+    $totalGrossProfit +=
+        $itemGrossProfit;
+
+    $totalNetRevenue +=
+        $itemNetRevenue;
+}
+
+$totalGrossMargin =
+    abs($totalNetRevenue) > 0.0001
+        ? round(
+            (
+                $totalGrossProfit /
+                $totalNetRevenue
+            ) * 100,
+            2
+        )
+        : 0.0;
+?>
+
 <div
     class="d-flex justify-content-between
     align-items-center mb-4"
@@ -596,6 +650,13 @@
                             <th>VAT %</th>
                             <th>VAT</th>
                             <th>Total</th>
+
+                            <?php if ($showCosts): ?>
+                                <th>Unit Cost</th>
+                                <th>COGS</th>
+                                <th>Gross Profit</th>
+                                <th>Gross Margin</th>
+                            <?php endif; ?>
                         </tr>
                     </thead>
 
@@ -603,6 +664,65 @@
                         <?php foreach (
                             $items as $item
                         ): ?>
+                            <?php
+                            $itemUnitCost =
+                                (float) (
+                                    $item[
+                                        'unit_cost'
+                                    ] ?? 0
+                                );
+
+                            $itemTotalCost =
+                                (float) (
+                                    $item[
+                                        'total_cost'
+                                    ] ?? 0
+                                );
+
+                            $itemNetRevenue =
+                                (float) (
+                                    $item[
+                                        'net_amount'
+                                    ] ?? 0
+                                );
+
+                            $itemGrossProfit =
+                                array_key_exists(
+                                    'gross_profit',
+                                    $item
+                                ) &&
+                                $item[
+                                    'gross_profit'
+                                ] !== null
+                                    ? (float) $item[
+                                        'gross_profit'
+                                    ]
+                                    : $itemNetRevenue -
+                                        $itemTotalCost;
+
+                            $itemGrossMargin =
+                                array_key_exists(
+                                    'gross_margin_percent',
+                                    $item
+                                ) &&
+                                $item[
+                                    'gross_margin_percent'
+                                ] !== null
+                                    ? (float) $item[
+                                        'gross_margin_percent'
+                                    ]
+                                    : (
+                                        abs(
+                                            $itemNetRevenue
+                                        ) > 0.0001
+                                            ? (
+                                                $itemGrossProfit /
+                                                $itemNetRevenue
+                                            ) * 100
+                                            : 0
+                                    );
+                            ?>
+
                             <tr>
                                 <td>
                                     <?php if (
@@ -766,6 +886,48 @@
                                         ) ?>
                                     </strong>
                                 </td>
+
+                                <?php if ($showCosts): ?>
+                                    <td>
+                                        <?= number_format(
+                                            $itemUnitCost,
+                                            4
+                                        ) ?>
+                                    </td>
+
+                                    <td>
+                                        <?= number_format(
+                                            $itemTotalCost,
+                                            4
+                                        ) ?>
+                                    </td>
+
+                                    <td>
+                                        <span
+                                            class="<?= $itemGrossProfit < 0
+                                                ? 'text-danger'
+                                                : 'text-success' ?>"
+                                        >
+                                            <?= number_format(
+                                                $itemGrossProfit,
+                                                4
+                                            ) ?>
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <span
+                                            class="<?= $itemGrossMargin < 0
+                                                ? 'text-danger'
+                                                : 'text-success' ?>"
+                                        >
+                                            <?= number_format(
+                                                $itemGrossMargin,
+                                                2
+                                            ) ?>%
+                                        </span>
+                                    </td>
+                                <?php endif; ?>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -1052,6 +1214,53 @@
                                     ],
                                     2
                                 ) ?>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+
+                    <?php if ($showCosts): ?>
+                        <tr>
+                            <th>Cost of Goods Sold</th>
+
+                            <td class="text-end">
+                                <?= number_format(
+                                    $totalCostOfGoods,
+                                    4
+                                ) ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>Gross Profit</th>
+
+                            <td
+                                class="text-end <?= $totalGrossProfit < 0
+                                    ? 'text-danger'
+                                    : 'text-success' ?>"
+                            >
+                                <strong>
+                                    <?= number_format(
+                                        $totalGrossProfit,
+                                        4
+                                    ) ?>
+                                </strong>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <th>Gross Margin</th>
+
+                            <td
+                                class="text-end <?= $totalGrossMargin < 0
+                                    ? 'text-danger'
+                                    : 'text-success' ?>"
+                            >
+                                <strong>
+                                    <?= number_format(
+                                        $totalGrossMargin,
+                                        2
+                                    ) ?>%
+                                </strong>
                             </td>
                         </tr>
                     <?php endif; ?>

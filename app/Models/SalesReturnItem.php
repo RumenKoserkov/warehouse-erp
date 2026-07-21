@@ -11,117 +11,131 @@ class SalesReturnItem extends Model
     public function create(array $data): int
     {
         $sql = "
-            INSERT INTO sales_return_items
-            (
-                sales_return_id,
-                company_id,
-                sale_item_id,
-                product_id,
+        INSERT INTO sales_return_items
+        (
+            sales_return_id,
+            company_id,
+            sale_item_id,
+            product_id,
 
-                product_name,
-                product_internal_code,
-                product_unit,
+            product_name,
+            product_internal_code,
+            product_unit,
 
-                sold_quantity,
-                return_quantity,
-                restock_quantity,
+            sold_quantity,
+            return_quantity,
+            restock_quantity,
 
-                unit_price,
-                subtotal_amount,
-                discount_amount,
-                net_amount,
-                vat_rate,
-                tax_amount,
-                total_amount,
+            unit_cost,
+            restocked_cost,
 
-                item_note
-            )
-            VALUES
-            (
-                :sales_return_id,
-                :company_id,
-                :sale_item_id,
-                :product_id,
+            unit_price,
+            subtotal_amount,
+            discount_amount,
+            net_amount,
+            vat_rate,
+            tax_amount,
+            total_amount,
 
-                :product_name,
-                :product_internal_code,
-                :product_unit,
+            item_note
+        )
+        VALUES
+        (
+            :sales_return_id,
+            :company_id,
+            :sale_item_id,
+            :product_id,
 
-                :sold_quantity,
-                :return_quantity,
-                :restock_quantity,
+            :product_name,
+            :product_internal_code,
+            :product_unit,
 
-                :unit_price,
-                :subtotal_amount,
-                :discount_amount,
-                :net_amount,
-                :vat_rate,
-                :tax_amount,
-                :total_amount,
+            :sold_quantity,
+            :return_quantity,
+            :restock_quantity,
 
-                :item_note
-            )
-        ";
+            :unit_cost,
+            :restocked_cost,
 
-        $statement = $this->db->prepare($sql);
+            :unit_price,
+            :subtotal_amount,
+            :discount_amount,
+            :net_amount,
+            :vat_rate,
+            :tax_amount,
+            :total_amount,
+
+            :item_note
+        )
+    ";
+
+        $statement =
+            $this->db->prepare($sql);
 
         $statement->execute([
             'sales_return_id' =>
-                $data['sales_return_id'],
+            $data['sales_return_id'],
 
             'company_id' =>
-                $data['company_id'],
+            $data['company_id'],
 
             'sale_item_id' =>
-                $data['sale_item_id'],
+            $data['sale_item_id'],
 
             'product_id' =>
-                $data['product_id'],
+            $data['product_id'],
 
             'product_name' =>
-                $data['product_name'],
+            $data['product_name'],
 
             'product_internal_code' =>
-                $data['product_internal_code'],
+            $data['product_internal_code'],
 
             'product_unit' =>
-                $data['product_unit'],
+            $data['product_unit'],
 
             'sold_quantity' =>
-                $data['sold_quantity'],
+            $data['sold_quantity'],
 
             'return_quantity' =>
-                $data['return_quantity'],
+            $data['return_quantity'],
 
             'restock_quantity' =>
-                $data['restock_quantity'],
+            $data['restock_quantity'],
+
+            'unit_cost' =>
+            $data['unit_cost'],
+
+            'restocked_cost' =>
+            $data['restocked_cost'],
 
             'unit_price' =>
-                $data['unit_price'],
+            $data['unit_price'],
 
             'subtotal_amount' =>
-                $data['subtotal_amount'],
+            $data['subtotal_amount'],
 
             'discount_amount' =>
-                $data['discount_amount'],
+            $data['discount_amount'],
 
             'net_amount' =>
-                $data['net_amount'],
+            $data['net_amount'],
 
             'vat_rate' =>
-                $data['vat_rate'],
+            $data['vat_rate'],
 
             'tax_amount' =>
-                $data['tax_amount'],
+            $data['tax_amount'],
 
             'total_amount' =>
-                $data['total_amount'],
+            $data['total_amount'],
 
             'item_note' =>
-                $data['item_note'],
+            $data['item_note'],
         ]);
 
-        return (int) $this->db->lastInsertId();
+        return (int)
+        $this->db->lastInsertId();
     }
 
     public function deleteByReturn(
@@ -139,10 +153,10 @@ class SalesReturnItem extends Model
 
         return $statement->execute([
             'sales_return_id' =>
-                $salesReturnId,
+            $salesReturnId,
 
             'company_id' =>
-                $companyId,
+            $companyId,
         ]);
     }
 
@@ -166,10 +180,10 @@ class SalesReturnItem extends Model
 
         $statement->execute([
             'sales_return_id' =>
-                $salesReturnId,
+            $salesReturnId,
 
             'company_id' =>
-                $companyId,
+            $companyId,
         ]);
 
         return $statement->fetchAll();
@@ -197,10 +211,10 @@ class SalesReturnItem extends Model
 
         $statement->execute([
             'sales_return_id' =>
-                $salesReturnId,
+            $salesReturnId,
 
             'company_id' =>
-                $companyId,
+            $companyId,
         ]);
 
         return $statement->fetchAll();
@@ -231,10 +245,10 @@ class SalesReturnItem extends Model
 
         return $statement->execute([
             'stock_quantity_before' =>
-                $quantityBefore,
+            $quantityBefore,
 
             'stock_quantity_after' =>
-                $quantityAfter,
+            $quantityAfter,
 
             'id' => $id,
             'company_id' => $companyId,
@@ -352,13 +366,13 @@ class SalesReturnItem extends Model
 
         $statement->execute([
             'returned_company_id' =>
-                $companyId,
+            $companyId,
 
             'sale_id' =>
-                $saleId,
+            $saleId,
 
             'company_id' =>
-                $companyId,
+            $companyId,
         ]);
 
         return $statement->fetchAll();
@@ -434,22 +448,16 @@ class SalesReturnItem extends Model
 
         return [
             'return_count' =>
-                (int) $summary['return_count'],
+            (int) $summary['return_count'],
 
             'returned_quantity' =>
-                (float) $summary[
-                    'returned_quantity'
-                ],
+            (float) $summary['returned_quantity'],
 
             'restocked_quantity' =>
-                (float) $summary[
-                    'restocked_quantity'
-                ],
+            (float) $summary['restocked_quantity'],
 
             'returned_total' =>
-                (float) $summary[
-                    'returned_total'
-                ],
+            (float) $summary['returned_total'],
         ];
     }
 }

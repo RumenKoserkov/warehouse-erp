@@ -19,17 +19,29 @@ class SaleService
     private PDO $db;
 
     private Sale $saleModel;
+
     private SaleItem $saleItemModel;
+
     private SalesReturn $salesReturnModel;
+
     private Product $productModel;
+
     private StockLevel $stockLevelModel;
 
     private WarehouseTransaction
         $warehouseTransactionModel;
 
-    private AuditLogService $auditLogService;
-    private TaxService $taxService;
-    private PromotionService $promotionService;
+    private InventoryCostService
+        $inventoryCostService;
+
+    private AuditLogService
+        $auditLogService;
+
+    private TaxService
+        $taxService;
+
+    private PromotionService
+        $promotionService;
 
     public function __construct()
     {
@@ -54,6 +66,9 @@ class SaleService
         $this->warehouseTransactionModel =
             new WarehouseTransaction();
 
+        $this->inventoryCostService =
+            new InventoryCostService();
+
         $this->auditLogService =
             new AuditLogService();
 
@@ -64,8 +79,9 @@ class SaleService
             new PromotionService();
     }
 
-    public function createSale(array $data): array
-    {
+    public function createSale(
+        array $data
+    ): array {
         try {
             $this->db->beginTransaction();
 
@@ -80,15 +96,15 @@ class SaleService
 
             $taxConfiguration =
                 $this->taxService
-                ->salesConfiguration(
-                    $companyId
-                );
+                    ->salesConfiguration(
+                        $companyId
+                    );
 
             $saleNumber =
                 $this->saleModel
-                ->generateNextSaleNumber(
-                    $companyId
-                );
+                    ->generateNextSaleNumber(
+                        $companyId
+                    );
 
             $items =
                 $this->prepareItems(
@@ -100,18 +116,22 @@ class SaleService
 
             $appliedPromotion =
                 $this->promotionService
-                ->applyToItems(
-                    (int) (
-                        $data['promotion_id'] ?? 0
-                    ),
+                    ->applyToItems(
+                        (int) (
+                            $data[
+                                'promotion_id'
+                            ] ?? 0
+                        ),
 
-                    (string) (
-                        $data['promotion_code'] ?? ''
-                    ),
+                        (string) (
+                            $data[
+                                'promotion_code'
+                            ] ?? ''
+                        ),
 
-                    $companyId,
-                    $items
-                );
+                        $companyId,
+                        $items
+                    );
 
             $items =
                 $appliedPromotion['items'];
@@ -123,150 +143,276 @@ class SaleService
 
             $saleId =
                 $this->saleModel
-                ->create([
-                    'company_id' =>
-                    $companyId,
-
-                    'client_id' =>
-                    $data['client_id'],
-
-                    'warehouse_id' =>
-                    $warehouseId,
-
-                    'user_id' =>
-                    $userId,
-
-                    'sale_number' =>
-                    $saleNumber,
-
-                    'sale_date' =>
-                    $data['sale_date'],
-
-                    'status' =>
-                    'completed',
-
-                    'vat_registered' =>
-                    $taxConfiguration['vat_registered'] ? 1 : 0,
-
-                    'prices_include_vat' =>
-                    $taxConfiguration['prices_include_vat'] ? 1 : 0,
-
-                    'default_vat_rate' =>
-                    $taxConfiguration['vat_rate'],
-
-                    'subtotal' =>
-                    $totals['subtotal'],
-
-                    'discount_amount' =>
-                    $totals['discount_amount'],
-
-                    'tax_amount' =>
-                    $totals['tax_amount'],
-
-                    'total_amount' =>
-                    $totals['total_amount'],
-
-                    'payment_method' =>
-                    $data['payment_method'],
-
-                    'note' =>
-                    $data['note'],
-                ]);
-
-            foreach ($items as $item) {
-                $this->saleItemModel
                     ->create([
-                        'sale_id' =>
-                        $saleId,
-
                         'company_id' =>
-                        $companyId,
+                            $companyId,
 
-                        'product_id' =>
-                        $item['product_id'],
+                        'client_id' =>
+                            $data['client_id'],
 
-                        'product_name' =>
-                        $item['product_name'],
+                        'warehouse_id' =>
+                            $warehouseId,
 
-                        'product_internal_code' =>
-                        $item['product_internal_code'],
+                        'user_id' =>
+                            $userId,
 
-                        'quantity' =>
-                        $item['quantity'],
+                        'sale_number' =>
+                            $saleNumber,
 
-                        'unit' =>
-                        $item['unit'],
+                        'sale_date' =>
+                            $data['sale_date'],
 
-                        'unit_price' =>
-                        $item['unit_price'],
+                        'status' =>
+                            'completed',
+
+                        'vat_registered' =>
+                            $taxConfiguration[
+                                'vat_registered'
+                            ]
+                                ? 1
+                                : 0,
+
+                        'prices_include_vat' =>
+                            $taxConfiguration[
+                                'prices_include_vat'
+                            ]
+                                ? 1
+                                : 0,
+
+                        'default_vat_rate' =>
+                            $taxConfiguration[
+                                'vat_rate'
+                            ],
+
+                        'subtotal' =>
+                            $totals['subtotal'],
 
                         'discount_amount' =>
-                        $item['discount_amount'],
-
-                        'promotion_discount_amount' =>
-                        $item['promotion_discount_amount'] ?? 0,
-
-                        'vat_rate' =>
-                        $item['vat_rate'],
-
-                        'net_amount' =>
-                        $item['net_amount'],
+                            $totals[
+                                'discount_amount'
+                            ],
 
                         'tax_amount' =>
-                        $item['tax_amount'],
+                            $totals['tax_amount'],
 
-                        'total_price' =>
-                        $item['total_price'],
+                        'total_amount' =>
+                            $totals[
+                                'total_amount'
+                            ],
+
+                        'payment_method' =>
+                            $data[
+                                'payment_method'
+                            ],
+
+                        'note' =>
+                            $data['note'],
                     ]);
 
-                $decreased =
-                    $this->stockLevelModel
-                    ->decrease(
-                        $companyId,
-                        $item['product_id'],
-                        $warehouseId,
-                        $item['quantity']
-                    );
+            foreach ($items as $item) {
+                /*
+                 * Изписваме количеството по текущата
+                 * среднопретеглена себестойност.
+                 */
+                $costMovement =
+                    $this->inventoryCostService
+                        ->issue(
+                            $companyId,
+                            (int) $item[
+                                'product_id'
+                            ],
+                            $warehouseId,
+                            (float) $item[
+                                'quantity'
+                            ]
+                        );
 
-                if (!$decreased) {
+                $unitCost = round(
+                    (float) $costMovement[
+                        'unit_cost'
+                    ],
+                    4
+                );
+
+                $totalCost = round(
+                    (float) $costMovement[
+                        'total_cost'
+                    ],
+                    4
+                );
+
+                /*
+                 * net_amount вече съдържа ефекта
+                 * от ръчната отстъпка и промоцията.
+                 */
+                $grossProfit = round(
+                    (float) $item[
+                        'net_amount'
+                    ] - $totalCost,
+                    2
+                );
+
+                $grossMarginPercent =
+                    (float) $item[
+                        'net_amount'
+                    ] > 0
+                        ? round(
+                            (
+                                $grossProfit /
+                                (float) $item[
+                                    'net_amount'
+                                ]
+                            ) * 100,
+                            2
+                        )
+                        : 0.0;
+
+                $created =
+                    $this->saleItemModel
+                        ->create([
+                            'sale_id' =>
+                                $saleId,
+
+                            'company_id' =>
+                                $companyId,
+
+                            'product_id' =>
+                                $item[
+                                    'product_id'
+                                ],
+
+                            'product_name' =>
+                                $item[
+                                    'product_name'
+                                ],
+
+                            'product_internal_code' =>
+                                $item[
+                                    'product_internal_code'
+                                ],
+
+                            'quantity' =>
+                                $item[
+                                    'quantity'
+                                ],
+
+                            'unit' =>
+                                $item['unit'],
+
+                            'unit_price' =>
+                                $item[
+                                    'unit_price'
+                                ],
+
+                            'unit_cost' =>
+                                $unitCost,
+
+                            'total_cost' =>
+                                $totalCost,
+
+                            'gross_profit' =>
+                                $grossProfit,
+
+                            'gross_margin_percent' =>
+                                $grossMarginPercent,
+
+                            'discount_amount' =>
+                                $item[
+                                    'discount_amount'
+                                ],
+
+                            'promotion_discount_amount' =>
+                                $item[
+                                    'promotion_discount_amount'
+                                ] ?? 0,
+
+                            'vat_rate' =>
+                                $item[
+                                    'vat_rate'
+                                ],
+
+                            'net_amount' =>
+                                $item[
+                                    'net_amount'
+                                ],
+
+                            'tax_amount' =>
+                                $item[
+                                    'tax_amount'
+                                ],
+
+                            'total_price' =>
+                                $item[
+                                    'total_price'
+                                ],
+                        ]);
+
+                if (!$created) {
                     throw new Exception(
-                        'Could not decrease stock.'
+                        'Sale item could not be created.'
                     );
                 }
 
-                $this->warehouseTransactionModel
-                    ->create([
-                        'company_id' =>
+                $transactionData = [
+                    'company_id' =>
                         $companyId,
 
-                        'product_id' =>
-                        $item['product_id'],
+                    'product_id' =>
+                        (int) $item[
+                            'product_id'
+                        ],
 
-                        'from_warehouse_id' =>
+                    'from_warehouse_id' =>
                         $warehouseId,
 
-                        'to_warehouse_id' =>
+                    'to_warehouse_id' =>
                         null,
 
-                        'user_id' =>
+                    'user_id' =>
                         $userId,
 
-                        'type' =>
+                    'type' =>
                         'sale',
 
-                        'quantity' =>
-                        $item['quantity'],
+                    'quantity' =>
+                        (float) $item[
+                            'quantity'
+                        ],
 
-                        'reference_type' =>
+                    'reference_type' =>
                         'sale',
 
-                        'reference_id' =>
+                    'reference_id' =>
                         $saleId,
 
-                        'note' =>
+                    'note' =>
                         'Sale ' .
-                            $saleNumber,
-                    ]);
+                        $saleNumber,
+                ];
+
+                $transactionData =
+                    array_merge(
+                        $transactionData,
+
+                        $this
+                            ->inventoryCostService
+                            ->outgoingTransactionFields(
+                                $costMovement
+                            )
+                    );
+
+                $transactionCreated =
+                    $this
+                        ->warehouseTransactionModel
+                        ->create(
+                            $transactionData
+                        );
+
+                if (!$transactionCreated) {
+                    throw new Exception(
+                        'Warehouse transaction could not be created.'
+                    );
+                }
             }
 
             $this->promotionService
@@ -291,7 +437,10 @@ class SaleService
 
             return [
                 'success' => true,
-                'sale_id' => $saleId,
+
+                'sale_id' =>
+                    $saleId,
+
                 'error' => null,
             ];
         } catch (Exception $exception) {
@@ -301,9 +450,11 @@ class SaleService
 
             return [
                 'success' => false,
+
                 'sale_id' => null,
+
                 'error' =>
-                $exception->getMessage(),
+                    $exception->getMessage(),
             ];
         }
     }
@@ -318,10 +469,10 @@ class SaleService
 
             $sale =
                 $this->saleModel
-                ->findByIdAndCompany(
-                    $saleId,
-                    $companyId
-                );
+                    ->findByIdAndCompany(
+                        $saleId,
+                        $companyId
+                    );
 
             if ($sale === null) {
                 throw new Exception(
@@ -330,7 +481,7 @@ class SaleService
             }
 
             if (
-                $sale['status'] ===
+                (string) $sale['status'] ===
                 'cancelled'
             ) {
                 throw new Exception(
@@ -339,7 +490,7 @@ class SaleService
             }
 
             if (
-                $sale['status'] !==
+                (string) $sale['status'] !==
                 'completed'
             ) {
                 throw new Exception(
@@ -349,10 +500,10 @@ class SaleService
 
             if (
                 $this->salesReturnModel
-                ->hasActiveForSale(
-                    $saleId,
-                    $companyId
-                )
+                    ->hasActiveForSale(
+                        $saleId,
+                        $companyId
+                    )
             ) {
                 throw new Exception(
                     'A sale with draft or completed sales returns cannot be cancelled.'
@@ -361,10 +512,10 @@ class SaleService
 
             $items =
                 $this->saleItemModel
-                ->allBySale(
-                    $saleId,
-                    $companyId
-                );
+                    ->allBySale(
+                        $saleId,
+                        $companyId
+                    );
 
             if (empty($items)) {
                 throw new Exception(
@@ -373,50 +524,131 @@ class SaleService
             }
 
             $warehouseId =
-                (int) $sale['warehouse_id'];
+                (int) $sale[
+                    'warehouse_id'
+                ];
 
             foreach ($items as $item) {
-                $this->stockLevelModel
-                    ->increase(
+                /*
+                 * Новите продажби имат точен cost
+                 * snapshot в sale_items.unit_cost.
+                 */
+                $restoreUnitCost =
+                    $item['unit_cost'] !== null
+                        ? (float) $item[
+                            'unit_cost'
+                        ]
+                        : 0.0;
+
+                /*
+                 * Старите продажби нямат историческа
+                 * себестойност. Използваме последната
+                 * покупна или ориентировъчната цена.
+                 */
+                if ($restoreUnitCost <= 0) {
+                    $product =
+                        $this->productModel
+                            ->findByIdAndCompany(
+                                (int) $item[
+                                    'product_id'
+                                ],
+                                $companyId
+                            );
+
+                    if ($product === null) {
+                        throw new Exception(
+                            'Product was not found while cancelling sale.'
+                        );
+                    }
+
+                    $restoreUnitCost =
+                        (float) (
+                            $product[
+                                'last_purchase_cost'
+                            ] ??
+                            $product[
+                                'purchase_price'
+                            ] ??
+                            0
+                        );
+                }
+
+                $costMovement =
+                    $this->inventoryCostService
+                        ->receive(
+                            $companyId,
+                            (int) $item[
+                                'product_id'
+                            ],
+                            $warehouseId,
+                            (float) $item[
+                                'quantity'
+                            ],
+                            $restoreUnitCost
+                        );
+
+                $transactionData = [
+                    'company_id' =>
                         $companyId,
-                        (int) $item['product_id'],
-                        $warehouseId,
-                        (float) $item['quantity']
-                    );
 
-                $this->warehouseTransactionModel
-                    ->create([
-                        'company_id' =>
-                        $companyId,
+                    'product_id' =>
+                        (int) $item[
+                            'product_id'
+                        ],
 
-                        'product_id' =>
-                        (int) $item['product_id'],
-
-                        'from_warehouse_id' =>
+                    'from_warehouse_id' =>
                         null,
 
-                        'to_warehouse_id' =>
+                    'to_warehouse_id' =>
                         $warehouseId,
 
-                        'user_id' =>
+                    'user_id' =>
                         $userId,
 
-                        'type' =>
+                    'type' =>
                         'sale_cancel',
 
-                        'quantity' =>
-                        (float) $item['quantity'],
+                    'quantity' =>
+                        (float) $item[
+                            'quantity'
+                        ],
 
-                        'reference_type' =>
+                    'reference_type' =>
                         'sale',
 
-                        'reference_id' =>
+                    'reference_id' =>
                         $saleId,
 
-                        'note' =>
+                    'note' =>
                         'Cancel sale ' .
-                            $sale['sale_number'],
-                    ]);
+                        (string) $sale[
+                            'sale_number'
+                        ],
+                ];
+
+                $transactionData =
+                    array_merge(
+                        $transactionData,
+
+                        $this
+                            ->inventoryCostService
+                            ->incomingTransactionFields(
+                                $costMovement
+                            )
+                    );
+
+                $transactionCreated =
+                    $this
+                        ->warehouseTransactionModel
+                        ->create(
+                            $transactionData
+                        );
+
+                if (!$transactionCreated) {
+                    throw new Exception(
+                        'Warehouse transaction could not be created.'
+                    );
+                }
             }
 
             $this->promotionService
@@ -425,11 +657,18 @@ class SaleService
                     $companyId
                 );
 
-            $this->saleModel
-                ->cancel(
-                    $saleId,
-                    $companyId
+            $cancelled =
+                $this->saleModel
+                    ->cancel(
+                        $saleId,
+                        $companyId
+                    );
+
+            if (!$cancelled) {
+                throw new Exception(
+                    'Sale could not be cancelled.'
                 );
+            }
 
             $this->auditLogService
                 ->log(
@@ -439,7 +678,9 @@ class SaleService
                     'sale',
                     $saleId,
                     'Cancelled sale ' .
-                        $sale['sale_number']
+                        (string) $sale[
+                            'sale_number'
+                        ]
                 );
 
             $this->db->commit();
@@ -455,8 +696,9 @@ class SaleService
 
             return [
                 'success' => false,
+
                 'error' =>
-                $exception->getMessage(),
+                    $exception->getMessage(),
             ];
         }
     }
@@ -472,22 +714,30 @@ class SaleService
         foreach ($items as $item) {
             $productId =
                 (int) (
-                    $item['product_id'] ?? 0
+                    $item[
+                        'product_id'
+                    ] ?? 0
                 );
 
             $quantity =
                 (float) (
-                    $item['quantity'] ?? 0
+                    $item[
+                        'quantity'
+                    ] ?? 0
                 );
 
             $unitPrice =
                 (float) (
-                    $item['unit_price'] ?? 0
+                    $item[
+                        'unit_price'
+                    ] ?? 0
                 );
 
             $discountAmount =
                 (float) (
-                    $item['discount_amount'] ?? 0
+                    $item[
+                        'discount_amount'
+                    ] ?? 0
                 );
 
             if ($productId <= 0) {
@@ -496,10 +746,10 @@ class SaleService
 
             $product =
                 $this->productModel
-                ->findByIdAndCompany(
-                    $productId,
-                    $companyId
-                );
+                    ->findByIdAndCompany(
+                        $productId,
+                        $companyId
+                    );
 
             if ($product === null) {
                 throw new Exception(
@@ -509,68 +759,84 @@ class SaleService
 
             $taxResult =
                 $this->taxService
-                ->calculateLine(
-                    $quantity,
-                    $unitPrice,
-                    $discountAmount,
-                    $taxConfiguration
-                );
+                    ->calculateLine(
+                        $quantity,
+                        $unitPrice,
+                        $discountAmount,
+                        $taxConfiguration
+                    );
 
             $hasEnoughStock =
                 $this->stockLevelModel
-                ->hasEnoughStock(
-                    $companyId,
-                    $productId,
-                    $warehouseId,
-                    $quantity
-                );
+                    ->hasEnoughStock(
+                        $companyId,
+                        $productId,
+                        $warehouseId,
+                        $quantity
+                    );
 
             if (!$hasEnoughStock) {
                 throw new Exception(
                     'Not enough stock for product: ' .
-                        $product['name']
+                    (string) $product[
+                        'name'
+                    ]
                 );
             }
 
             $preparedItems[] = [
                 'product_id' =>
-                $productId,
+                    $productId,
 
                 'product_name' =>
-                $product['name'],
+                    $product['name'],
 
                 'product_internal_code' =>
-                $product['internal_code'],
+                    $product[
+                        'internal_code'
+                    ],
 
                 'quantity' =>
-                $quantity,
+                    $quantity,
 
                 'unit' =>
-                $product['unit'],
+                    $product['unit'],
 
                 'unit_price' =>
-                $unitPrice,
+                    $unitPrice,
 
                 'discount_amount' =>
-                $taxResult['discount_amount'],
+                    $taxResult[
+                        'discount_amount'
+                    ],
 
                 'promotion_discount_amount' =>
-                0.00,
+                    0.00,
 
                 'subtotal' =>
-                $taxResult['subtotal'],
+                    $taxResult[
+                        'subtotal'
+                    ],
 
                 'vat_rate' =>
-                $taxResult['vat_rate'],
+                    $taxResult[
+                        'vat_rate'
+                    ],
 
                 'net_amount' =>
-                $taxResult['net_amount'],
+                    $taxResult[
+                        'net_amount'
+                    ],
 
                 'tax_amount' =>
-                $taxResult['tax_amount'],
+                    $taxResult[
+                        'tax_amount'
+                    ],
 
                 'total_price' =>
-                $taxResult['total_amount'],
+                    $taxResult[
+                        'total_amount'
+                    ],
             ];
         }
 
@@ -593,42 +859,50 @@ class SaleService
 
         foreach ($items as $item) {
             $subtotal +=
-                (float) $item['subtotal'];
+                (float) $item[
+                    'subtotal'
+                ];
 
             $discountAmount +=
-                (float) $item['discount_amount'];
+                (float) $item[
+                    'discount_amount'
+                ];
 
             $taxAmount +=
-                (float) $item['tax_amount'];
+                (float) $item[
+                    'tax_amount'
+                ];
 
             $totalAmount +=
-                (float) $item['total_price'];
+                (float) $item[
+                    'total_price'
+                ];
         }
 
         return [
             'subtotal' =>
-            round(
-                $subtotal,
-                2
-            ),
+                round(
+                    $subtotal,
+                    2
+                ),
 
             'discount_amount' =>
-            round(
-                $discountAmount,
-                2
-            ),
+                round(
+                    $discountAmount,
+                    2
+                ),
 
             'tax_amount' =>
-            round(
-                $taxAmount,
-                2
-            ),
+                round(
+                    $taxAmount,
+                    2
+                ),
 
             'total_amount' =>
-            round(
-                $totalAmount,
-                2
-            ),
+                round(
+                    $totalAmount,
+                    2
+                ),
         ];
     }
 }

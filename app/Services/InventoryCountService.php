@@ -32,6 +32,9 @@ class InventoryCountService
     private WarehouseTransaction
         $warehouseTransactionModel;
 
+    private InventoryCostService
+        $inventoryCostService;
+
     private AuditLogService
         $auditLogService;
 
@@ -55,6 +58,9 @@ class InventoryCountService
         $this->warehouseTransactionModel =
             new WarehouseTransaction();
 
+        $this->inventoryCostService =
+            new InventoryCostService();
+
         $this->auditLogService =
             new AuditLogService();
     }
@@ -72,8 +78,9 @@ class InventoryCountService
             return [
                 'success' => false,
                 'inventory_count_id' => null,
+
                 'error' =>
-                'Inventory count date is invalid.',
+                    'Inventory count date is invalid.',
             ];
         }
 
@@ -81,8 +88,9 @@ class InventoryCountService
             return [
                 'success' => false,
                 'inventory_count_id' => null,
+
                 'error' =>
-                'Inventory count date cannot be in the future.',
+                    'Inventory count date cannot be in the future.',
             ];
         }
 
@@ -90,27 +98,31 @@ class InventoryCountService
             return [
                 'success' => false,
                 'inventory_count_id' => null,
+
                 'error' =>
-                'Notes must be maximum 2000 characters.',
+                    'Notes must be maximum 2000 characters.',
             ];
         }
 
         $warehouse =
             $this->warehouseModel
-            ->findByIdAndCompany(
-                $warehouseId,
-                $companyId
-            );
+                ->findByIdAndCompany(
+                    $warehouseId,
+                    $companyId
+                );
 
         if (
             $warehouse === null ||
-            (int) $warehouse['is_active'] !== 1
+            (int) $warehouse[
+                'is_active'
+            ] !== 1
         ) {
             return [
                 'success' => false,
                 'inventory_count_id' => null,
+
                 'error' =>
-                'Selected warehouse was not found or is inactive.',
+                    'Selected warehouse was not found or is inactive.',
             ];
         }
 
@@ -119,10 +131,10 @@ class InventoryCountService
 
             if (
                 $this->inventoryCountModel
-                ->hasOpenForWarehouse(
-                    $companyId,
-                    $warehouseId
-                )
+                    ->hasOpenForWarehouse(
+                        $companyId,
+                        $warehouseId
+                    )
             ) {
                 throw new Exception(
                     'This warehouse already has an open inventory count.'
@@ -131,40 +143,40 @@ class InventoryCountService
 
             $transactionBefore =
                 $this->warehouseTransactionModel
-                ->latestIdForWarehouse(
-                    $companyId,
-                    $warehouseId
-                );
+                    ->latestIdForWarehouse(
+                        $companyId,
+                        $warehouseId
+                    );
 
             $snapshotAt =
                 date('Y-m-d H:i:s');
 
             $inventoryCountId =
                 $this->inventoryCountModel
-                ->create([
-                    'company_id' =>
-                    $companyId,
+                    ->create([
+                        'company_id' =>
+                            $companyId,
 
-                    'warehouse_id' =>
-                    $warehouseId,
+                        'warehouse_id' =>
+                            $warehouseId,
 
-                    'count_date' =>
-                    $countDate,
+                        'count_date' =>
+                            $countDate,
 
-                    'snapshot_transaction_id' =>
-                    $transactionBefore,
+                        'snapshot_transaction_id' =>
+                            $transactionBefore,
 
-                    'snapshot_at' =>
-                    $snapshotAt,
+                        'snapshot_at' =>
+                            $snapshotAt,
 
-                    'notes' =>
-                    $this->nullableString(
-                        $notes
-                    ),
+                        'notes' =>
+                            $this->nullableString(
+                                $notes
+                            ),
 
-                    'created_by_user_id' =>
-                    $userId,
-                ]);
+                        'created_by_user_id' =>
+                            $userId,
+                    ]);
 
             $countNumber =
                 $this->countNumber(
@@ -173,11 +185,11 @@ class InventoryCountService
 
             $numberAssigned =
                 $this->inventoryCountModel
-                ->assignNumber(
-                    $inventoryCountId,
-                    $companyId,
-                    $countNumber
-                );
+                    ->assignNumber(
+                        $inventoryCountId,
+                        $companyId,
+                        $countNumber
+                    );
 
             if (!$numberAssigned) {
                 throw new Exception(
@@ -187,11 +199,11 @@ class InventoryCountService
 
             $itemCount =
                 $this->inventoryCountItemModel
-                ->createWarehouseSnapshot(
-                    $inventoryCountId,
-                    $companyId,
-                    $warehouseId
-                );
+                    ->createWarehouseSnapshot(
+                        $inventoryCountId,
+                        $companyId,
+                        $warehouseId
+                    );
 
             if ($itemCount <= 0) {
                 throw new Exception(
@@ -201,10 +213,10 @@ class InventoryCountService
 
             $transactionAfter =
                 $this->warehouseTransactionModel
-                ->latestIdForWarehouse(
-                    $companyId,
-                    $warehouseId
-                );
+                    ->latestIdForWarehouse(
+                        $companyId,
+                        $warehouseId
+                    );
 
             if (
                 $transactionBefore !==
@@ -222,11 +234,11 @@ class InventoryCountService
                 'inventory_count',
                 $inventoryCountId,
                 'Created inventory count ' .
-                    $countNumber .
-                    ' for warehouse ' .
-                    (string) $warehouse['name'] .
-                    '. Products: ' .
-                    $itemCount
+                $countNumber .
+                ' for warehouse ' .
+                (string) $warehouse['name'] .
+                '. Products: ' .
+                $itemCount
             );
 
             $this->db->commit();
@@ -235,7 +247,7 @@ class InventoryCountService
                 'success' => true,
 
                 'inventory_count_id' =>
-                $inventoryCountId,
+                    $inventoryCountId,
 
                 'error' => null,
             ];
@@ -247,8 +259,9 @@ class InventoryCountService
             return [
                 'success' => false,
                 'inventory_count_id' => null,
+
                 'error' =>
-                $exception->getMessage(),
+                    $exception->getMessage(),
             ];
         }
     }
@@ -264,10 +277,10 @@ class InventoryCountService
 
             $inventoryCount =
                 $this->inventoryCountModel
-                ->findForUpdate(
-                    $inventoryCountId,
-                    $companyId
-                );
+                    ->findForUpdate(
+                        $inventoryCountId,
+                        $companyId
+                    );
 
             if ($inventoryCount === null) {
                 throw new Exception(
@@ -276,8 +289,9 @@ class InventoryCountService
             }
 
             if (
-                (string) $inventoryCount['status']
-                !== 'draft'
+                (string) $inventoryCount[
+                    'status'
+                ] !== 'draft'
             ) {
                 throw new Exception(
                     'Only draft inventory counts can be edited.'
@@ -286,10 +300,10 @@ class InventoryCountService
 
             $items =
                 $this->inventoryCountItemModel
-                ->allForUpdate(
-                    $inventoryCountId,
-                    $companyId
-                );
+                    ->allForUpdate(
+                        $inventoryCountId,
+                        $companyId
+                    );
 
             $this->applySubmittedQuantities(
                 $inventoryCountId,
@@ -306,7 +320,9 @@ class InventoryCountService
                 'inventory_count',
                 $inventoryCountId,
                 'Updated counted quantities for inventory count ' .
-                    (string) $inventoryCount['count_number']
+                (string) $inventoryCount[
+                    'count_number'
+                ]
             );
 
             $this->db->commit();
@@ -322,8 +338,9 @@ class InventoryCountService
 
             return [
                 'success' => false,
+
                 'error' =>
-                $exception->getMessage(),
+                    $exception->getMessage(),
             ];
         }
     }
@@ -339,10 +356,10 @@ class InventoryCountService
 
             $inventoryCount =
                 $this->inventoryCountModel
-                ->findForUpdate(
-                    $inventoryCountId,
-                    $companyId
-                );
+                    ->findForUpdate(
+                        $inventoryCountId,
+                        $companyId
+                    );
 
             if ($inventoryCount === null) {
                 throw new Exception(
@@ -351,8 +368,9 @@ class InventoryCountService
             }
 
             if (
-                (string) $inventoryCount['status']
-                !== 'draft'
+                (string) $inventoryCount[
+                    'status'
+                ] !== 'draft'
             ) {
                 throw new Exception(
                     'Only draft inventory counts can be completed.'
@@ -360,15 +378,19 @@ class InventoryCountService
             }
 
             $warehouseId =
-                (int) $inventoryCount['warehouse_id'];
+                (int) $inventoryCount[
+                    'warehouse_id'
+                ];
 
             $stockChanged =
                 $this->warehouseTransactionModel
-                ->existsForWarehouseAfterId(
-                    $companyId,
-                    $warehouseId,
-                    (int) $inventoryCount['snapshot_transaction_id']
-                );
+                    ->existsForWarehouseAfterId(
+                        $companyId,
+                        $warehouseId,
+                        (int) $inventoryCount[
+                            'snapshot_transaction_id'
+                        ]
+                    );
 
             if ($stockChanged) {
                 throw new Exception(
@@ -378,10 +400,10 @@ class InventoryCountService
 
             $items =
                 $this->inventoryCountItemModel
-                ->allForUpdate(
-                    $inventoryCountId,
-                    $companyId
-                );
+                    ->allForUpdate(
+                        $inventoryCountId,
+                        $companyId
+                    );
 
             $this->applySubmittedQuantities(
                 $inventoryCountId,
@@ -397,8 +419,9 @@ class InventoryCountService
 
             foreach ($items as $item) {
                 if (
-                    $item['counted_quantity'] ===
-                    null
+                    $item[
+                        'counted_quantity'
+                    ] === null
                 ) {
                     throw new Exception(
                         'All products must have a counted quantity before completion.'
@@ -406,54 +429,112 @@ class InventoryCountService
                 }
 
                 $productId =
-                    (int) $item['product_id'];
+                    (int) $item[
+                        'product_id'
+                    ];
 
                 $systemQuantity = round(
-                    (float) $item['system_quantity'],
+                    (float) $item[
+                        'system_quantity'
+                    ],
                     3
                 );
 
                 $countedQuantity = round(
-                    (float) $item['counted_quantity'],
+                    (float) $item[
+                        'counted_quantity'
+                    ],
                     3
                 );
 
                 $stockLevel =
                     $this->stockLevelModel
-                    ->lockForUpdate(
-                        $companyId,
-                        $productId,
-                        $warehouseId
+                        ->lockForUpdate(
+                            $companyId,
+                            $productId,
+                            $warehouseId
+                        );
+
+                if ($stockLevel === null) {
+                    throw new Exception(
+                        'Stock level was not found for product: ' .
+                        (string) $item[
+                            'product_name'
+                        ] .
+                        '.'
                     );
+                }
 
                 $currentQuantity = round(
-                    (float) $stockLevel['quantity'],
+                    (float) $stockLevel[
+                        'quantity'
+                    ],
                     3
                 );
 
                 if (
                     abs(
                         $currentQuantity -
-                            $systemQuantity
+                        $systemQuantity
                     ) > 0.0005
                 ) {
                     throw new Exception(
                         'Current stock no longer matches the snapshot for product: ' .
-                            (string) $item['product_name'] .
-                            '. Cancel the count and create a new one.'
+                        (string) $item[
+                            'product_name'
+                        ] .
+                        '. Cancel the count and create a new one.'
                     );
                 }
 
                 $difference = round(
                     $countedQuantity -
-                        $systemQuantity,
+                    $systemQuantity,
                     3
                 );
 
+                $snapshotUnitCost = round(
+                    (float) (
+                        $item[
+                            'unit_cost'
+                        ] ??
+                        $stockLevel[
+                            'average_unit_cost'
+                        ] ??
+                        0
+                    ),
+                    4
+                );
+
+                /*
+                 * Когато няма количествена разлика,
+                 * записваме нулева стойностна разлика.
+                 */
                 if (
                     abs($difference) <=
                     0.0005
                 ) {
+                    $costMarked =
+                        $this
+                            ->inventoryCountItemModel
+                            ->markCostVariance(
+                                (int) $item['id'],
+                                $inventoryCountId,
+                                $companyId,
+                                $snapshotUnitCost,
+                                0.0
+                            );
+
+                    if (!$costMarked) {
+                        throw new Exception(
+                            'Could not save inventory cost result for product: ' .
+                            (string) $item[
+                                'product_name'
+                            ] .
+                            '.'
+                        );
+                    }
+
                     continue;
                 }
 
@@ -466,42 +547,64 @@ class InventoryCountService
                 $toWarehouseId = null;
 
                 if ($difference > 0) {
-                    $increased =
-                        $this->stockLevelModel
-                        ->increase(
-                            $companyId,
-                            $productId,
-                            $warehouseId,
-                            $absoluteDifference
-                        );
+                    /*
+                     * Намерената допълнителна стока
+                     * влиза по snapshot/fallback цена.
+                     */
+                    $costMovement =
+                        $this->inventoryCostService
+                            ->receive(
+                                $companyId,
+                                $productId,
+                                $warehouseId,
+                                $absoluteDifference,
+                                $snapshotUnitCost
+                            );
 
-                    if (!$increased) {
-                        throw new Exception(
-                            'Could not increase stock for product: ' .
-                                (string) $item['product_name']
-                        );
-                    }
+                    $transactionCostFields =
+                        $this->inventoryCostService
+                            ->incomingTransactionFields(
+                                $costMovement
+                            );
+
+                    $costVariance = round(
+                        (float) $costMovement[
+                            'total_cost'
+                        ],
+                        4
+                    );
 
                     $toWarehouseId =
                         $warehouseId;
 
                     $positiveAdjustments++;
                 } else {
-                    $decreased =
-                        $this->stockLevelModel
-                        ->decrease(
-                            $companyId,
-                            $productId,
-                            $warehouseId,
-                            $absoluteDifference
-                        );
+                    /*
+                     * Липсващата стока се изписва
+                     * по текущата среднопретеглена цена.
+                     */
+                    $costMovement =
+                        $this->inventoryCostService
+                            ->issue(
+                                $companyId,
+                                $productId,
+                                $warehouseId,
+                                $absoluteDifference
+                            );
 
-                    if (!$decreased) {
-                        throw new Exception(
-                            'Could not decrease stock for product: ' .
-                                (string) $item['product_name']
-                        );
-                    }
+                    $transactionCostFields =
+                        $this->inventoryCostService
+                            ->outgoingTransactionFields(
+                                $costMovement
+                            );
+
+                    $costVariance = round(
+                        -1 *
+                        (float) $costMovement[
+                            'total_cost'
+                        ],
+                        4
+                    );
 
                     $fromWarehouseId =
                         $warehouseId;
@@ -509,70 +612,156 @@ class InventoryCountService
                     $negativeAdjustments++;
                 }
 
-                $transactionCreated =
-                    $this->warehouseTransactionModel
-                    ->create([
-                        'company_id' =>
+                $movementUnitCost = round(
+                    (float) $costMovement[
+                        'unit_cost'
+                    ],
+                    4
+                );
+
+                $quantityBefore = round(
+                    (float) $costMovement[
+                        'quantity_before'
+                    ],
+                    3
+                );
+
+                $quantityAfter = round(
+                    (float) $costMovement[
+                        'quantity_after'
+                    ],
+                    3
+                );
+
+                $costMarked =
+                    $this->inventoryCountItemModel
+                        ->markCostVariance(
+                            (int) $item['id'],
+                            $inventoryCountId,
+                            $companyId,
+                            $movementUnitCost,
+                            $costVariance
+                        );
+
+                if (!$costMarked) {
+                    throw new Exception(
+                        'Could not save inventory cost variance for product: ' .
+                        (string) $item[
+                            'product_name'
+                        ] .
+                        '.'
+                    );
+                }
+
+                $transactionData = [
+                    'company_id' =>
                         $companyId,
 
-                        'product_id' =>
+                    'product_id' =>
                         $productId,
 
-                        'from_warehouse_id' =>
+                    'from_warehouse_id' =>
                         $fromWarehouseId,
 
-                        'to_warehouse_id' =>
+                    'to_warehouse_id' =>
                         $toWarehouseId,
 
-                        'user_id' =>
+                    'user_id' =>
                         $userId,
 
-                        'type' =>
+                    'type' =>
                         'adjustment',
 
-                        'quantity' =>
+                    'quantity' =>
                         $absoluteDifference,
 
-                        'reference_type' =>
+                    'reference_type' =>
                         'inventory_count',
 
-                        'reference_id' =>
+                    'reference_id' =>
                         $inventoryCountId,
 
-                        'note' =>
+                    'note' =>
                         'Inventory count ' .
-                            (string) $inventoryCount['count_number'] .
-                            '. System: ' .
-                            number_format(
-                                $systemQuantity,
-                                3,
-                                '.',
-                                ''
-                            ) .
-                            ', counted: ' .
-                            number_format(
-                                $countedQuantity,
-                                3,
-                                '.',
-                                ''
-                            ) .
+                        (string) $inventoryCount[
+                            'count_number'
+                        ] .
+                        '. System: ' .
+                        number_format(
+                            $systemQuantity,
+                            3,
                             '.',
-                    ]);
+                            ''
+                        ) .
+                        ', counted: ' .
+                        number_format(
+                            $countedQuantity,
+                            3,
+                            '.',
+                            ''
+                        ) .
+                        ', before: ' .
+                        number_format(
+                            $quantityBefore,
+                            3,
+                            '.',
+                            ''
+                        ) .
+                        ', after: ' .
+                        number_format(
+                            $quantityAfter,
+                            3,
+                            '.',
+                            ''
+                        ) .
+                        ', unit cost: ' .
+                        number_format(
+                            $movementUnitCost,
+                            4,
+                            '.',
+                            ''
+                        ) .
+                        ', cost variance: ' .
+                        number_format(
+                            $costVariance,
+                            4,
+                            '.',
+                            ''
+                        ) .
+                        '.',
+                ];
+
+                $transactionData =
+                    array_merge(
+                        $transactionData,
+                        $transactionCostFields
+                    );
+
+                $transactionCreated =
+                    $this
+                        ->warehouseTransactionModel
+                        ->create(
+                            $transactionData
+                        );
 
                 if (!$transactionCreated) {
                     throw new Exception(
-                        'Warehouse adjustment transaction could not be created.'
+                        'Warehouse adjustment transaction could not be created for product: ' .
+                        (string) $item[
+                            'product_name'
+                        ] .
+                        '.'
                     );
                 }
             }
 
             $completed =
                 $this->inventoryCountModel
-                ->markCompleted(
-                    $inventoryCountId,
-                    $companyId,
-                    $userId
-                );
+                    ->markCompleted(
+                        $inventoryCountId,
+                        $companyId,
+                        $userId
+                    );
 
             if (!$completed) {
                 throw new Exception(
@@ -587,14 +776,16 @@ class InventoryCountService
                 'inventory_count',
                 $inventoryCountId,
                 'Completed inventory count ' .
-                    (string) $inventoryCount['count_number'] .
-                    '. Adjusted products: ' .
-                    $differenceItemCount .
-                    ', increases: ' .
-                    $positiveAdjustments .
-                    ', decreases: ' .
-                    $negativeAdjustments .
-                    '.'
+                (string) $inventoryCount[
+                    'count_number'
+                ] .
+                '. Adjusted products: ' .
+                $differenceItemCount .
+                ', increases: ' .
+                $positiveAdjustments .
+                ', decreases: ' .
+                $negativeAdjustments .
+                '.'
             );
 
             $this->db->commit();
@@ -603,7 +794,7 @@ class InventoryCountService
                 'success' => true,
 
                 'difference_item_count' =>
-                $differenceItemCount,
+                    $differenceItemCount,
 
                 'error' => null,
             ];
@@ -616,10 +807,10 @@ class InventoryCountService
                 'success' => false,
 
                 'difference_item_count' =>
-                0,
+                    0,
 
                 'error' =>
-                $exception->getMessage(),
+                    $exception->getMessage(),
             ];
         }
     }
@@ -635,16 +826,18 @@ class InventoryCountService
         if ($reason === '') {
             return [
                 'success' => false,
+
                 'error' =>
-                'Cancellation reason is required.',
+                    'Cancellation reason is required.',
             ];
         }
 
         if (mb_strlen($reason) > 500) {
             return [
                 'success' => false,
+
                 'error' =>
-                'Cancellation reason must be maximum 500 characters.',
+                    'Cancellation reason must be maximum 500 characters.',
             ];
         }
 
@@ -653,10 +846,10 @@ class InventoryCountService
 
             $inventoryCount =
                 $this->inventoryCountModel
-                ->findForUpdate(
-                    $inventoryCountId,
-                    $companyId
-                );
+                    ->findForUpdate(
+                        $inventoryCountId,
+                        $companyId
+                    );
 
             if ($inventoryCount === null) {
                 throw new Exception(
@@ -665,8 +858,9 @@ class InventoryCountService
             }
 
             if (
-                (string) $inventoryCount['status']
-                !== 'draft'
+                (string) $inventoryCount[
+                    'status'
+                ] !== 'draft'
             ) {
                 throw new Exception(
                     'Only draft inventory counts can be cancelled.'
@@ -675,12 +869,12 @@ class InventoryCountService
 
             $cancelled =
                 $this->inventoryCountModel
-                ->markCancelled(
-                    $inventoryCountId,
-                    $companyId,
-                    $userId,
-                    $reason
-                );
+                    ->markCancelled(
+                        $inventoryCountId,
+                        $companyId,
+                        $userId,
+                        $reason
+                    );
 
             if (!$cancelled) {
                 throw new Exception(
@@ -695,9 +889,11 @@ class InventoryCountService
                 'inventory_count',
                 $inventoryCountId,
                 'Cancelled inventory count ' .
-                    (string) $inventoryCount['count_number'] .
-                    '. Reason: ' .
-                    $reason
+                (string) $inventoryCount[
+                    'count_number'
+                ] .
+                '. Reason: ' .
+                $reason
             );
 
             $this->db->commit();
@@ -713,8 +909,9 @@ class InventoryCountService
 
             return [
                 'success' => false,
+
                 'error' =>
-                $exception->getMessage(),
+                    $exception->getMessage(),
             ];
         }
     }
@@ -723,19 +920,26 @@ class InventoryCountService
         array $inventoryCount
     ): bool {
         if (
-            (string) $inventoryCount['status']
-            !== 'draft'
+            (string) $inventoryCount[
+                'status'
+            ] !== 'draft'
         ) {
             return false;
         }
 
         return $this->warehouseTransactionModel
             ->existsForWarehouseAfterId(
-                (int) $inventoryCount['company_id'],
+                (int) $inventoryCount[
+                    'company_id'
+                ],
 
-                (int) $inventoryCount['warehouse_id'],
+                (int) $inventoryCount[
+                    'warehouse_id'
+                ],
 
-                (int) $inventoryCount['snapshot_transaction_id']
+                (int) $inventoryCount[
+                    'snapshot_transaction_id'
+                ]
             );
     }
 
@@ -747,7 +951,8 @@ class InventoryCountService
         bool $requireAll
     ): void {
         foreach ($items as &$item) {
-            $itemId = (int) $item['id'];
+            $itemId =
+                (int) $item['id'];
 
             if (
                 array_key_exists(
@@ -756,12 +961,16 @@ class InventoryCountService
                 )
             ) {
                 $rawValue =
-                    $submittedQuantities[$itemId];
+                    $submittedQuantities[
+                        $itemId
+                    ];
 
                 if (!is_scalar($rawValue)) {
                     throw new Exception(
                         'Invalid counted quantity for product: ' .
-                            (string) $item['product_name']
+                        (string) $item[
+                            'product_name'
+                        ]
                     );
                 }
 
@@ -772,17 +981,19 @@ class InventoryCountService
 
                 $updated =
                     $this->inventoryCountItemModel
-                    ->updateCountedQuantity(
-                        $itemId,
-                        $inventoryCountId,
-                        $companyId,
-                        $countedQuantity
-                    );
+                        ->updateCountedQuantity(
+                            $itemId,
+                            $inventoryCountId,
+                            $companyId,
+                            $countedQuantity
+                        );
 
                 if (!$updated) {
                     throw new Exception(
                         'Could not save counted quantity for product: ' .
-                            (string) $item['product_name']
+                        (string) $item[
+                            'product_name'
+                        ]
                     );
                 }
 
@@ -792,8 +1003,9 @@ class InventoryCountService
 
             if (
                 $requireAll &&
-                $item['counted_quantity'] ===
-                null
+                $item[
+                    'counted_quantity'
+                ] === null
             ) {
                 throw new Exception(
                     'Enter a counted quantity for every product before completion.'

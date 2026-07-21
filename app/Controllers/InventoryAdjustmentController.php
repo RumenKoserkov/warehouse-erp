@@ -54,9 +54,7 @@ class InventoryAdjustmentController extends Controller
         }
 
         $companyId =
-            (int) $currentUser[
-                'company_id'
-            ];
+            (int) $currentUser['company_id'];
 
         $status =
             $this->queryString('status');
@@ -94,47 +92,47 @@ class InventoryAdjustmentController extends Controller
 
         $filters = [
             'search' =>
-                $this->queryString(
-                    'search'
-                ),
+            $this->queryString(
+                'search'
+            ),
 
             'status' =>
-                $status,
+            $status,
 
             'reason_type' =>
-                $reasonType,
+            $reasonType,
 
             'warehouse_id' =>
-                $this->queryId(
-                    'warehouse_id'
-                ),
+            $this->queryId(
+                'warehouse_id'
+            ),
         ];
 
         $this->view(
             'inventory_adjustments/index',
             [
                 'title' =>
-                    'Inventory Adjustments',
+                'Inventory Adjustments',
 
                 'adjustments' =>
-                    $this->adjustmentModel
-                        ->allByCompany(
-                            $companyId,
-                            $filters
-                        ),
+                $this->adjustmentModel
+                    ->allByCompany(
+                        $companyId,
+                        $filters
+                    ),
 
                 'warehouses' =>
-                    $this->warehouseModel
-                        ->activeByCompany(
-                            $companyId
-                        ),
+                $this->warehouseModel
+                    ->activeByCompany(
+                        $companyId
+                    ),
 
                 'reasonTypes' =>
-                    $this->adjustmentService
-                        ->reasonTypes(),
+                $this->adjustmentService
+                    ->reasonTypes(),
 
                 'filters' =>
-                    $filters,
+                $filters,
             ]
         );
     }
@@ -154,19 +152,17 @@ class InventoryAdjustmentController extends Controller
             'inventory_adjustments/create',
             [
                 'title' =>
-                    'New Inventory Adjustment',
+                'New Inventory Adjustment',
 
                 'warehouses' =>
-                    $this->warehouseModel
-                        ->activeByCompany(
-                            (int) $currentUser[
-                                'company_id'
-                            ]
-                        ),
+                $this->warehouseModel
+                    ->activeByCompany(
+                        (int) $currentUser['company_id']
+                    ),
 
                 'reasonTypes' =>
-                    $this->adjustmentService
-                        ->reasonTypes(),
+                $this->adjustmentService
+                    ->reasonTypes(),
 
                 'errors' => [],
 
@@ -174,7 +170,7 @@ class InventoryAdjustmentController extends Controller
                     'warehouse_id' => '',
 
                     'adjustment_date' =>
-                        date('Y-m-d'),
+                    date('Y-m-d'),
 
                     'reason_type' => '',
 
@@ -222,64 +218,58 @@ class InventoryAdjustmentController extends Controller
 
         $result =
             $this->adjustmentService
-                ->createDraft(
-                    (int) $currentUser[
-                        'company_id'
-                    ],
+            ->createDraft(
+                (int) $currentUser['company_id'],
 
-                    $warehouseId,
+                $warehouseId,
 
-                    (int) $currentUser['id'],
+                (int) $currentUser['id'],
 
-                    $adjustmentDate,
+                $adjustmentDate,
 
-                    $reasonType,
+                $reasonType,
 
-                    $reasonDescription,
+                $reasonDescription,
 
-                    $notes
-                );
+                $notes
+            );
 
         if (!$result['success']) {
             $this->view(
                 'inventory_adjustments/create',
                 [
                     'title' =>
-                        'New Inventory Adjustment',
+                    'New Inventory Adjustment',
 
                     'warehouses' =>
-                        $this->warehouseModel
-                            ->activeByCompany(
-                                (int) $currentUser[
-                                    'company_id'
-                                ]
-                            ),
+                    $this->warehouseModel
+                        ->activeByCompany(
+                            (int) $currentUser['company_id']
+                        ),
 
                     'reasonTypes' =>
-                        $this->adjustmentService
-                            ->reasonTypes(),
+                    $this->adjustmentService
+                        ->reasonTypes(),
 
                     'errors' => [
-                        (string) $result[
-                            'error'
-                        ],
+                        (string) $result['error'],
                     ],
 
                     'old' => [
                         'warehouse_id' =>
-                            (string) $warehouseId,
+                        (string) $warehouseId,
 
                         'adjustment_date' =>
-                            $adjustmentDate,
+                        $adjustmentDate,
 
                         'reason_type' =>
-                            $reasonType,
+                        $reasonType,
 
                         'reason_description' =>
-                            $reasonDescription,
+                        $reasonDescription,
 
                         'notes' =>
-                            $notes,
+                        $notes,
                     ],
                 ]
             );
@@ -293,9 +283,7 @@ class InventoryAdjustmentController extends Controller
 
         $this->redirect(
             '/inventory-adjustments/show?id=' .
-            (int) $result[
-                'adjustment_id'
-            ]
+                (int) $result['adjustment_id']
         );
     }
 
@@ -320,16 +308,14 @@ class InventoryAdjustmentController extends Controller
         }
 
         $companyId =
-            (int) $currentUser[
-                'company_id'
-            ];
+            (int) $currentUser['company_id'];
 
         $adjustment =
             $this->adjustmentModel
-                ->findByIdAndCompany(
-                    $adjustmentId,
-                    $companyId
-                );
+            ->findByIdAndCompany(
+                $adjustmentId,
+                $companyId
+            );
 
         if ($adjustment === null) {
             $this->abort(404);
@@ -345,55 +331,49 @@ class InventoryAdjustmentController extends Controller
         $products = [];
 
         if (
-            (string) $adjustment[
-                'status'
-            ] === 'draft'
+            (string) $adjustment['status'] === 'draft'
         ) {
             $products =
                 $this->itemModel
-                    ->productsForAdjustment(
-                        $companyId,
+                ->productsForAdjustment(
+                    $companyId,
 
-                        (int) $adjustment[
-                            'warehouse_id'
-                        ],
+                    (int) $adjustment['warehouse_id'],
 
-                        $productSearch
-                    );
+                    $productSearch
+                );
         }
 
         $this->view(
             'inventory_adjustments/show',
             [
                 'title' =>
-                    'Inventory Adjustment ' .
-                    (string) $adjustment[
-                        'adjustment_number'
-                    ],
+                'Inventory Adjustment ' .
+                    (string) $adjustment['adjustment_number'],
 
                 'adjustment' =>
-                    $adjustment,
+                $adjustment,
 
                 'items' =>
-                    $this->itemModel
-                        ->allByAdjustment(
-                            $adjustmentId,
-                            $companyId
-                        ),
+                $this->itemModel
+                    ->allByAdjustment(
+                        $adjustmentId,
+                        $companyId
+                    ),
 
                 'products' =>
-                    $products,
+                $products,
 
                 'productSearch' =>
-                    $productSearch,
+                $productSearch,
 
                 'reasonTypes' =>
-                    $this->adjustmentService
-                        ->reasonTypes(),
+                $this->adjustmentService
+                    ->reasonTypes(),
 
                 'directions' =>
-                    $this->adjustmentService
-                        ->directions(),
+                $this->adjustmentService
+                    ->directions(),
             ]
         );
     }
@@ -416,31 +396,33 @@ class InventoryAdjustmentController extends Controller
 
         $result =
             $this->adjustmentService
-                ->addItem(
-                    $adjustmentId,
+            ->addItem(
+                $adjustmentId,
 
-                    (int) $currentUser[
-                        'company_id'
-                    ],
+                (int) $currentUser['company_id'],
 
-                    (int) $currentUser['id'],
+                (int) $currentUser['id'],
 
-                    $this->postId(
-                        'product_id'
-                    ),
+                $this->postId(
+                    'product_id'
+                ),
 
-                    $this->postString(
-                        'direction'
-                    ),
+                $this->postString(
+                    'direction'
+                ),
 
-                    $this->postString(
-                        'quantity'
-                    ),
+                $this->postString(
+                    'quantity'
+                ),
 
-                    $this->postString(
-                        'item_note'
-                    )
-                );
+                $this->postString(
+                    'unit_cost'
+                ),
+
+                $this->postString(
+                    'item_note'
+                )
+            );
 
         if (!$result['success']) {
             Flash::danger(
@@ -454,7 +436,7 @@ class InventoryAdjustmentController extends Controller
 
         $this->redirect(
             '/inventory-adjustments/show?id=' .
-            $adjustmentId
+                $adjustmentId
         );
     }
 
@@ -476,19 +458,17 @@ class InventoryAdjustmentController extends Controller
 
         $result =
             $this->adjustmentService
-                ->deleteItem(
-                    $adjustmentId,
+            ->deleteItem(
+                $adjustmentId,
 
-                    $this->postId(
-                        'item_id'
-                    ),
+                $this->postId(
+                    'item_id'
+                ),
 
-                    (int) $currentUser[
-                        'company_id'
-                    ],
+                (int) $currentUser['company_id'],
 
-                    (int) $currentUser['id']
-                );
+                (int) $currentUser['id']
+            );
 
         if (!$result['success']) {
             Flash::danger(
@@ -502,7 +482,7 @@ class InventoryAdjustmentController extends Controller
 
         $this->redirect(
             '/inventory-adjustments/show?id=' .
-            $adjustmentId
+                $adjustmentId
         );
     }
 
@@ -524,15 +504,13 @@ class InventoryAdjustmentController extends Controller
 
         $result =
             $this->adjustmentService
-                ->complete(
-                    $adjustmentId,
+            ->complete(
+                $adjustmentId,
 
-                    (int) $currentUser[
-                        'company_id'
-                    ],
+                (int) $currentUser['company_id'],
 
-                    (int) $currentUser['id']
-                );
+                (int) $currentUser['id']
+            );
 
         if (!$result['success']) {
             Flash::danger(
@@ -541,16 +519,14 @@ class InventoryAdjustmentController extends Controller
         } else {
             Flash::success(
                 'Inventory adjustment completed. Products adjusted: ' .
-                (int) $result[
-                    'item_count'
-                ] .
-                '.'
+                    (int) $result['item_count'] .
+                    '.'
             );
         }
 
         $this->redirect(
             '/inventory-adjustments/show?id=' .
-            $adjustmentId
+                $adjustmentId
         );
     }
 
@@ -572,19 +548,17 @@ class InventoryAdjustmentController extends Controller
 
         $result =
             $this->adjustmentService
-                ->cancel(
-                    $adjustmentId,
+            ->cancel(
+                $adjustmentId,
 
-                    (int) $currentUser[
-                        'company_id'
-                    ],
+                (int) $currentUser['company_id'],
 
-                    (int) $currentUser['id'],
+                (int) $currentUser['id'],
 
-                    $this->postString(
-                        'cancellation_reason'
-                    )
-                );
+                $this->postString(
+                    'cancellation_reason'
+                )
+            );
 
         if (!$result['success']) {
             Flash::danger(
@@ -598,7 +572,7 @@ class InventoryAdjustmentController extends Controller
 
         $this->redirect(
             '/inventory-adjustments/show?id=' .
-            $adjustmentId
+                $adjustmentId
         );
     }
 

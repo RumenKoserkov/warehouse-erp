@@ -10,7 +10,7 @@ class SaleItem extends Model
 {
     public function create(array $data): bool
     {
-        $stmt = $this->db->prepare("
+        $sql = "
         INSERT INTO sale_items
         (
             sale_id,
@@ -21,6 +21,12 @@ class SaleItem extends Model
             quantity,
             unit,
             unit_price,
+
+            unit_cost,
+            total_cost,
+            gross_profit,
+            gross_margin_percent,
+
             discount_amount,
             promotion_discount_amount,
             vat_rate,
@@ -30,24 +36,85 @@ class SaleItem extends Model
         )
         VALUES
         (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-        )
-    ");
+            :sale_id,
+            :company_id,
+            :product_id,
+            :product_name,
+            :product_internal_code,
+            :quantity,
+            :unit,
+            :unit_price,
 
-        return $stmt->execute([
+            :unit_cost,
+            :total_cost,
+            :gross_profit,
+            :gross_margin_percent,
+
+            :discount_amount,
+            :promotion_discount_amount,
+            :vat_rate,
+            :net_amount,
+            :tax_amount,
+            :total_price
+        )
+    ";
+
+        $statement =
+            $this->db->prepare($sql);
+
+        return $statement->execute([
+            'sale_id' =>
             $data['sale_id'],
+
+            'company_id' =>
             $data['company_id'],
+
+            'product_id' =>
             $data['product_id'],
+
+            'product_name' =>
             $data['product_name'],
+
+            'product_internal_code' =>
             $data['product_internal_code'],
+
+            'quantity' =>
             $data['quantity'],
+
+            'unit' =>
             $data['unit'],
+
+            'unit_price' =>
             $data['unit_price'],
+
+            'unit_cost' =>
+            $data['unit_cost'],
+
+            'total_cost' =>
+            $data['total_cost'],
+
+            'gross_profit' =>
+            $data['gross_profit'],
+
+            'gross_margin_percent' =>
+            $data['gross_margin_percent'],
+
+            'discount_amount' =>
             $data['discount_amount'],
+
+            'promotion_discount_amount' =>
             $data['promotion_discount_amount'] ?? 0,
+
+            'vat_rate' =>
             $data['vat_rate'],
+
+            'net_amount' =>
             $data['net_amount'],
+
+            'tax_amount' =>
             $data['tax_amount'],
+
+            'total_price' =>
             $data['total_price'],
         ]);
     }

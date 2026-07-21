@@ -19,17 +19,24 @@ class InventoryAdjustmentService
 {
     private PDO $db;
 
-    private InventoryAdjustment $adjustmentModel;
+    private InventoryAdjustment
+        $adjustmentModel;
 
-    private InventoryAdjustmentItem $itemModel;
+    private InventoryAdjustmentItem
+        $itemModel;
 
     private Warehouse $warehouseModel;
 
     private StockLevel $stockLevelModel;
 
-    private WarehouseTransaction $transactionModel;
+    private WarehouseTransaction
+        $transactionModel;
 
-    private AuditLogService $auditLogService;
+    private InventoryCostService
+        $inventoryCostService;
+
+    private AuditLogService
+        $auditLogService;
 
     public function __construct()
     {
@@ -50,6 +57,9 @@ class InventoryAdjustmentService
 
         $this->transactionModel =
             new WarehouseTransaction();
+
+        $this->inventoryCostService =
+            new InventoryCostService();
 
         $this->auditLogService =
             new AuditLogService();
@@ -111,6 +121,7 @@ class InventoryAdjustmentService
             return [
                 'success' => false,
                 'adjustment_id' => null,
+
                 'error' =>
                     'Adjustment date is invalid.',
             ];
@@ -123,6 +134,7 @@ class InventoryAdjustmentService
             return [
                 'success' => false,
                 'adjustment_id' => null,
+
                 'error' =>
                     'Adjustment date cannot be in the future.',
             ];
@@ -137,6 +149,7 @@ class InventoryAdjustmentService
             return [
                 'success' => false,
                 'adjustment_id' => null,
+
                 'error' =>
                     'Invalid adjustment reason.',
             ];
@@ -146,6 +159,7 @@ class InventoryAdjustmentService
             return [
                 'success' => false,
                 'adjustment_id' => null,
+
                 'error' =>
                     'Reason description is required.',
             ];
@@ -159,6 +173,7 @@ class InventoryAdjustmentService
             return [
                 'success' => false,
                 'adjustment_id' => null,
+
                 'error' =>
                     'Reason description must be maximum 500 characters.',
             ];
@@ -168,6 +183,7 @@ class InventoryAdjustmentService
             return [
                 'success' => false,
                 'adjustment_id' => null,
+
                 'error' =>
                     'Notes must be maximum 2000 characters.',
             ];
@@ -189,6 +205,7 @@ class InventoryAdjustmentService
             return [
                 'success' => false,
                 'adjustment_id' => null,
+
                 'error' =>
                     'Selected warehouse was not found or is inactive.',
             ];
@@ -274,6 +291,7 @@ class InventoryAdjustmentService
             return [
                 'success' => false,
                 'adjustment_id' => null,
+
                 'error' =>
                     $exception->getMessage(),
             ];
@@ -287,6 +305,7 @@ class InventoryAdjustmentService
         int $productId,
         string $direction,
         string $quantityInput,
+        string $unitCostInput,
         string $itemNote
     ): array {
         $itemNote = trim($itemNote);
@@ -299,6 +318,7 @@ class InventoryAdjustmentService
         ) {
             return [
                 'success' => false,
+
                 'error' =>
                     'Invalid adjustment direction.',
             ];
@@ -309,9 +329,25 @@ class InventoryAdjustmentService
                 $this->parseQuantity(
                     $quantityInput
                 );
+
+            $unitCost = null;
+            $totalCost = null;
+
+            if ($direction === 'increase') {
+                $unitCost =
+                    $this->parseCost(
+                        $unitCostInput
+                    );
+
+                $totalCost = round(
+                    $quantity * $unitCost,
+                    4
+                );
+            }
         } catch (Throwable $exception) {
             return [
                 'success' => false,
+
                 'error' =>
                     $exception->getMessage(),
             ];
@@ -320,6 +356,7 @@ class InventoryAdjustmentService
         if (mb_strlen($itemNote) > 500) {
             return [
                 'success' => false,
+
                 'error' =>
                     'Item note must be maximum 500 characters.',
             ];
@@ -387,6 +424,12 @@ class InventoryAdjustmentService
                         ]
                     );
 
+            if ($stockLevel === null) {
+                throw new Exception(
+                    'Stock level was not found for the selected product.'
+                );
+            }
+
             $currentQuantity = round(
                 (float) $stockLevel[
                     'quantity'
@@ -414,56 +457,63 @@ class InventoryAdjustmentService
             }
 
             $itemId =
-                $this->itemModel->create([
-                    'inventory_adjustment_id' =>
-                        $adjustmentId,
+                $this->itemModel
+                    ->create([
+                        'inventory_adjustment_id' =>
+                            $adjustmentId,
 
-                    'company_id' =>
-                        $companyId,
+                        'company_id' =>
+                            $companyId,
 
-                    'product_id' =>
-                        $productId,
+                        'product_id' =>
+                            $productId,
 
-                    'product_name' =>
-                        (string) $product['name'],
+                        'product_name' =>
+                            (string) $product[
+                                'name'
+                            ],
 
-                    'product_internal_code' =>
-                        (string) $product[
-                            'internal_code'
-                        ],
+                        'product_internal_code' =>
+                            (string) $product[
+                                'internal_code'
+                            ],
 
-                    'product_barcode' =>
-                        $this->nullableString(
-                            (string) (
-                                $product['barcode'] ??
-                                ''
-                            )
-                        ),
+                        'product_barcode' =>
+                            $this->nullableString(
+                                (string) (
+                                    $product[
+                                        'barcode'
+                                    ] ?? ''
+                                )
+                            ),
 
-                    'product_unit' =>
-                        (string) $product['unit'],
+                        'product_unit' =>
+                            (string) $product[
+                                'unit'
+                            ],
 
-                    'direction' =>
-                        $direction,
+                        'direction' =>
+                            $direction,
 
-                    'quantity' =>
-                        $quantity,
+                        'quantity' =>
+                            $quantity,
 
-                    'stock_quantity_at_add' =>
-                        $currentQuantity,
+                        'unit_cost' =>
+                            $unitCost,
 
-                    'item_note' =>
-                        $this->nullableString(
-                            $itemNote
-                        ),
-                ]);
+                        'total_cost' =>
+                            $totalCost,
 
-            $this->auditLogService->log(
-                $companyId,
-                $userId,
-                'update',
-                'inventory_adjustment',
-                $adjustmentId,
+                        'stock_quantity_at_add' =>
+                            $currentQuantity,
+
+                        'item_note' =>
+                            $this->nullableString(
+                                $itemNote
+                            ),
+                    ]);
+
+            $auditMessage =
                 'Added product ' .
                 (string) $product['name'] .
                 ' to inventory adjustment ' .
@@ -478,8 +528,31 @@ class InventoryAdjustmentService
                     3,
                     '.',
                     ''
-                ) .
-                '.'
+                );
+
+            if (
+                $direction === 'increase' &&
+                $unitCost !== null
+            ) {
+                $auditMessage .=
+                    ', unit cost: ' .
+                    number_format(
+                        $unitCost,
+                        4,
+                        '.',
+                        ''
+                    );
+            }
+
+            $auditMessage .= '.';
+
+            $this->auditLogService->log(
+                $companyId,
+                $userId,
+                'update',
+                'inventory_adjustment',
+                $adjustmentId,
+                $auditMessage
             );
 
             $this->db->commit();
@@ -496,6 +569,7 @@ class InventoryAdjustmentService
 
             return [
                 'success' => false,
+
                 'error' =>
                     $exception->getMessage(),
             ];
@@ -592,6 +666,7 @@ class InventoryAdjustmentService
 
             return [
                 'success' => false,
+
                 'error' =>
                     $exception->getMessage(),
             ];
@@ -652,10 +727,14 @@ class InventoryAdjustmentService
 
             foreach ($items as $item) {
                 $productId =
-                    (int) $item['product_id'];
+                    (int) $item[
+                        'product_id'
+                    ];
 
                 $quantity = round(
-                    (float) $item['quantity'],
+                    (float) $item[
+                        'quantity'
+                    ],
                     3
                 );
 
@@ -664,51 +743,39 @@ class InventoryAdjustmentService
                         'direction'
                     ];
 
-                $stockLevel =
-                    $this->stockLevelModel
-                        ->lockForUpdate(
-                            $companyId,
-                            $productId,
-                            $warehouseId
-                        );
-
-                $quantityBefore = round(
-                    (float) $stockLevel[
-                        'quantity'
-                    ],
-                    3
-                );
-
-                $quantityAfter =
-                    $quantityBefore;
-
                 $fromWarehouseId = null;
                 $toWarehouseId = null;
 
                 if ($direction === 'increase') {
-                    $updated =
-                        $this->stockLevelModel
-                            ->increase(
-                                $companyId,
-                                $productId,
-                                $warehouseId,
-                                $quantity
-                            );
-
-                    if (!$updated) {
+                    if (
+                        $item['unit_cost'] === null
+                    ) {
                         throw new Exception(
-                            'Could not increase stock for product: ' .
+                            'Unit cost is missing for stock increase product: ' .
                             (string) $item[
                                 'product_name'
-                            ]
+                            ] .
+                            '.'
                         );
                     }
 
-                    $quantityAfter = round(
-                        $quantityBefore +
-                        $quantity,
-                        3
-                    );
+                    $costMovement =
+                        $this->inventoryCostService
+                            ->receive(
+                                $companyId,
+                                $productId,
+                                $warehouseId,
+                                $quantity,
+                                (float) $item[
+                                    'unit_cost'
+                                ]
+                            );
+
+                    $transactionCostFields =
+                        $this->inventoryCostService
+                            ->incomingTransactionFields(
+                                $costMovement
+                            );
 
                     $toWarehouseId =
                         $warehouseId;
@@ -717,49 +784,20 @@ class InventoryAdjustmentService
                 } elseif (
                     $direction === 'decrease'
                 ) {
-                    if (
-                        $quantity >
-                        $quantityBefore + 0.0005
-                    ) {
-                        throw new Exception(
-                            'Insufficient stock for product: ' .
-                            (string) $item[
-                                'product_name'
-                            ] .
-                            '. Current stock: ' .
-                            number_format(
-                                $quantityBefore,
-                                3,
-                                '.',
-                                ''
-                            ) .
-                            '.'
-                        );
-                    }
-
-                    $updated =
-                        $this->stockLevelModel
-                            ->decrease(
+                    $costMovement =
+                        $this->inventoryCostService
+                            ->issue(
                                 $companyId,
                                 $productId,
                                 $warehouseId,
                                 $quantity
                             );
 
-                    if (!$updated) {
-                        throw new Exception(
-                            'Could not decrease stock for product: ' .
-                            (string) $item[
-                                'product_name'
-                            ]
-                        );
-                    }
-
-                    $quantityAfter = round(
-                        $quantityBefore -
-                        $quantity,
-                        3
-                    );
+                    $transactionCostFields =
+                        $this->inventoryCostService
+                            ->outgoingTransactionFields(
+                                $costMovement
+                            );
 
                     $fromWarehouseId =
                         $warehouseId;
@@ -770,73 +808,118 @@ class InventoryAdjustmentService
                         'Invalid direction for product: ' .
                         (string) $item[
                             'product_name'
-                        ]
+                        ] .
+                        '.'
                     );
                 }
 
+                $quantityBefore = round(
+                    (float) $costMovement[
+                        'quantity_before'
+                    ],
+                    3
+                );
+
+                $quantityAfter = round(
+                    (float) $costMovement[
+                        'quantity_after'
+                    ],
+                    3
+                );
+
+                $unitCost = round(
+                    (float) $costMovement[
+                        'unit_cost'
+                    ],
+                    4
+                );
+
+                $totalCost = round(
+                    (float) $costMovement[
+                        'total_cost'
+                    ],
+                    4
+                );
+
                 $itemApplied =
                     $this->itemModel
-                        ->markApplied(
+                        ->markCostApplied(
                             (int) $item['id'],
                             $companyId,
                             $quantityBefore,
-                            $quantityAfter
+                            $quantityAfter,
+                            $unitCost,
+                            $totalCost
                         );
 
                 if (!$itemApplied) {
                     throw new Exception(
-                        'Could not store resulting quantity for product: ' .
+                        'Could not store resulting quantity and cost for product: ' .
                         (string) $item[
                             'product_name'
-                        ]
+                        ] .
+                        '.'
                     );
                 }
 
+                $transactionData = [
+                    'company_id' =>
+                        $companyId,
+
+                    'product_id' =>
+                        $productId,
+
+                    'from_warehouse_id' =>
+                        $fromWarehouseId,
+
+                    'to_warehouse_id' =>
+                        $toWarehouseId,
+
+                    'user_id' =>
+                        $userId,
+
+                    'type' =>
+                        'adjustment',
+
+                    'quantity' =>
+                        $quantity,
+
+                    'reference_type' =>
+                        'inventory_adjustment',
+
+                    'reference_id' =>
+                        $adjustmentId,
+
+                    'note' =>
+                        $this->transactionNote(
+                            $adjustment,
+                            $item,
+                            $quantityBefore,
+                            $quantityAfter,
+                            $unitCost,
+                            $totalCost
+                        ),
+                ];
+
+                $transactionData =
+                    array_merge(
+                        $transactionData,
+                        $transactionCostFields
+                    );
+
                 $transactionCreated =
                     $this->transactionModel
-                        ->create([
-                            'company_id' =>
-                                $companyId,
-
-                            'product_id' =>
-                                $productId,
-
-                            'from_warehouse_id' =>
-                                $fromWarehouseId,
-
-                            'to_warehouse_id' =>
-                                $toWarehouseId,
-
-                            'user_id' =>
-                                $userId,
-
-                            'type' =>
-                                'adjustment',
-
-                            'quantity' =>
-                                $quantity,
-
-                            'reference_type' =>
-                                'inventory_adjustment',
-
-                            'reference_id' =>
-                                $adjustmentId,
-
-                            'note' =>
-                                $this->transactionNote(
-                                    $adjustment,
-                                    $item,
-                                    $quantityBefore,
-                                    $quantityAfter
-                                ),
-                        ]);
+                        ->create(
+                            $transactionData
+                        );
 
                 if (!$transactionCreated) {
                     throw new Exception(
                         'Warehouse transaction could not be created for product: ' .
                         (string) $item[
                             'product_name'
-                        ]
+                        ] .
+                        '.'
                     );
                 }
             }
@@ -878,8 +961,10 @@ class InventoryAdjustmentService
 
             return [
                 'success' => true,
+
                 'item_count' =>
                     count($items),
+
                 'error' => null,
             ];
         } catch (Throwable $exception) {
@@ -890,6 +975,7 @@ class InventoryAdjustmentService
             return [
                 'success' => false,
                 'item_count' => 0,
+
                 'error' =>
                     $exception->getMessage(),
             ];
@@ -907,6 +993,7 @@ class InventoryAdjustmentService
         if ($reason === '') {
             return [
                 'success' => false,
+
                 'error' =>
                     'Cancellation reason is required.',
             ];
@@ -915,6 +1002,7 @@ class InventoryAdjustmentService
         if (mb_strlen($reason) > 500) {
             return [
                 'success' => false,
+
                 'error' =>
                     'Cancellation reason must be maximum 500 characters.',
             ];
@@ -988,6 +1076,7 @@ class InventoryAdjustmentService
 
             return [
                 'success' => false,
+
                 'error' =>
                     $exception->getMessage(),
             ];
@@ -1036,6 +1125,54 @@ class InventoryAdjustmentService
         return $quantity;
     }
 
+    private function parseCost(
+        string $value
+    ): float {
+        $value = trim($value);
+
+        if ($value === '') {
+            throw new Exception(
+                'Unit cost is required for stock increases.'
+            );
+        }
+
+        $value = str_replace(
+            [
+                ' ',
+                ',',
+            ],
+            [
+                '',
+                '.',
+            ],
+            $value
+        );
+
+        if (
+            preg_match(
+                '/^\d{1,10}(?:\.\d{1,4})?$/',
+                $value
+            ) !== 1
+        ) {
+            throw new Exception(
+                'Unit cost must be a non-negative number with maximum 4 decimal places.'
+            );
+        }
+
+        $unitCost = round(
+            (float) $value,
+            4
+        );
+
+        if ($unitCost < 0) {
+            throw new Exception(
+                'Unit cost cannot be negative.'
+            );
+        }
+
+        return $unitCost;
+    }
+
     private function adjustmentNumber(
         int $adjustmentId
     ): string {
@@ -1052,7 +1189,9 @@ class InventoryAdjustmentService
         array $adjustment,
         array $item,
         float $quantityBefore,
-        float $quantityAfter
+        float $quantityAfter,
+        float $unitCost,
+        float $totalCost
     ): string {
         $note =
             'Inventory adjustment ' .
@@ -1074,6 +1213,20 @@ class InventoryAdjustmentService
             number_format(
                 $quantityAfter,
                 3,
+                '.',
+                ''
+            ) .
+            ', unit cost: ' .
+            number_format(
+                $unitCost,
+                4,
+                '.',
+                ''
+            ) .
+            ', total cost: ' .
+            number_format(
+                $totalCost,
+                4,
                 '.',
                 ''
             ) .

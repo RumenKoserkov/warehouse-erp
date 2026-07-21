@@ -10,45 +10,211 @@ class WarehouseTransaction extends Model
 {
     public function create(array $data): bool
     {
-        $stmt = $this->db->prepare("
+        $sql = "
             INSERT INTO warehouse_transactions
-                (
-                    company_id,
-                    product_id,
-                    from_warehouse_id,
-                    to_warehouse_id,
-                    user_id,
-                    type,
-                    quantity,
-                    reference_type,
-                    reference_id,
-                    note
-                )
-            VALUES
-                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ");
+            (
+                company_id,
+                product_id,
+                from_warehouse_id,
+                to_warehouse_id,
+                user_id,
+                type,
+                quantity,
 
-        return $stmt->execute([
-            $data['company_id'],
-            $data['product_id'],
-            $data['from_warehouse_id'],
-            $data['to_warehouse_id'],
-            $data['user_id'],
-            $data['type'],
-            $data['quantity'],
-            $data['reference_type'],
-            $data['reference_id'],
-            $data['note'],
+                unit_cost,
+                total_cost,
+
+                from_quantity_before,
+                from_quantity_after,
+                to_quantity_before,
+                to_quantity_after,
+
+                from_average_cost_before,
+                from_average_cost_after,
+                to_average_cost_before,
+                to_average_cost_after,
+
+                from_inventory_value_before,
+                from_inventory_value_after,
+                to_inventory_value_before,
+                to_inventory_value_after,
+
+                reference_type,
+                reference_id,
+                note
+            )
+            VALUES
+            (
+                :company_id,
+                :product_id,
+                :from_warehouse_id,
+                :to_warehouse_id,
+                :user_id,
+                :type,
+                :quantity,
+
+                :unit_cost,
+                :total_cost,
+
+                :from_quantity_before,
+                :from_quantity_after,
+                :to_quantity_before,
+                :to_quantity_after,
+
+                :from_average_cost_before,
+                :from_average_cost_after,
+                :to_average_cost_before,
+                :to_average_cost_after,
+
+                :from_inventory_value_before,
+                :from_inventory_value_after,
+                :to_inventory_value_before,
+                :to_inventory_value_after,
+
+                :reference_type,
+                :reference_id,
+                :note
+            )
+        ";
+
+        $statement =
+            $this->db->prepare($sql);
+
+        return $statement->execute([
+            'company_id' =>
+                $data['company_id'],
+
+            'product_id' =>
+                $data['product_id'],
+
+            'from_warehouse_id' =>
+                $data[
+                    'from_warehouse_id'
+                ] ?? null,
+
+            'to_warehouse_id' =>
+                $data[
+                    'to_warehouse_id'
+                ] ?? null,
+
+            'user_id' =>
+                $data['user_id'],
+
+            'type' =>
+                $data['type'],
+
+            'quantity' =>
+                $data['quantity'],
+
+            'unit_cost' =>
+                $data['unit_cost'] ?? null,
+
+            'total_cost' =>
+                $data['total_cost'] ?? null,
+
+            'from_quantity_before' =>
+                $data[
+                    'from_quantity_before'
+                ] ?? null,
+
+            'from_quantity_after' =>
+                $data[
+                    'from_quantity_after'
+                ] ?? null,
+
+            'to_quantity_before' =>
+                $data[
+                    'to_quantity_before'
+                ] ?? null,
+
+            'to_quantity_after' =>
+                $data[
+                    'to_quantity_after'
+                ] ?? null,
+
+            'from_average_cost_before' =>
+                $data[
+                    'from_average_cost_before'
+                ] ?? null,
+
+            'from_average_cost_after' =>
+                $data[
+                    'from_average_cost_after'
+                ] ?? null,
+
+            'to_average_cost_before' =>
+                $data[
+                    'to_average_cost_before'
+                ] ?? null,
+
+            'to_average_cost_after' =>
+                $data[
+                    'to_average_cost_after'
+                ] ?? null,
+
+            'from_inventory_value_before' =>
+                $data[
+                    'from_inventory_value_before'
+                ] ?? null,
+
+            'from_inventory_value_after' =>
+                $data[
+                    'from_inventory_value_after'
+                ] ?? null,
+
+            'to_inventory_value_before' =>
+                $data[
+                    'to_inventory_value_before'
+                ] ?? null,
+
+            'to_inventory_value_after' =>
+                $data[
+                    'to_inventory_value_after'
+                ] ?? null,
+
+            'reference_type' =>
+                $data[
+                    'reference_type'
+                ] ?? null,
+
+            'reference_id' =>
+                $data[
+                    'reference_id'
+                ] ?? null,
+
+            'note' =>
+                $data['note'] ?? null,
         ]);
     }
 
-    public function allByCompany(int $companyId, array $filters = []): array
-    {
+    public function allByCompany(
+        int $companyId,
+        array $filters = []
+    ): array {
         $sql = "
             SELECT
                 warehouse_transactions.id,
                 warehouse_transactions.type,
                 warehouse_transactions.quantity,
+
+                warehouse_transactions.unit_cost,
+                warehouse_transactions.total_cost,
+
+                warehouse_transactions.from_quantity_before,
+                warehouse_transactions.from_quantity_after,
+                warehouse_transactions.to_quantity_before,
+                warehouse_transactions.to_quantity_after,
+
+                warehouse_transactions.from_average_cost_before,
+                warehouse_transactions.from_average_cost_after,
+                warehouse_transactions.to_average_cost_before,
+                warehouse_transactions.to_average_cost_after,
+
+                warehouse_transactions.from_inventory_value_before,
+                warehouse_transactions.from_inventory_value_after,
+                warehouse_transactions.to_inventory_value_before,
+                warehouse_transactions.to_inventory_value_after,
+
                 warehouse_transactions.reference_type,
                 warehouse_transactions.reference_id,
                 warehouse_transactions.note,
@@ -59,27 +225,37 @@ class WarehouseTransaction extends Model
                 products.barcode,
                 products.unit,
 
-                from_warehouse.name AS from_warehouse_name,
-                from_warehouse.code AS from_warehouse_code,
+                from_warehouse.name
+                    AS from_warehouse_name,
 
-                to_warehouse.name AS to_warehouse_name,
-                to_warehouse.code AS to_warehouse_code,
+                from_warehouse.code
+                    AS from_warehouse_code,
+
+                to_warehouse.name
+                    AS to_warehouse_name,
+
+                to_warehouse.code
+                    AS to_warehouse_code,
 
                 users.name AS user_name
 
             FROM warehouse_transactions
 
             INNER JOIN products
-                ON warehouse_transactions.product_id = products.id
+                ON warehouse_transactions.product_id =
+                    products.id
 
             LEFT JOIN warehouses AS from_warehouse
-                ON warehouse_transactions.from_warehouse_id = from_warehouse.id
+                ON warehouse_transactions.from_warehouse_id =
+                    from_warehouse.id
 
             LEFT JOIN warehouses AS to_warehouse
-                ON warehouse_transactions.to_warehouse_id = to_warehouse.id
+                ON warehouse_transactions.to_warehouse_id =
+                    to_warehouse.id
 
             LEFT JOIN users
-                ON warehouse_transactions.user_id = users.id
+                ON warehouse_transactions.user_id =
+                    users.id
 
             WHERE warehouse_transactions.company_id = ?
         ";
@@ -100,7 +276,8 @@ class WarehouseTransaction extends Model
                 )
             ";
 
-            $searchTerm = '%' . $filters['search'] . '%';
+            $searchTerm =
+                '%' . $filters['search'] . '%';
 
             $params[] = $searchTerm;
             $params[] = $searchTerm;
@@ -113,12 +290,18 @@ class WarehouseTransaction extends Model
         }
 
         if (!empty($filters['type'])) {
-            $sql .= " AND warehouse_transactions.type = ?";
+            $sql .= "
+                AND warehouse_transactions.type = ?
+            ";
+
             $params[] = $filters['type'];
         }
 
         if (!empty($filters['product_id'])) {
-            $sql .= " AND warehouse_transactions.product_id = ?";
+            $sql .= "
+                AND warehouse_transactions.product_id = ?
+            ";
+
             $params[] = $filters['product_id'];
         }
 
@@ -130,23 +313,30 @@ class WarehouseTransaction extends Model
                 )
             ";
 
-            $params[] = $filters['warehouse_id'];
-            $params[] = $filters['warehouse_id'];
+            $params[] =
+                $filters['warehouse_id'];
+
+            $params[] =
+                $filters['warehouse_id'];
         }
 
         $sql .= "
             ORDER BY warehouse_transactions.id DESC
         ";
 
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
+        $statement =
+            $this->db->prepare($sql);
 
-        return $stmt->fetchAll();
+        $statement->execute($params);
+
+        return $statement->fetchAll();
     }
 
-    public function findByIdAndCompany(int $id, int $companyId): ?array
-    {
-        $stmt = $this->db->prepare("
+    public function findByIdAndCompany(
+        int $id,
+        int $companyId
+    ): ?array {
+        $sql = "
             SELECT
                 warehouse_transactions.*,
 
@@ -154,40 +344,52 @@ class WarehouseTransaction extends Model
                 products.internal_code,
                 products.unit,
 
-                from_warehouse.name AS from_warehouse_name,
-                to_warehouse.name AS to_warehouse_name,
+                from_warehouse.name
+                    AS from_warehouse_name,
+
+                to_warehouse.name
+                    AS to_warehouse_name,
 
                 users.name AS user_name
 
             FROM warehouse_transactions
 
             INNER JOIN products
-                ON warehouse_transactions.product_id = products.id
+                ON warehouse_transactions.product_id =
+                    products.id
 
             LEFT JOIN warehouses AS from_warehouse
-                ON warehouse_transactions.from_warehouse_id = from_warehouse.id
+                ON warehouse_transactions.from_warehouse_id =
+                    from_warehouse.id
 
             LEFT JOIN warehouses AS to_warehouse
-                ON warehouse_transactions.to_warehouse_id = to_warehouse.id
+                ON warehouse_transactions.to_warehouse_id =
+                    to_warehouse.id
 
             LEFT JOIN users
-                ON warehouse_transactions.user_id = users.id
+                ON warehouse_transactions.user_id =
+                    users.id
 
             WHERE warehouse_transactions.id = ?
-              AND warehouse_transactions.company_id = ?
+            AND warehouse_transactions.company_id = ?
 
             LIMIT 1
-        ");
+        ";
 
-        $stmt->execute([$id, $companyId]);
+        $statement =
+            $this->db->prepare($sql);
 
-        $transaction = $stmt->fetch();
+        $statement->execute([
+            $id,
+            $companyId,
+        ]);
 
-        if (!$transaction) {
-            return null;
-        }
+        $transaction =
+            $statement->fetch();
 
-        return $transaction;
+        return $transaction === false
+            ? null
+            : $transaction;
     }
 
     public function types(): array
@@ -211,34 +413,37 @@ class WarehouseTransaction extends Model
         int $warehouseId
     ): int {
         $sql = "
-        SELECT COALESCE(
-            MAX(id),
-            0
-        )
-        FROM warehouse_transactions
-        WHERE company_id = :company_id
-        AND (
-            from_warehouse_id =
-                :from_warehouse_id
+            SELECT COALESCE(
+                MAX(id),
+                0
+            )
+            FROM warehouse_transactions
+            WHERE company_id = :company_id
+            AND (
+                from_warehouse_id =
+                    :from_warehouse_id
 
-            OR to_warehouse_id =
-                :to_warehouse_id
-        )
-    ";
+                OR to_warehouse_id =
+                    :to_warehouse_id
+            )
+        ";
 
-        $statement = $this->db->prepare($sql);
+        $statement =
+            $this->db->prepare($sql);
 
         $statement->execute([
-            'company_id' => $companyId,
+            'company_id' =>
+                $companyId,
 
             'from_warehouse_id' =>
-            $warehouseId,
+                $warehouseId,
 
             'to_warehouse_id' =>
-            $warehouseId,
+                $warehouseId,
         ]);
 
-        return (int) $statement->fetchColumn();
+        return (int)
+            $statement->fetchColumn();
     }
 
     public function existsForWarehouseAfterId(
@@ -247,33 +452,35 @@ class WarehouseTransaction extends Model
         int $transactionId
     ): bool {
         $sql = "
-        SELECT id
-        FROM warehouse_transactions
-        WHERE company_id = :company_id
-        AND id > :transaction_id
-        AND (
-            from_warehouse_id =
-                :from_warehouse_id
+            SELECT id
+            FROM warehouse_transactions
+            WHERE company_id = :company_id
+            AND id > :transaction_id
+            AND (
+                from_warehouse_id =
+                    :from_warehouse_id
 
-            OR to_warehouse_id =
-                :to_warehouse_id
-        )
-        LIMIT 1
-    ";
+                OR to_warehouse_id =
+                    :to_warehouse_id
+            )
+            LIMIT 1
+        ";
 
-        $statement = $this->db->prepare($sql);
+        $statement =
+            $this->db->prepare($sql);
 
         $statement->execute([
-            'company_id' => $companyId,
+            'company_id' =>
+                $companyId,
 
             'transaction_id' =>
-            $transactionId,
+                $transactionId,
 
             'from_warehouse_id' =>
-            $warehouseId,
+                $warehouseId,
 
             'to_warehouse_id' =>
-            $warehouseId,
+                $warehouseId,
         ]);
 
         return $statement->fetch() !== false;

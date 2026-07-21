@@ -8,7 +8,6 @@ use App\Core\Database;
 use App\Models\Purchase;
 use App\Models\PurchaseReturn;
 use App\Models\PurchaseReturnItem;
-use App\Models\StockLevel;
 use App\Models\WarehouseTransaction;
 use DateTimeImmutable;
 use Exception;
@@ -25,15 +24,19 @@ class PurchaseReturnService
 
     private PurchaseReturnItem $itemModel;
 
-    private StockLevel $stockLevelModel;
+    private WarehouseTransaction
+        $transactionModel;
 
-    private WarehouseTransaction $transactionModel;
+    private InventoryCostService
+        $inventoryCostService;
 
-    private AuditLogService $auditLogService;
+    private AuditLogService
+        $auditLogService;
 
     public function __construct()
     {
-        $this->db = Database::getConnection();
+        $this->db =
+            Database::getConnection();
 
         $this->purchaseModel =
             new Purchase();
@@ -44,11 +47,11 @@ class PurchaseReturnService
         $this->itemModel =
             new PurchaseReturnItem();
 
-        $this->stockLevelModel =
-            new StockLevel();
-
         $this->transactionModel =
             new WarehouseTransaction();
+
+        $this->inventoryCostService =
+            new InventoryCostService();
 
         $this->auditLogService =
             new AuditLogService();
@@ -58,22 +61,22 @@ class PurchaseReturnService
     {
         return [
             'damaged_goods' =>
-                'Damaged Goods',
+            'Damaged Goods',
 
             'wrong_goods' =>
-                'Wrong Goods Delivered',
+            'Wrong Goods Delivered',
 
             'quality_issue' =>
-                'Quality Issue',
+            'Quality Issue',
 
             'excess_delivery' =>
-                'Excess Delivery',
+            'Excess Delivery',
 
             'expired_goods' =>
-                'Expired Goods',
+            'Expired Goods',
 
             'other' =>
-                'Other',
+            'Other',
         ];
     }
 
@@ -99,8 +102,12 @@ class PurchaseReturnService
         if ($validationError !== null) {
             return [
                 'success' => false,
-                'purchase_return_id' => null,
-                'error' => $validationError,
+
+                'purchase_return_id' =>
+                null,
+
+                'error' =>
+                $validationError,
             ];
         }
 
@@ -109,10 +116,10 @@ class PurchaseReturnService
 
             $purchase =
                 $this->purchaseModel
-                    ->findForUpdate(
-                        $purchaseId,
-                        $companyId
-                    );
+                ->findForUpdate(
+                    $purchaseId,
+                    $companyId
+                );
 
             if ($purchase === null) {
                 throw new Exception(
@@ -121,8 +128,7 @@ class PurchaseReturnService
             }
 
             if (
-                (string) $purchase['status'] !==
-                'completed'
+                (string) $purchase['status'] !== 'completed'
             ) {
                 throw new Exception(
                     'Only completed purchases can be returned.'
@@ -131,9 +137,7 @@ class PurchaseReturnService
 
             if (
                 $returnDate <
-                (string) $purchase[
-                    'purchase_date'
-                ]
+                (string) $purchase['purchase_date']
             ) {
                 throw new Exception(
                     'Return date cannot be before the purchase date.'
@@ -142,10 +146,10 @@ class PurchaseReturnService
 
             if (
                 $this->purchaseReturnModel
-                    ->hasDraftForPurchase(
-                        $purchaseId,
-                        $companyId
-                    )
+                ->hasDraftForPurchase(
+                    $purchaseId,
+                    $companyId
+                )
             ) {
                 throw new Exception(
                     'This purchase already has an open return draft.'
@@ -162,51 +166,50 @@ class PurchaseReturnService
 
             $purchaseReturnId =
                 $this->purchaseReturnModel
-                    ->create([
-                        'company_id' =>
-                            $companyId,
+                ->create([
+                    'company_id' =>
+                    $companyId,
 
-                        'purchase_id' =>
-                            $purchaseId,
+                    'purchase_id' =>
+                    $purchaseId,
 
-                        'warehouse_id' =>
-                            (int) $purchase[
-                                'warehouse_id'
-                            ],
+                    'warehouse_id' =>
+                    (int) $purchase['warehouse_id'],
 
-                        'return_date' =>
-                            $returnDate,
+                    'return_date' =>
+                    $returnDate,
 
-                        'reason_type' =>
-                            $reasonType,
+                    'reason_type' =>
+                    $reasonType,
 
-                        'reason_description' =>
-                            trim(
-                                $reasonDescription
-                            ),
+                    'reason_description' =>
+                    trim(
+                        $reasonDescription
+                    ),
 
-                        'notes' =>
-                            $this->nullableString(
-                                $notes
-                            ),
+                    'notes' =>
+                    $this->nullableString(
+                        $notes
+                    ),
 
-                        'created_by_user_id' =>
-                            $userId,
-                    ]);
+                    'created_by_user_id' =>
+                    $userId,
+                ]);
 
             $returnNumber =
                 $this->returnNumber(
                     $purchaseReturnId
                 );
 
-            if (
-                !$this->purchaseReturnModel
-                    ->assignNumber(
-                        $purchaseReturnId,
-                        $companyId,
-                        $returnNumber
-                    )
-            ) {
+            $numberAssigned =
+                $this->purchaseReturnModel
+                ->assignNumber(
+                    $purchaseReturnId,
+                    $companyId,
+                    $returnNumber
+                );
+
+            if (!$numberAssigned) {
                 throw new Exception(
                     'Purchase return number could not be assigned.'
                 );
@@ -234,14 +237,12 @@ class PurchaseReturnService
                 'purchase_return',
                 $purchaseReturnId,
                 'Created purchase return ' .
-                $returnNumber .
-                ' for purchase ' .
-                (string) $purchase[
-                    'purchase_number'
-                ] .
-                '. Items: ' .
-                count($preparedItems) .
-                '.'
+                    $returnNumber .
+                    ' for purchase ' .
+                    (string) $purchase['purchase_number'] .
+                    '. Items: ' .
+                    count($preparedItems) .
+                    '.'
             );
 
             $this->db->commit();
@@ -250,7 +251,7 @@ class PurchaseReturnService
                 'success' => true,
 
                 'purchase_return_id' =>
-                    $purchaseReturnId,
+                $purchaseReturnId,
 
                 'error' => null,
             ];
@@ -261,9 +262,12 @@ class PurchaseReturnService
 
             return [
                 'success' => false,
-                'purchase_return_id' => null,
+
+                'purchase_return_id' =>
+                null,
+
                 'error' =>
-                    $exception->getMessage(),
+                $exception->getMessage(),
             ];
         }
     }
@@ -280,10 +284,10 @@ class PurchaseReturnService
 
             $purchaseReturn =
                 $this->purchaseReturnModel
-                    ->findForUpdate(
-                        $purchaseReturnId,
-                        $companyId
-                    );
+                ->findForUpdate(
+                    $purchaseReturnId,
+                    $companyId
+                );
 
             if ($purchaseReturn === null) {
                 throw new Exception(
@@ -292,9 +296,7 @@ class PurchaseReturnService
             }
 
             if (
-                (string) $purchaseReturn[
-                    'status'
-                ] !== 'draft'
+                (string) $purchaseReturn['status'] !== 'draft'
             ) {
                 throw new Exception(
                     'Only draft purchase returns can be edited.'
@@ -303,17 +305,14 @@ class PurchaseReturnService
 
             $purchase =
                 $this->purchaseModel
-                    ->findForUpdate(
-                        (int) $purchaseReturn[
-                            'purchase_id'
-                        ],
-                        $companyId
-                    );
+                ->findForUpdate(
+                    (int) $purchaseReturn['purchase_id'],
+                    $companyId
+                );
 
             if (
                 $purchase === null ||
-                (string) $purchase['status'] !==
-                    'completed'
+                (string) $purchase['status'] !== 'completed'
             ) {
                 throw new Exception(
                     'The original purchase is no longer returnable.'
@@ -322,18 +321,17 @@ class PurchaseReturnService
 
             $preparedItems =
                 $this->prepareItems(
-                    (int) $purchaseReturn[
-                        'purchase_id'
-                    ],
+                    (int) $purchaseReturn['purchase_id'],
                     $companyId,
                     $returnQuantities,
                     $itemNotes
                 );
 
-            $this->itemModel->deleteByReturn(
-                $purchaseReturnId,
-                $companyId
-            );
+            $this->itemModel
+                ->deleteByReturn(
+                    $purchaseReturnId,
+                    $companyId
+                );
 
             $this->storeItems(
                 $purchaseReturnId,
@@ -357,12 +355,10 @@ class PurchaseReturnService
                 'purchase_return',
                 $purchaseReturnId,
                 'Updated purchase return ' .
-                (string) $purchaseReturn[
-                    'return_number'
-                ] .
-                '. Items: ' .
-                count($preparedItems) .
-                '.'
+                    (string) $purchaseReturn['return_number'] .
+                    '. Items: ' .
+                    count($preparedItems) .
+                    '.'
             );
 
             $this->db->commit();
@@ -378,8 +374,9 @@ class PurchaseReturnService
 
             return [
                 'success' => false,
+
                 'error' =>
-                    $exception->getMessage(),
+                $exception->getMessage(),
             ];
         }
     }
@@ -394,10 +391,10 @@ class PurchaseReturnService
 
             $purchaseReturn =
                 $this->purchaseReturnModel
-                    ->findForUpdate(
-                        $purchaseReturnId,
-                        $companyId
-                    );
+                ->findForUpdate(
+                    $purchaseReturnId,
+                    $companyId
+                );
 
             if ($purchaseReturn === null) {
                 throw new Exception(
@@ -406,9 +403,7 @@ class PurchaseReturnService
             }
 
             if (
-                (string) $purchaseReturn[
-                    'status'
-                ] !== 'draft'
+                (string) $purchaseReturn['status'] !== 'draft'
             ) {
                 throw new Exception(
                     'Only draft purchase returns can be completed.'
@@ -417,17 +412,14 @@ class PurchaseReturnService
 
             $purchase =
                 $this->purchaseModel
-                    ->findForUpdate(
-                        (int) $purchaseReturn[
-                            'purchase_id'
-                        ],
-                        $companyId
-                    );
+                ->findForUpdate(
+                    (int) $purchaseReturn['purchase_id'],
+                    $companyId
+                );
 
             if (
                 $purchase === null ||
-                (string) $purchase['status'] !==
-                    'completed'
+                (string) $purchase['status'] !== 'completed'
             ) {
                 throw new Exception(
                     'The original purchase is no longer returnable.'
@@ -436,10 +428,10 @@ class PurchaseReturnService
 
             $items =
                 $this->itemModel
-                    ->allForUpdate(
-                        $purchaseReturnId,
-                        $companyId
-                    );
+                ->allForUpdate(
+                    $purchaseReturnId,
+                    $companyId
+                );
 
             if (empty($items)) {
                 throw new Exception(
@@ -449,37 +441,27 @@ class PurchaseReturnService
 
             $returnableRows =
                 $this->itemModel
-                    ->returnableByPurchase(
-                        (int) $purchaseReturn[
-                            'purchase_id'
-                        ],
-                        $companyId
-                    );
+                ->returnableByPurchase(
+                    (int) $purchaseReturn['purchase_id'],
+                    $companyId
+                );
 
             $returnableMap = [];
 
             foreach ($returnableRows as $row) {
-                $returnableMap[
-                    (int) $row['id']
-                ] = $row;
+                $returnableMap[(int) $row['id']] = $row;
             }
 
             $warehouseId =
-                (int) $purchaseReturn[
-                    'warehouse_id'
-                ];
+                (int) $purchaseReturn['warehouse_id'];
 
             foreach ($items as $item) {
                 $purchaseItemId =
-                    (int) $item[
-                        'purchase_item_id'
-                    ];
+                    (int) $item['purchase_item_id'];
 
                 if (
                     !isset(
-                        $returnableMap[
-                            $purchaseItemId
-                        ]
+                        $returnableMap[$purchaseItemId]
                     )
                 ) {
                     throw new Exception(
@@ -488,16 +470,12 @@ class PurchaseReturnService
                 }
 
                 $remainingQuantity = round(
-                    (float) $returnableMap[
-                        $purchaseItemId
-                    ]['remaining_quantity'],
+                    (float) $returnableMap[$purchaseItemId]['remaining_quantity'],
                     3
                 );
 
                 $returnQuantity = round(
-                    (float) $item[
-                        'return_quantity'
-                    ],
+                    (float) $item['return_quantity'],
                     3
                 );
 
@@ -507,171 +485,159 @@ class PurchaseReturnService
                 ) {
                     throw new Exception(
                         'Return quantity exceeds the remaining quantity for product: ' .
-                        (string) $item[
-                            'product_name'
-                        ] .
-                        '.'
+                            (string) $item['product_name'] .
+                            '.'
                     );
                 }
 
                 $productId =
-                    (int) $item[
-                        'product_id'
-                    ];
+                    (int) $item['product_id'];
 
-                $stockLevel =
-                    $this->stockLevelModel
-                        ->lockForUpdate(
-                            $companyId,
-                            $productId,
-                            $warehouseId
-                        );
+                /*
+                 * Изваждаме върнатото количество
+                 * по текущата среднопретеглена
+                 * себестойност на склада.
+                 */
+                $costMovement =
+                    $this->inventoryCostService
+                    ->issue(
+                        $companyId,
+                        $productId,
+                        $warehouseId,
+                        $returnQuantity
+                    );
 
                 $quantityBefore = round(
-                    (float) $stockLevel[
-                        'quantity'
-                    ],
+                    (float) $costMovement['quantity_before'],
                     3
                 );
 
-                if (
-                    $returnQuantity >
-                    $quantityBefore + 0.0005
-                ) {
+                $quantityAfter = round(
+                    (float) $costMovement['quantity_after'],
+                    3
+                );
+
+                $inventoryUnitCost = round(
+                    (float) $costMovement['unit_cost'],
+                    4
+                );
+
+                $totalCost = round(
+                    (float) $costMovement['total_cost'],
+                    4
+                );
+
+                $marked =
+                    $this->itemModel
+                    ->markCostApplied(
+                        (int) $item['id'],
+                        $companyId,
+                        $quantityBefore,
+                        $quantityAfter,
+                        $inventoryUnitCost,
+                        $totalCost
+                    );
+
+                if (!$marked) {
                     throw new Exception(
-                        'Insufficient current stock for product: ' .
-                        (string) $item[
-                            'product_name'
-                        ] .
-                        '. Available: ' .
+                        'Could not save resulting stock and cost for product: ' .
+                            (string) $item['product_name'] .
+                            '.'
+                    );
+                }
+
+                $transactionData = [
+                    'company_id' =>
+                    $companyId,
+
+                    'product_id' =>
+                    $productId,
+
+                    'from_warehouse_id' =>
+                    $warehouseId,
+
+                    'to_warehouse_id' =>
+                    null,
+
+                    'user_id' =>
+                    $userId,
+
+                    'type' =>
+                    'purchase_return',
+
+                    'quantity' =>
+                    $returnQuantity,
+
+                    'reference_type' =>
+                    'purchase_return',
+
+                    'reference_id' =>
+                    $purchaseReturnId,
+
+                    'note' =>
+                    'Purchase return ' .
+                        (string) $purchaseReturn['return_number'] .
+                        ' for purchase ' .
+                        (string) $purchase['purchase_number'] .
+                        '. Before: ' .
                         number_format(
                             $quantityBefore,
                             3,
                             '.',
                             ''
                         ) .
-                        '.'
+                        ', after: ' .
+                        number_format(
+                            $quantityAfter,
+                            3,
+                            '.',
+                            ''
+                        ) .
+                        ', inventory unit cost: ' .
+                        number_format(
+                            $inventoryUnitCost,
+                            4,
+                            '.',
+                            ''
+                        ) .
+                        '.',
+                ];
+
+                $transactionData =
+                    array_merge(
+                        $transactionData,
+
+                        $this
+                            ->inventoryCostService
+                            ->outgoingTransactionFields(
+                                $costMovement
+                            )
                     );
-                }
-
-                $decreased =
-                    $this->stockLevelModel
-                        ->decrease(
-                            $companyId,
-                            $productId,
-                            $warehouseId,
-                            $returnQuantity
-                        );
-
-                if (!$decreased) {
-                    throw new Exception(
-                        'Could not decrease stock for product: ' .
-                        (string) $item[
-                            'product_name'
-                        ] .
-                        '.'
-                    );
-                }
-
-                $quantityAfter = round(
-                    $quantityBefore -
-                    $returnQuantity,
-                    3
-                );
-
-                if (
-                    !$this->itemModel
-                        ->markApplied(
-                            (int) $item['id'],
-                            $companyId,
-                            $quantityBefore,
-                            $quantityAfter
-                        )
-                ) {
-                    throw new Exception(
-                        'Could not save resulting stock for product: ' .
-                        (string) $item[
-                            'product_name'
-                        ] .
-                        '.'
-                    );
-                }
 
                 $transactionCreated =
                     $this->transactionModel
-                        ->create([
-                            'company_id' =>
-                                $companyId,
-
-                            'product_id' =>
-                                $productId,
-
-                            'from_warehouse_id' =>
-                                $warehouseId,
-
-                            'to_warehouse_id' =>
-                                null,
-
-                            'user_id' =>
-                                $userId,
-
-                            'type' =>
-                                'purchase_return',
-
-                            'quantity' =>
-                                $returnQuantity,
-
-                            'reference_type' =>
-                                'purchase_return',
-
-                            'reference_id' =>
-                                $purchaseReturnId,
-
-                            'note' =>
-                                'Purchase return ' .
-                                (string) $purchaseReturn[
-                                    'return_number'
-                                ] .
-                                ' for purchase ' .
-                                (string) $purchase[
-                                    'purchase_number'
-                                ] .
-                                '. Before: ' .
-                                number_format(
-                                    $quantityBefore,
-                                    3,
-                                    '.',
-                                    ''
-                                ) .
-                                ', after: ' .
-                                number_format(
-                                    $quantityAfter,
-                                    3,
-                                    '.',
-                                    ''
-                                ) .
-                                '.',
-                        ]);
+                    ->create(
+                        $transactionData
+                    );
 
                 if (!$transactionCreated) {
                     throw new Exception(
                         'Warehouse transaction could not be created for product: ' .
-                        (string) $item[
-                            'product_name'
-                        ] .
-                        '.'
+                            (string) $item['product_name'] .
+                            '.'
                     );
                 }
             }
 
-            if (
-                !$this->purchaseReturnModel
-                    ->markCompleted(
-                        $purchaseReturnId,
-                        $companyId,
-                        $userId
-                    )
-            ) {
+            $completed =
+                $this->purchaseReturnModel
+                ->markCompleted(
+                    $purchaseReturnId,
+                    $companyId,
+                    $userId
+                );
+
+            if (!$completed) {
                 throw new Exception(
                     'Purchase return could not be completed.'
                 );
@@ -684,32 +650,29 @@ class PurchaseReturnService
                 'purchase_return',
                 $purchaseReturnId,
                 'Completed purchase return ' .
-                (string) $purchaseReturn[
-                    'return_number'
-                ] .
-                ' for purchase ' .
-                (string) $purchase[
-                    'purchase_number'
-                ] .
-                '. Items: ' .
-                count($items) .
-                ', return total: ' .
-                number_format(
-                    (float) $purchaseReturn[
-                        'total_amount'
-                    ],
-                    2,
-                    '.',
-                    ''
-                ) .
-                '.'
+                    (string) $purchaseReturn['return_number'] .
+                    ' for purchase ' .
+                    (string) $purchase['purchase_number'] .
+                    '. Items: ' .
+                    count($items) .
+                    ', return total: ' .
+                    number_format(
+                        (float) $purchaseReturn['total_amount'],
+                        2,
+                        '.',
+                        ''
+                    ) .
+                    '.'
             );
 
             $this->db->commit();
 
             return [
                 'success' => true,
-                'item_count' => count($items),
+
+                'item_count' =>
+                count($items),
+
                 'error' => null,
             ];
         } catch (Throwable $exception) {
@@ -719,9 +682,11 @@ class PurchaseReturnService
 
             return [
                 'success' => false,
+
                 'item_count' => 0,
+
                 'error' =>
-                    $exception->getMessage(),
+                $exception->getMessage(),
             ];
         }
     }
@@ -737,16 +702,18 @@ class PurchaseReturnService
         if ($reason === '') {
             return [
                 'success' => false,
+
                 'error' =>
-                    'Cancellation reason is required.',
+                'Cancellation reason is required.',
             ];
         }
 
         if (mb_strlen($reason) > 500) {
             return [
                 'success' => false,
+
                 'error' =>
-                    'Cancellation reason must be maximum 500 characters.',
+                'Cancellation reason must be maximum 500 characters.',
             ];
         }
 
@@ -755,10 +722,10 @@ class PurchaseReturnService
 
             $purchaseReturn =
                 $this->purchaseReturnModel
-                    ->findForUpdate(
-                        $purchaseReturnId,
-                        $companyId
-                    );
+                ->findForUpdate(
+                    $purchaseReturnId,
+                    $companyId
+                );
 
             if ($purchaseReturn === null) {
                 throw new Exception(
@@ -767,24 +734,23 @@ class PurchaseReturnService
             }
 
             if (
-                (string) $purchaseReturn[
-                    'status'
-                ] !== 'draft'
+                (string) $purchaseReturn['status'] !== 'draft'
             ) {
                 throw new Exception(
                     'Only draft purchase returns can be cancelled.'
                 );
             }
 
-            if (
-                !$this->purchaseReturnModel
-                    ->markCancelled(
-                        $purchaseReturnId,
-                        $companyId,
-                        $userId,
-                        $reason
-                    )
-            ) {
+            $cancelled =
+                $this->purchaseReturnModel
+                ->markCancelled(
+                    $purchaseReturnId,
+                    $companyId,
+                    $userId,
+                    $reason
+                );
+
+            if (!$cancelled) {
                 throw new Exception(
                     'Purchase return could not be cancelled.'
                 );
@@ -797,11 +763,9 @@ class PurchaseReturnService
                 'purchase_return',
                 $purchaseReturnId,
                 'Cancelled purchase return ' .
-                (string) $purchaseReturn[
-                    'return_number'
-                ] .
-                '. Reason: ' .
-                $reason
+                    (string) $purchaseReturn['return_number'] .
+                    '. Reason: ' .
+                    $reason
             );
 
             $this->db->commit();
@@ -817,8 +781,9 @@ class PurchaseReturnService
 
             return [
                 'success' => false,
+
                 'error' =>
-                    $exception->getMessage(),
+                $exception->getMessage(),
             ];
         }
     }
@@ -829,17 +794,17 @@ class PurchaseReturnService
     ): array {
         $summary =
             $this->itemModel
-                ->completedSummaryByPurchase(
-                    $purchaseId,
-                    $companyId
-                );
+            ->completedSummaryByPurchase(
+                $purchaseId,
+                $companyId
+            );
 
         $items =
             $this->itemModel
-                ->returnableByPurchase(
-                    $purchaseId,
-                    $companyId
-                );
+            ->returnableByPurchase(
+                $purchaseId,
+                $companyId
+            );
 
         $hasReturnableItems = false;
         $remainingQuantity = 0.0;
@@ -847,12 +812,11 @@ class PurchaseReturnService
         foreach ($items as $item) {
             $remaining = max(
                 0,
-                (float) $item[
-                    'remaining_quantity'
-                ]
+                (float) $item['remaining_quantity']
             );
 
-            $remainingQuantity += $remaining;
+            $remainingQuantity +=
+                $remaining;
 
             if ($remaining > 0.0005) {
                 $hasReturnableItems = true;
@@ -863,20 +827,20 @@ class PurchaseReturnService
             $summary,
             [
                 'has_returnable_items' =>
-                    $hasReturnableItems,
+                $hasReturnableItems,
 
                 'remaining_quantity' =>
-                    round(
-                        $remainingQuantity,
-                        3
-                    ),
+                round(
+                    $remainingQuantity,
+                    3
+                ),
 
                 'has_draft' =>
-                    $this->purchaseReturnModel
-                        ->hasDraftForPurchase(
-                            $purchaseId,
-                            $companyId
-                        ),
+                $this->purchaseReturnModel
+                    ->hasDraftForPurchase(
+                        $purchaseId,
+                        $companyId
+                    ),
             ]
         );
     }
@@ -889,10 +853,10 @@ class PurchaseReturnService
     ): array {
         $purchaseItems =
             $this->itemModel
-                ->returnableByPurchase(
-                    $purchaseId,
-                    $companyId
-                );
+            ->returnableByPurchase(
+                $purchaseId,
+                $companyId
+            );
 
         $preparedItems = [];
 
@@ -921,9 +885,7 @@ class PurchaseReturnService
                 );
 
             $remainingQuantity = round(
-                (float) $item[
-                    'remaining_quantity'
-                ],
+                (float) $item['remaining_quantity'],
                 3
             );
 
@@ -933,17 +895,15 @@ class PurchaseReturnService
             ) {
                 throw new Exception(
                     'Return quantity cannot exceed the remaining quantity of ' .
-                    number_format(
-                        $remainingQuantity,
-                        3,
-                        '.',
-                        ''
-                    ) .
-                    ' for product: ' .
-                    (string) $item[
-                        'product_name'
-                    ] .
-                    '.'
+                        number_format(
+                            $remainingQuantity,
+                            3,
+                            '.',
+                            ''
+                        ) .
+                        ' for product: ' .
+                        (string) $item['product_name'] .
+                        '.'
                 );
             }
 
@@ -956,10 +916,8 @@ class PurchaseReturnService
             if (mb_strlen($itemNote) > 500) {
                 throw new Exception(
                     'Item note must be maximum 500 characters for product: ' .
-                    (string) $item[
-                        'product_name'
-                    ] .
-                    '.'
+                        (string) $item['product_name'] .
+                        '.'
                 );
             }
 
@@ -971,77 +929,61 @@ class PurchaseReturnService
 
             $preparedItems[] = [
                 'purchase_item_id' =>
-                    $purchaseItemId,
+                $purchaseItemId,
 
                 'product_id' =>
-                    (int) $item[
-                        'product_id'
-                    ],
+                (int) $item['product_id'],
 
                 'product_name' =>
-                    (string) $item[
-                        'product_name'
-                    ],
+                (string) $item['product_name'],
 
                 'product_internal_code' =>
-                    (string) $item[
-                        'product_internal_code'
-                    ],
+                (string) $item['product_internal_code'],
 
                 'product_unit' =>
-                    (string) $item['unit'],
+                (string) $item['unit'],
 
                 'purchased_quantity' =>
-                    round(
-                        (float) $item[
-                            'quantity'
-                        ],
-                        3
-                    ),
+                round(
+                    (float) $item['quantity'],
+                    3
+                ),
 
                 'return_quantity' =>
-                    $returnQuantity,
+                $returnQuantity,
 
+                /*
+                 * Документната покупна цена.
+                 * Не се заменя със складовата цена.
+                 */
                 'unit_cost' =>
-                    (float) $item[
-                        'unit_cost'
-                    ],
+                (float) $item['unit_cost'],
 
                 'subtotal_amount' =>
-                    $amounts[
-                        'subtotal_amount'
-                    ],
+                $amounts['subtotal_amount'],
 
                 'discount_amount' =>
-                    $amounts[
-                        'discount_amount'
-                    ],
+                $amounts['discount_amount'],
 
                 'net_amount' =>
-                    $amounts[
-                        'net_amount'
-                    ],
+                $amounts['net_amount'],
 
                 'vat_rate' =>
-                    (float) (
-                        $item['vat_rate'] ??
-                        0
-                    ),
+                (float) (
+                    $item['vat_rate'] ??
+                    0
+                ),
 
                 'tax_amount' =>
-                    $amounts[
-                        'tax_amount'
-                    ],
+                $amounts['tax_amount'],
 
                 'total_amount' =>
-                    $amounts[
-                        'total_amount'
-                    ],
+                $amounts['total_amount'],
 
                 'item_note' =>
-                    $this->nullableString(
-                        $itemNote
-                    ),
+                $this->nullableString(
+                    $itemNote
+                ),
             ];
         }
 
@@ -1070,27 +1012,26 @@ class PurchaseReturnService
         }
 
         $remainingQuantity = round(
-            (float) $item[
-                'remaining_quantity'
-            ],
+            (float) $item['remaining_quantity'],
             3
         );
 
         $originalAmounts = [
-            'subtotal_amount' => round(
+            'subtotal_amount' =>
+            round(
                 $purchasedQuantity *
-                (float) $item['unit_cost'],
+                    (float) $item['unit_cost'],
                 2
             ),
 
-            'discount_amount' => round(
-                (float) $item[
-                    'discount_amount'
-                ],
+            'discount_amount' =>
+            round(
+                (float) $item['discount_amount'],
                 2
             ),
 
-            'net_amount' => round(
+            'net_amount' =>
+            round(
                 (float) (
                     $item['net_amount'] ??
                     $item['total_price']
@@ -1098,55 +1039,49 @@ class PurchaseReturnService
                 2
             ),
 
-            'tax_amount' => round(
+            'tax_amount' =>
+            round(
                 (float) (
-                    $item['tax_amount'] ??
-                    0
+                    $item['tax_amount'] ?? 0
                 ),
                 2
             ),
 
-            'total_amount' => round(
-                (float) $item[
-                    'total_price'
-                ],
+            'total_amount' =>
+            round(
+                (float) $item['total_price'],
                 2
             ),
         ];
 
         $alreadyReturned = [
-            'subtotal_amount' => round(
-                (float) $item[
-                    'returned_subtotal'
-                ],
+            'subtotal_amount' =>
+            round(
+                (float) $item['returned_subtotal'],
                 2
             ),
 
-            'discount_amount' => round(
-                (float) $item[
-                    'returned_discount'
-                ],
+            'discount_amount' =>
+            round(
+                (float) $item['returned_discount'],
                 2
             ),
 
-            'net_amount' => round(
-                (float) $item[
-                    'returned_net'
-                ],
+            'net_amount' =>
+            round(
+                (float) $item['returned_net'],
                 2
             ),
 
-            'tax_amount' => round(
-                (float) $item[
-                    'returned_tax'
-                ],
+            'tax_amount' =>
+            round(
+                (float) $item['returned_tax'],
                 2
             ),
 
-            'total_amount' => round(
-                (float) $item[
-                    'returned_total'
-                ],
+            'total_amount' =>
+            round(
+                (float) $item['returned_total'],
                 2
             ),
         ];
@@ -1154,7 +1089,7 @@ class PurchaseReturnService
         $isFinalReturn =
             abs(
                 $returnQuantity -
-                $remainingQuantity
+                    $remainingQuantity
             ) <= 0.0005;
 
         $result = [];
@@ -1168,7 +1103,7 @@ class PurchaseReturnService
                     max(
                         0,
                         $originalAmount -
-                        $alreadyReturned[$field]
+                            $alreadyReturned[$field]
                     ),
                     2
                 );
@@ -1184,7 +1119,7 @@ class PurchaseReturnService
                 max(
                     0,
                     $originalAmount *
-                    $ratio
+                        $ratio
                 ),
                 2
             );
@@ -1199,18 +1134,19 @@ class PurchaseReturnService
         array $items
     ): void {
         foreach ($items as $item) {
-            $this->itemModel->create(
-                array_merge(
-                    $item,
-                    [
-                        'purchase_return_id' =>
+            $this->itemModel
+                ->create(
+                    array_merge(
+                        $item,
+                        [
+                            'purchase_return_id' =>
                             $purchaseReturnId,
 
-                        'company_id' =>
+                            'company_id' =>
                             $companyId,
-                    ]
-                )
-            );
+                        ]
+                    )
+                );
         }
     }
 
@@ -1269,7 +1205,9 @@ class PurchaseReturnService
             return 'Invalid return reason.';
         }
 
-        if (trim($reasonDescription) === '') {
+        if (
+            trim($reasonDescription) === ''
+        ) {
             return 'Reason description is required.';
         }
 
@@ -1332,7 +1270,9 @@ class PurchaseReturnService
         );
 
         return is_numeric($value) &&
-            abs((float) $value) <= 0.0005;
+            abs(
+                (float) $value
+            ) <= 0.0005;
     }
 
     private function arrayScalar(
@@ -1340,8 +1280,13 @@ class PurchaseReturnService
         int $key
     ): string {
         if (
-            !array_key_exists($key, $values) ||
-            !is_scalar($values[$key])
+            !array_key_exists(
+                $key,
+                $values
+            ) ||
+            !is_scalar(
+                $values[$key]
+            )
         ) {
             return '';
         }

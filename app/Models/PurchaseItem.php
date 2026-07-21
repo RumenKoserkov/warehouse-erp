@@ -10,7 +10,7 @@ class PurchaseItem extends Model
 {
     public function create(array $data): bool
     {
-        $stmt = $this->db->prepare("
+        $sql = "
         INSERT INTO purchase_items
         (
             purchase_id,
@@ -21,6 +21,10 @@ class PurchaseItem extends Model
             quantity,
             unit,
             unit_cost,
+
+            inventory_unit_cost,
+            inventory_total_cost,
+
             discount_amount,
             vat_rate,
             net_amount,
@@ -29,23 +33,73 @@ class PurchaseItem extends Model
         )
         VALUES
         (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-        )
-    ");
+            :purchase_id,
+            :company_id,
+            :product_id,
+            :product_name,
+            :product_internal_code,
+            :quantity,
+            :unit,
+            :unit_cost,
 
-        return $stmt->execute([
+            :inventory_unit_cost,
+            :inventory_total_cost,
+
+            :discount_amount,
+            :vat_rate,
+            :net_amount,
+            :tax_amount,
+            :total_price
+        )
+    ";
+
+        $statement =
+            $this->db->prepare($sql);
+
+        return $statement->execute([
+            'purchase_id' =>
             $data['purchase_id'],
+
+            'company_id' =>
             $data['company_id'],
+
+            'product_id' =>
             $data['product_id'],
+
+            'product_name' =>
             $data['product_name'],
+
+            'product_internal_code' =>
             $data['product_internal_code'],
+
+            'quantity' =>
             $data['quantity'],
+
+            'unit' =>
             $data['unit'],
+
+            'unit_cost' =>
             $data['unit_cost'],
+
+            'inventory_unit_cost' =>
+            $data['inventory_unit_cost'],
+
+            'inventory_total_cost' =>
+            $data['inventory_total_cost'],
+
+            'discount_amount' =>
             $data['discount_amount'],
+
+            'vat_rate' =>
             $data['vat_rate'],
+
+            'net_amount' =>
             $data['net_amount'],
+
+            'tax_amount' =>
             $data['tax_amount'],
+
+            'total_price' =>
             $data['total_price'],
         ]);
     }

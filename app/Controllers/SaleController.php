@@ -85,66 +85,64 @@ class SaleController extends Controller
             $this->authService->user();
 
         $companyId =
-            (int) $currentUser[
-                'company_id'
-            ];
+            (int) $currentUser['company_id'];
 
         $taxConfiguration =
             $this->taxService
-                ->salesConfiguration(
-                    $companyId
-                );
+            ->salesConfiguration(
+                $companyId
+            );
 
         $this->view(
             'sales/create',
             [
                 'title' =>
-                    'Create Sale',
+                'Create Sale',
 
                 'saleNumber' =>
-                    $this->saleModel
-                        ->generateNextSaleNumber(
-                            $companyId
-                        ),
+                $this->saleModel
+                    ->generateNextSaleNumber(
+                        $companyId
+                    ),
 
                 'saleDate' =>
-                    date('Y-m-d'),
+                date('Y-m-d'),
 
                 'clients' =>
-                    $this->clientModel
-                        ->activeByCompany(
-                            $companyId
-                        ),
+                $this->clientModel
+                    ->activeByCompany(
+                        $companyId
+                    ),
 
                 'warehouses' =>
-                    $this->warehouseModel
-                        ->activeByCompany(
-                            $companyId
-                        ),
+                $this->warehouseModel
+                    ->activeByCompany(
+                        $companyId
+                    ),
 
                 'products' =>
-                    $this->productModel
-                        ->activeByCompany(
-                            $companyId
-                        ),
+                $this->productModel
+                    ->activeByCompany(
+                        $companyId
+                    ),
 
                 'promotions' =>
-                    $this->promotionModel
-                        ->availableByCompany(
-                            $companyId
-                        ),
+                $this->promotionModel
+                    ->availableByCompany(
+                        $companyId
+                    ),
 
                 'paymentMethods' =>
-                    $this->paymentMethods(),
+                $this->paymentMethods(),
 
                 'taxConfiguration' =>
-                    $taxConfiguration,
+                $taxConfiguration,
 
                 'errors' =>
-                    [],
+                [],
 
                 'old' =>
-                    $this->emptyOldData(),
+                $this->emptyOldData(),
             ]
         );
     }
@@ -155,15 +153,13 @@ class SaleController extends Controller
             $this->authService->user();
 
         $companyId =
-            (int) $currentUser[
-                'company_id'
-            ];
+            (int) $currentUser['company_id'];
 
         $taxConfiguration =
             $this->taxService
-                ->salesConfiguration(
-                    $companyId
-                );
+            ->salesConfiguration(
+                $companyId
+            );
 
         $clientId = null;
         $warehouseId = 0;
@@ -183,16 +179,12 @@ class SaleController extends Controller
 
         if (isset($_POST['warehouse_id'])) {
             $warehouseId =
-                (int) $_POST[
-                    'warehouse_id'
-                ];
+                (int) $_POST['warehouse_id'];
         }
 
         if (isset($_POST['promotion_id'])) {
             $promotionId =
-                (int) $_POST[
-                    'promotion_id'
-                ];
+                (int) $_POST['promotion_id'];
         }
 
         if (
@@ -202,31 +194,23 @@ class SaleController extends Controller
             )
         ) {
             $promotionCode = trim(
-                (string) $_POST[
-                    'promotion_code'
-                ]
+                (string) $_POST['promotion_code']
             );
         }
 
         if (isset($_POST['sale_date'])) {
             $saleDate = trim(
-                (string) $_POST[
-                    'sale_date'
-                ]
+                (string) $_POST['sale_date']
             );
         }
 
         if (
             isset(
-                $_POST[
-                    'payment_method'
-                ]
+                $_POST['payment_method']
             )
         ) {
             $paymentMethod = trim(
-                (string) $_POST[
-                    'payment_method'
-                ]
+                (string) $_POST['payment_method']
             );
         }
 
@@ -288,10 +272,10 @@ class SaleController extends Controller
         if ($warehouseId > 0) {
             $warehouse =
                 $this->warehouseModel
-                    ->findByIdAndCompany(
-                        $warehouseId,
-                        $companyId
-                    );
+                ->findByIdAndCompany(
+                    $warehouseId,
+                    $companyId
+                );
 
             if ($warehouse === null) {
                 $errors[] =
@@ -302,10 +286,10 @@ class SaleController extends Controller
         if ($clientId !== null) {
             $client =
                 $this->clientModel
-                    ->findByIdAndCompany(
-                        $clientId,
-                        $companyId
-                    );
+                ->findByIdAndCompany(
+                    $clientId,
+                    $companyId
+                );
 
             if ($client === null) {
                 $errors[] =
@@ -326,68 +310,68 @@ class SaleController extends Controller
                 'sales/create',
                 [
                     'title' =>
-                        'Create Sale',
+                    'Create Sale',
 
                     'saleNumber' =>
-                        $this->saleModel
-                            ->generateNextSaleNumber(
-                                $companyId
-                            ),
+                    $this->saleModel
+                        ->generateNextSaleNumber(
+                            $companyId
+                        ),
 
                     'saleDate' =>
-                        $saleDate,
+                    $saleDate,
 
                     'clients' =>
-                        $this->clientModel
-                            ->activeByCompany(
-                                $companyId
-                            ),
+                    $this->clientModel
+                        ->activeByCompany(
+                            $companyId
+                        ),
 
                     'warehouses' =>
-                        $this->warehouseModel
-                            ->activeByCompany(
-                                $companyId
-                            ),
+                    $this->warehouseModel
+                        ->activeByCompany(
+                            $companyId
+                        ),
 
                     'products' =>
-                        $this->productModel
-                            ->activeByCompany(
-                                $companyId
-                            ),
+                    $this->productModel
+                        ->activeByCompany(
+                            $companyId
+                        ),
 
                     'promotions' =>
-                        $this->promotionModel
-                            ->availableByCompany(
-                                $companyId
-                            ),
+                    $this->promotionModel
+                        ->availableByCompany(
+                            $companyId
+                        ),
 
                     'paymentMethods' =>
-                        $this->paymentMethods(),
+                    $this->paymentMethods(),
 
                     'taxConfiguration' =>
-                        $taxConfiguration,
+                    $taxConfiguration,
 
                     'errors' =>
-                        $errors,
+                    $errors,
 
                     'old' => [
                         'client_id' =>
-                            (string) $clientId,
+                        (string) $clientId,
 
                         'warehouse_id' =>
-                            (string) $warehouseId,
+                        (string) $warehouseId,
 
                         'promotion_id' =>
-                            (string) $promotionId,
+                        (string) $promotionId,
 
                         'promotion_code' =>
-                            $promotionCode,
+                        $promotionCode,
 
                         'payment_method' =>
-                            $paymentMethod,
+                        $paymentMethod,
 
                         'note' =>
-                            $note,
+                        $note,
                     ],
                 ]
             );
@@ -397,85 +381,83 @@ class SaleController extends Controller
 
         $result =
             $this->saleService
-                ->createSale([
-                    'company_id' =>
-                        $companyId,
+            ->createSale([
+                'company_id' =>
+                $companyId,
 
-                    'client_id' =>
-                        $clientId,
+                'client_id' =>
+                $clientId,
 
-                    'warehouse_id' =>
-                        $warehouseId,
+                'warehouse_id' =>
+                $warehouseId,
 
-                    'user_id' =>
-                        (int) $currentUser[
-                            'id'
-                        ],
+                'user_id' =>
+                (int) $currentUser['id'],
 
-                    'sale_date' =>
-                        $saleDate,
+                'sale_date' =>
+                $saleDate,
 
-                    'payment_method' =>
-                        $paymentMethod,
+                'payment_method' =>
+                $paymentMethod,
 
-                    'note' =>
-                        $note,
+                'note' =>
+                $note,
 
-                    'promotion_id' =>
-                        $promotionId,
+                'promotion_id' =>
+                $promotionId,
 
-                    'promotion_code' =>
-                        $promotionCode,
+                'promotion_code' =>
+                $promotionCode,
 
-                    'items' =>
-                        $items,
-                ]);
+                'items' =>
+                $items,
+            ]);
 
         if (!$result['success']) {
             $this->view(
                 'sales/create',
                 [
                     'title' =>
-                        'Create Sale',
+                    'Create Sale',
 
                     'saleNumber' =>
-                        $this->saleModel
-                            ->generateNextSaleNumber(
-                                $companyId
-                            ),
+                    $this->saleModel
+                        ->generateNextSaleNumber(
+                            $companyId
+                        ),
 
                     'saleDate' =>
-                        $saleDate,
+                    $saleDate,
 
                     'clients' =>
-                        $this->clientModel
-                            ->activeByCompany(
-                                $companyId
-                            ),
+                    $this->clientModel
+                        ->activeByCompany(
+                            $companyId
+                        ),
 
                     'warehouses' =>
-                        $this->warehouseModel
-                            ->activeByCompany(
-                                $companyId
-                            ),
+                    $this->warehouseModel
+                        ->activeByCompany(
+                            $companyId
+                        ),
 
                     'products' =>
-                        $this->productModel
-                            ->activeByCompany(
-                                $companyId
-                            ),
+                    $this->productModel
+                        ->activeByCompany(
+                            $companyId
+                        ),
 
                     'promotions' =>
-                        $this->promotionModel
-                            ->availableByCompany(
-                                $companyId
-                            ),
+                    $this->promotionModel
+                        ->availableByCompany(
+                            $companyId
+                        ),
 
                     'paymentMethods' =>
-                        $this->paymentMethods(),
+                    $this->paymentMethods(),
 
                     'taxConfiguration' =>
-                        $taxConfiguration,
+                    $taxConfiguration,
 
                     'errors' => [
                         $result['error'],
@@ -483,22 +465,22 @@ class SaleController extends Controller
 
                     'old' => [
                         'client_id' =>
-                            (string) $clientId,
+                        (string) $clientId,
 
                         'warehouse_id' =>
-                            (string) $warehouseId,
+                        (string) $warehouseId,
 
                         'promotion_id' =>
-                            (string) $promotionId,
+                        (string) $promotionId,
 
                         'promotion_code' =>
-                            $promotionCode,
+                        $promotionCode,
 
                         'payment_method' =>
-                            $paymentMethod,
+                        $paymentMethod,
 
                         'note' =>
-                            $note,
+                        $note,
                     ],
                 ]
             );
@@ -533,15 +515,11 @@ class SaleController extends Controller
 
         $result =
             $this->saleService
-                ->cancelSale(
-                    $id,
-                    (int) $currentUser[
-                        'company_id'
-                    ],
-                    (int) $currentUser[
-                        'id'
-                    ]
-                );
+            ->cancelSale(
+                $id,
+                (int) $currentUser['company_id'],
+                (int) $currentUser['id']
+            );
 
         if (!$result['success']) {
             Flash::danger(
@@ -550,7 +528,7 @@ class SaleController extends Controller
 
             $this->redirect(
                 '/sales/show?id=' .
-                $id
+                    $id
             );
 
             return;
@@ -562,7 +540,7 @@ class SaleController extends Controller
 
         $this->redirect(
             '/sales/show?id=' .
-            $id
+                $id
         );
     }
 
@@ -575,32 +553,28 @@ class SaleController extends Controller
 
         if (isset($_GET['search'])) {
             $search = trim(
-                (string) $_GET[
-                    'search'
-                ]
+                (string) $_GET['search']
             );
         }
 
         $sales =
             $this->saleModel
-                ->allByCompany(
-                    (int) $currentUser[
-                        'company_id'
-                    ],
-                    $search
-                );
+            ->allByCompany(
+                (int) $currentUser['company_id'],
+                $search
+            );
 
         $this->view(
             'sales/index',
             [
                 'title' =>
-                    'Sales',
+                'Sales',
 
                 'sales' =>
-                    $sales,
+                $sales,
 
                 'search' =>
-                    $search,
+                $search,
             ]
         );
     }
@@ -624,16 +598,24 @@ class SaleController extends Controller
         }
 
         $companyId =
-            (int) $currentUser[
-                'company_id'
-            ];
+            (int) $currentUser['company_id'];
+
+        $canViewCosts =
+            in_array(
+                (string) $currentUser['role_slug'],
+                [
+                    'administrator',
+                    'manager',
+                ],
+                true
+            );
 
         $sale =
             $this->saleModel
-                ->findByIdAndCompany(
-                    $id,
-                    $companyId
-                );
+            ->findByIdAndCompany(
+                $id,
+                $companyId
+            );
 
         if ($sale === null) {
             $this->abort(404);
@@ -643,52 +625,55 @@ class SaleController extends Controller
 
         $items =
             $this->saleItemModel
-                ->allBySale(
-                    $id,
-                    $companyId
-                );
+            ->allBySale(
+                $id,
+                $companyId
+            );
 
         $existingInvoice =
             $this->invoiceModel
-                ->findBySaleAndCompany(
-                    $id,
-                    $companyId
-                );
+            ->findBySaleAndCompany(
+                $id,
+                $companyId
+            );
 
         $returnSummary =
             $this->salesReturnService
-                ->summaryForSale(
-                    $id,
-                    $companyId
-                );
+            ->summaryForSale(
+                $id,
+                $companyId
+            );
 
         $salesReturns =
             $this->salesReturnModel
-                ->allBySale(
-                    $id,
-                    $companyId
-                );
+            ->allBySale(
+                $id,
+                $companyId
+            );
 
         $this->view(
             'sales/show',
             [
                 'title' =>
-                    'Sale Details',
+                'Sale Details',
 
                 'sale' =>
-                    $sale,
+                $sale,
 
                 'items' =>
-                    $items,
+                $items,
 
                 'existingInvoice' =>
-                    $existingInvoice,
+                $existingInvoice,
 
                 'returnSummary' =>
-                    $returnSummary,
+                $returnSummary,
 
                 'salesReturns' =>
-                    $salesReturns,
+                $salesReturns,
+
+                'canViewCosts' =>
+                $canViewCosts,
             ]
         );
     }
@@ -699,9 +684,7 @@ class SaleController extends Controller
             $this->authService->user();
 
         $companyId =
-            (int) $currentUser[
-                'company_id'
-            ];
+            (int) $currentUser['company_id'];
 
         $dateFrom =
             date('Y-m-01');
@@ -712,30 +695,22 @@ class SaleController extends Controller
         if (
             isset($_GET['date_from']) &&
             trim(
-                (string) $_GET[
-                    'date_from'
-                ]
+                (string) $_GET['date_from']
             ) !== ''
         ) {
             $dateFrom = trim(
-                (string) $_GET[
-                    'date_from'
-                ]
+                (string) $_GET['date_from']
             );
         }
 
         if (
             isset($_GET['date_to']) &&
             trim(
-                (string) $_GET[
-                    'date_to'
-                ]
+                (string) $_GET['date_to']
             ) !== ''
         ) {
             $dateTo = trim(
-                (string) $_GET[
-                    'date_to'
-                ]
+                (string) $_GET['date_to']
             );
         }
 
@@ -754,47 +729,47 @@ class SaleController extends Controller
             'sales/report',
             [
                 'title' =>
-                    'Sales Report',
+                'Sales Report',
 
                 'dateFrom' =>
-                    $dateFrom,
+                $dateFrom,
 
                 'dateTo' =>
-                    $dateTo,
+                $dateTo,
 
                 'summary' =>
-                    $this->salesReportService
-                        ->getSummary(
-                            $companyId,
-                            $dateFrom,
-                            $dateTo
-                        ),
+                $this->salesReportService
+                    ->getSummary(
+                        $companyId,
+                        $dateFrom,
+                        $dateTo
+                    ),
 
                 'topProducts' =>
-                    $this->salesReportService
-                        ->getTopProducts(
-                            $companyId,
-                            $dateFrom,
-                            $dateTo,
-                            10
-                        ),
+                $this->salesReportService
+                    ->getTopProducts(
+                        $companyId,
+                        $dateFrom,
+                        $dateTo,
+                        10
+                    ),
 
                 'salesByDay' =>
-                    $this->salesReportService
-                        ->getSalesByDay(
-                            $companyId,
-                            $dateFrom,
-                            $dateTo
-                        ),
+                $this->salesReportService
+                    ->getSalesByDay(
+                        $companyId,
+                        $dateFrom,
+                        $dateTo
+                    ),
 
                 'recentSales' =>
-                    $this->salesReportService
-                        ->getRecentSales(
-                            $companyId,
-                            $dateFrom,
-                            $dateTo,
-                            10
-                        ),
+                $this->salesReportService
+                    ->getRecentSales(
+                        $companyId,
+                        $dateFrom,
+                        $dateTo,
+                        10
+                    ),
             ]
         );
     }
@@ -828,41 +803,29 @@ class SaleController extends Controller
 
             if (
                 isset(
-                    $_POST[
-                        'quantity'
-                    ][$index]
+                    $_POST['quantity'][$index]
                 )
             ) {
                 $quantity =
-                    (float) $_POST[
-                        'quantity'
-                    ][$index];
+                    (float) $_POST['quantity'][$index];
             }
 
             if (
                 isset(
-                    $_POST[
-                        'unit_price'
-                    ][$index]
+                    $_POST['unit_price'][$index]
                 )
             ) {
                 $unitPrice =
-                    (float) $_POST[
-                        'unit_price'
-                    ][$index];
+                    (float) $_POST['unit_price'][$index];
             }
 
             if (
                 isset(
-                    $_POST[
-                        'discount_amount'
-                    ][$index]
+                    $_POST['discount_amount'][$index]
                 )
             ) {
                 $discountAmount =
-                    (float) $_POST[
-                        'discount_amount'
-                    ][$index];
+                    (float) $_POST['discount_amount'][$index];
             }
 
             if ((int) $productId <= 0) {
@@ -871,16 +834,16 @@ class SaleController extends Controller
 
             $items[] = [
                 'product_id' =>
-                    (int) $productId,
+                (int) $productId,
 
                 'quantity' =>
-                    $quantity,
+                $quantity,
 
                 'unit_price' =>
-                    $unitPrice,
+                $unitPrice,
 
                 'discount_amount' =>
-                    $discountAmount,
+                $discountAmount,
             ];
         }
 
@@ -901,22 +864,22 @@ class SaleController extends Controller
     {
         return [
             'client_id' =>
-                '',
+            '',
 
             'warehouse_id' =>
-                '',
+            '',
 
             'promotion_id' =>
-                '0',
+            '0',
 
             'promotion_code' =>
-                '',
+            '',
 
             'payment_method' =>
-                'cash',
+            'cash',
 
             'note' =>
-                '',
+            '',
         ];
     }
 }

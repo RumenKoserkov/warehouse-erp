@@ -65,55 +65,55 @@ class PurchaseReturnItem extends Model
 
         $statement->execute([
             'purchase_return_id' =>
-                $data['purchase_return_id'],
+            $data['purchase_return_id'],
 
             'company_id' =>
-                $data['company_id'],
+            $data['company_id'],
 
             'purchase_item_id' =>
-                $data['purchase_item_id'],
+            $data['purchase_item_id'],
 
             'product_id' =>
-                $data['product_id'],
+            $data['product_id'],
 
             'product_name' =>
-                $data['product_name'],
+            $data['product_name'],
 
             'product_internal_code' =>
-                $data['product_internal_code'],
+            $data['product_internal_code'],
 
             'product_unit' =>
-                $data['product_unit'],
+            $data['product_unit'],
 
             'purchased_quantity' =>
-                $data['purchased_quantity'],
+            $data['purchased_quantity'],
 
             'return_quantity' =>
-                $data['return_quantity'],
+            $data['return_quantity'],
 
             'unit_cost' =>
-                $data['unit_cost'],
+            $data['unit_cost'],
 
             'subtotal_amount' =>
-                $data['subtotal_amount'],
+            $data['subtotal_amount'],
 
             'discount_amount' =>
-                $data['discount_amount'],
+            $data['discount_amount'],
 
             'net_amount' =>
-                $data['net_amount'],
+            $data['net_amount'],
 
             'vat_rate' =>
-                $data['vat_rate'],
+            $data['vat_rate'],
 
             'tax_amount' =>
-                $data['tax_amount'],
+            $data['tax_amount'],
 
             'total_amount' =>
-                $data['total_amount'],
+            $data['total_amount'],
 
             'item_note' =>
-                $data['item_note'],
+            $data['item_note'],
         ]);
 
         return (int) $this->db->lastInsertId();
@@ -134,10 +134,10 @@ class PurchaseReturnItem extends Model
 
         return $statement->execute([
             'purchase_return_id' =>
-                $purchaseReturnId,
+            $purchaseReturnId,
 
             'company_id' =>
-                $companyId,
+            $companyId,
         ]);
     }
 
@@ -158,10 +158,10 @@ class PurchaseReturnItem extends Model
 
         $statement->execute([
             'purchase_return_id' =>
-                $purchaseReturnId,
+            $purchaseReturnId,
 
             'company_id' =>
-                $companyId,
+            $companyId,
         ]);
 
         return $statement->fetchAll();
@@ -185,10 +185,10 @@ class PurchaseReturnItem extends Model
 
         $statement->execute([
             'purchase_return_id' =>
-                $purchaseReturnId,
+            $purchaseReturnId,
 
             'company_id' =>
-                $companyId,
+            $companyId,
         ]);
 
         return $statement->fetchAll();
@@ -219,13 +219,66 @@ class PurchaseReturnItem extends Model
 
         return $statement->execute([
             'stock_quantity_before' =>
-                $quantityBefore,
+            $quantityBefore,
 
             'stock_quantity_after' =>
-                $quantityAfter,
+            $quantityAfter,
 
             'id' => $id,
             'company_id' => $companyId,
+        ]);
+    }
+
+    public function markCostApplied(
+        int $id,
+        int $companyId,
+        float $quantityBefore,
+        float $quantityAfter,
+        float $inventoryUnitCost,
+        float $totalCost
+    ): bool {
+        $sql = "
+        UPDATE purchase_return_items
+        SET
+            stock_quantity_before =
+                :stock_quantity_before,
+
+            stock_quantity_after =
+                :stock_quantity_after,
+
+            inventory_unit_cost =
+                :inventory_unit_cost,
+
+            total_cost =
+                :total_cost,
+
+            updated_at = NOW()
+
+        WHERE id = :id
+        AND company_id = :company_id
+    ";
+
+        $statement =
+            $this->db->prepare($sql);
+
+        return $statement->execute([
+            'stock_quantity_before' =>
+            round($quantityBefore, 3),
+
+            'stock_quantity_after' =>
+            round($quantityAfter, 3),
+
+            'inventory_unit_cost' =>
+            round($inventoryUnitCost, 4),
+
+            'total_cost' =>
+            round($totalCost, 4),
+
+            'id' =>
+            $id,
+
+            'company_id' =>
+            $companyId,
         ]);
     }
 
@@ -340,13 +393,13 @@ class PurchaseReturnItem extends Model
 
         $statement->execute([
             'returned_company_id' =>
-                $companyId,
+            $companyId,
 
             'purchase_id' =>
-                $purchaseId,
+            $purchaseId,
 
             'company_id' =>
-                $companyId,
+            $companyId,
         ]);
 
         return $statement->fetchAll();
@@ -406,19 +459,19 @@ class PurchaseReturnItem extends Model
 
         return [
             'return_count' =>
-                (int) ($summary['return_count'] ?? 0),
+            (int) ($summary['return_count'] ?? 0),
 
             'returned_quantity' =>
-                (float) (
-                    $summary['returned_quantity'] ??
-                    0
-                ),
+            (float) (
+                $summary['returned_quantity'] ??
+                0
+            ),
 
             'returned_total' =>
-                (float) (
-                    $summary['returned_total'] ??
-                    0
-                ),
+            (float) (
+                $summary['returned_total'] ??
+                0
+            ),
         ];
     }
 }

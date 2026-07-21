@@ -1,13 +1,19 @@
 <?php
 
 $isDraft =
-    (string) $inventoryCount['status'] === 'draft';
+    (string) $inventoryCount['status'] ===
+    'draft';
 
 $isCompleted =
-    (string) $inventoryCount['status'] === 'completed';
+    (string) $inventoryCount['status'] ===
+    'completed';
 
 $isCancelled =
-    (string) $inventoryCount['status'] === 'cancelled';
+    (string) $inventoryCount['status'] ===
+    'cancelled';
+
+$showCosts =
+    (bool) ($canManage ?? false);
 
 $missingItems =
     (int) $inventoryCount['total_items'] -
@@ -17,13 +23,17 @@ $missingItems =
 <div
     class="d-flex flex-column
     flex-lg-row justify-content-between
-    align-items-lg-start gap-3 mb-4">
+    align-items-lg-start gap-3 mb-4"
+>
     <div>
         <h1 class="h3 mb-1">
             Inventory Count
+
             <span class="font-monospace">
                 <?= htmlspecialchars(
-                    (string) $inventoryCount['count_number'],
+                    (string) $inventoryCount[
+                        'count_number'
+                    ],
                     ENT_QUOTES,
                     'UTF-8'
                 ) ?>
@@ -32,13 +42,19 @@ $missingItems =
 
         <p class="text-muted mb-0">
             <?= htmlspecialchars(
-                (string) $inventoryCount['warehouse_name'],
+                (string) $inventoryCount[
+                    'warehouse_name'
+                ],
                 ENT_QUOTES,
                 'UTF-8'
             ) ?>
+
             —
+
             <?= htmlspecialchars(
-                (string) $inventoryCount['warehouse_code'],
+                (string) $inventoryCount[
+                    'warehouse_code'
+                ],
                 ENT_QUOTES,
                 'UTF-8'
             ) ?>
@@ -62,7 +78,8 @@ $missingItems =
 
         <a
             href="/inventory-counts"
-            class="btn btn-outline-secondary">
+            class="btn btn-outline-secondary"
+        >
             Back
         </a>
     </div>
@@ -92,7 +109,9 @@ $missingItems =
             <strong>Reason:</strong>
 
             <?= htmlspecialchars(
-                (string) $inventoryCount['cancellation_reason'],
+                (string) $inventoryCount[
+                    'cancellation_reason'
+                ],
                 ENT_QUOTES,
                 'UTF-8'
             ) ?>
@@ -102,7 +121,9 @@ $missingItems =
             <strong>Cancelled at:</strong>
 
             <?= htmlspecialchars(
-                (string) $inventoryCount['cancelled_at'],
+                (string) $inventoryCount[
+                    'cancelled_at'
+                ],
                 ENT_QUOTES,
                 'UTF-8'
             ) ?>
@@ -110,14 +131,18 @@ $missingItems =
 
         <?php if (
             trim(
-                (string) $inventoryCount['cancelled_by_user_name']
+                (string) $inventoryCount[
+                    'cancelled_by_user_name'
+                ]
             ) !== ''
         ): ?>
             <div>
                 <strong>Cancelled by:</strong>
 
                 <?= htmlspecialchars(
-                    (string) $inventoryCount['cancelled_by_user_name'],
+                    (string) $inventoryCount[
+                        'cancelled_by_user_name'
+                    ],
                     ENT_QUOTES,
                     'UTF-8'
                 ) ?>
@@ -135,7 +160,9 @@ $missingItems =
                 </div>
 
                 <div class="fs-3 fw-bold">
-                    <?= (int) $inventoryCount['total_items'] ?>
+                    <?= (int) $inventoryCount[
+                        'total_items'
+                    ] ?>
                 </div>
             </div>
         </div>
@@ -149,7 +176,9 @@ $missingItems =
                 </div>
 
                 <div class="fs-3 fw-bold">
-                    <?= (int) $inventoryCount['counted_items'] ?>
+                    <?= (int) $inventoryCount[
+                        'counted_items'
+                    ] ?>
                 </div>
             </div>
         </div>
@@ -180,7 +209,9 @@ $missingItems =
                 </div>
 
                 <div class="fs-3 fw-bold">
-                    <?= (int) $inventoryCount['difference_items'] ?>
+                    <?= (int) $inventoryCount[
+                        'difference_items'
+                    ] ?>
                 </div>
             </div>
         </div>
@@ -197,7 +228,9 @@ $missingItems =
 
                 <div class="fw-semibold">
                     <?= htmlspecialchars(
-                        (string) $inventoryCount['count_date'],
+                        (string) $inventoryCount[
+                            'count_date'
+                        ],
                         ENT_QUOTES,
                         'UTF-8'
                     ) ?>
@@ -211,7 +244,9 @@ $missingItems =
 
                 <div class="fw-semibold">
                     <?= htmlspecialchars(
-                        (string) $inventoryCount['snapshot_at'],
+                        (string) $inventoryCount[
+                            'snapshot_at'
+                        ],
                         ENT_QUOTES,
                         'UTF-8'
                     ) ?>
@@ -225,7 +260,9 @@ $missingItems =
 
                 <div class="fw-semibold">
                     <?= htmlspecialchars(
-                        (string) $inventoryCount['created_by_user_name'],
+                        (string) $inventoryCount[
+                            'created_by_user_name'
+                        ],
                         ENT_QUOTES,
                         'UTF-8'
                     ) ?>
@@ -240,7 +277,9 @@ $missingItems =
 
                     <div class="fw-semibold">
                         <?= htmlspecialchars(
-                            (string) $inventoryCount['completed_by_user_name'],
+                            (string) $inventoryCount[
+                                'completed_by_user_name'
+                            ],
                             ENT_QUOTES,
                             'UTF-8'
                         ) ?>
@@ -250,7 +289,9 @@ $missingItems =
 
             <?php if (
                 trim(
-                    (string) $inventoryCount['notes']
+                    (string) $inventoryCount[
+                        'notes'
+                    ]
                 ) !== ''
             ): ?>
                 <div class="col-12">
@@ -261,7 +302,9 @@ $missingItems =
                     <div>
                         <?= nl2br(
                             htmlspecialchars(
-                                (string) $inventoryCount['notes'],
+                                (string) $inventoryCount[
+                                    'notes'
+                                ],
                                 ENT_QUOTES,
                                 'UTF-8'
                             )
@@ -284,20 +327,23 @@ $missingItems =
 
 <form
     method="POST"
-    action="/inventory-counts/save">
+    action="/inventory-counts/save"
+>
     <?= \App\Core\Csrf::field() ?>
 
     <input
         type="hidden"
         name="inventory_count_id"
-        value="<?= (int) $inventoryCount['id'] ?>">
+        value="<?= (int) $inventoryCount['id'] ?>"
+    >
 
     <div class="card shadow-sm">
         <?php if ($isDraft): ?>
             <div
                 class="card-header d-flex
                 flex-wrap justify-content-between
-                align-items-center gap-2">
+                align-items-center gap-2"
+            >
                 <h2 class="h5 mb-0">
                     Counted Products
                 </h2>
@@ -307,7 +353,8 @@ $missingItems =
                         type="button"
                         id="fill-system-quantities"
                         class="btn btn-sm
-                        btn-outline-secondary">
+                        btn-outline-secondary"
+                    >
                         Fill With System Quantity
                     </button>
 
@@ -315,7 +362,8 @@ $missingItems =
                         type="button"
                         id="fill-empty-with-zero"
                         class="btn btn-sm
-                        btn-outline-secondary">
+                        btn-outline-secondary"
+                    >
                         Fill Empty With Zero
                     </button>
                 </div>
@@ -325,17 +373,25 @@ $missingItems =
         <div class="table-responsive">
             <table
                 class="table table-hover
-                align-middle mb-0">
+                align-middle mb-0"
+            >
                 <thead>
                     <tr>
                         <th>Product</th>
                         <th>Code / Barcode</th>
                         <th>Unit</th>
                         <th>System Qty</th>
+
                         <th style="width: 180px;">
                             Counted Qty
                         </th>
+
                         <th>Difference</th>
+
+                        <?php if ($showCosts): ?>
+                            <th>Unit Cost</th>
+                            <th>Cost Variance</th>
+                        <?php endif; ?>
                     </tr>
                 </thead>
 
@@ -347,22 +403,76 @@ $missingItems =
                         $difference = null;
 
                         if (
-                            $item['counted_quantity'] !== null
+                            $item[
+                                'counted_quantity'
+                            ] !== null
                         ) {
-                            $difference =
+                            $difference = round(
+                                (float) $item[
+                                    'counted_quantity'
+                                ] -
+                                (float) $item[
+                                    'system_quantity'
+                                ],
+                                3
+                            );
+                        }
+
+                        $unitCost = round(
+                            (float) (
+                                $item[
+                                    'unit_cost'
+                                ] ?? 0
+                            ),
+                            4
+                        );
+
+                        $displayCostVariance = null;
+
+                        if ($isCompleted) {
+                            if (
+                                $item[
+                                    'variance_value'
+                                ] !== null
+                            ) {
+                                $displayCostVariance =
+                                    round(
+                                        (float) $item[
+                                            'variance_value'
+                                        ],
+                                        4
+                                    );
+                            }
+                        } elseif (
+                            $difference !== null
+                        ) {
+                            $displayCostVariance =
                                 round(
-                                    (float) $item['counted_quantity'] -
-                                        (float) $item['system_quantity'],
-                                    3
+                                    $difference *
+                                    $unitCost,
+                                    4
                                 );
                         }
                         ?>
 
-                        <tr>
+                        <tr
+                            data-unit-cost="<?= htmlspecialchars(
+                                number_format(
+                                    $unitCost,
+                                    4,
+                                    '.',
+                                    ''
+                                ),
+                                ENT_QUOTES,
+                                'UTF-8'
+                            ) ?>"
+                        >
                             <td>
                                 <strong>
                                     <?= htmlspecialchars(
-                                        (string) $item['product_name'],
+                                        (string) $item[
+                                            'product_name'
+                                        ],
                                         ENT_QUOTES,
                                         'UTF-8'
                                     ) ?>
@@ -372,7 +482,9 @@ $missingItems =
                             <td>
                                 <div class="font-monospace">
                                     <?= htmlspecialchars(
-                                        (string) $item['product_internal_code'],
+                                        (string) $item[
+                                            'product_internal_code'
+                                        ],
                                         ENT_QUOTES,
                                         'UTF-8'
                                     ) ?>
@@ -380,15 +492,19 @@ $missingItems =
 
                                 <?php if (
                                     trim(
-                                        (string) $item['product_barcode']
+                                        (string) $item[
+                                            'product_barcode'
+                                        ]
                                     ) !== ''
                                 ): ?>
                                     <div
-                                        class="small
-                                        text-muted
-                                        font-monospace">
+                                        class="small text-muted
+                                        font-monospace"
+                                    >
                                         <?= htmlspecialchars(
-                                            (string) $item['product_barcode'],
+                                            (string) $item[
+                                                'product_barcode'
+                                            ],
                                             ENT_QUOTES,
                                             'UTF-8'
                                         ) ?>
@@ -398,7 +514,9 @@ $missingItems =
 
                             <td>
                                 <?= htmlspecialchars(
-                                    (string) $item['product_unit'],
+                                    (string) $item[
+                                        'product_unit'
+                                    ],
                                     ENT_QUOTES,
                                     'UTF-8'
                                 ) ?>
@@ -407,12 +525,17 @@ $missingItems =
                             <td
                                 class="system-quantity"
                                 data-system="<?= htmlspecialchars(
-                                                    (string) $item['system_quantity'],
-                                                    ENT_QUOTES,
-                                                    'UTF-8'
-                                                ) ?>">
+                                    (string) $item[
+                                        'system_quantity'
+                                    ],
+                                    ENT_QUOTES,
+                                    'UTF-8'
+                                ) ?>"
+                            >
                                 <?= number_format(
-                                    (float) $item['system_quantity'],
+                                    (float) $item[
+                                        'system_quantity'
+                                    ],
                                     3
                                 ) ?>
                             </td>
@@ -422,51 +545,63 @@ $missingItems =
                                     <input
                                         type="number"
                                         name="counted_quantity[<?= (int) $item['id'] ?>]"
-                                        class="form-control counted-quantity"
+                                        class="form-control
+                                        counted-quantity"
                                         min="0"
                                         step="0.001"
                                         data-system="<?= htmlspecialchars(
-                                                            (string) $item['system_quantity'],
-                                                            ENT_QUOTES,
-                                                            'UTF-8'
-                                                        ) ?>"
+                                            (string) $item[
+                                                'system_quantity'
+                                            ],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>"
                                         value="<?php
-                                                if (
-                                                    $item['counted_quantity'] !== null
-                                                ) {
-                                                    echo htmlspecialchars(
-                                                        (string) $item['counted_quantity'],
-                                                        ENT_QUOTES,
-                                                        'UTF-8'
-                                                    );
-                                                }
-                                                ?>">
+                                        if (
+                                            $item[
+                                                'counted_quantity'
+                                            ] !== null
+                                        ) {
+                                            echo htmlspecialchars(
+                                                (string) $item[
+                                                    'counted_quantity'
+                                                ],
+                                                ENT_QUOTES,
+                                                'UTF-8'
+                                            );
+                                        }
+                                        ?>"
+                                    >
                                 <?php else: ?>
-                                    <?= $item['counted_quantity'] !== null
+                                    <?= $item[
+                                        'counted_quantity'
+                                    ] !== null
                                         ? number_format(
-                                            (float) $item['counted_quantity'],
+                                            (float) $item[
+                                                'counted_quantity'
+                                            ],
                                             3
                                         )
-                                        : '—'
-                                    ?>
+                                        : '—' ?>
                                 <?php endif; ?>
                             </td>
 
                             <td>
                                 <span
                                     class="difference-value <?php
-                                                            if (
-                                                                $difference !== null &&
-                                                                $difference > 0
-                                                            ) {
-                                                                echo 'text-success';
-                                                            } elseif (
-                                                                $difference !== null &&
-                                                                $difference < 0
-                                                            ) {
-                                                                echo 'text-danger';
-                                                            }
-                                                            ?>">
+                                    if (
+                                        $difference !== null &&
+                                        $difference > 0
+                                    ) {
+                                        echo 'text-success';
+                                    } elseif (
+                                        $difference !== null &&
+                                        $difference < 0
+                                    ) {
+                                        echo 'text-danger';
+                                    }
+                                    ?>"
+                                >
                                     <?php if (
                                         $difference === null
                                     ): ?>
@@ -475,9 +610,9 @@ $missingItems =
                                         $difference > 0
                                     ): ?>
                                         +<?= number_format(
-                                                $difference,
-                                                3
-                                            ) ?>
+                                            $difference,
+                                            3
+                                        ) ?>
                                     <?php else: ?>
                                         <?= number_format(
                                             $difference,
@@ -486,6 +621,65 @@ $missingItems =
                                     <?php endif; ?>
                                 </span>
                             </td>
+
+                            <?php if ($showCosts): ?>
+                                <td>
+                                    <?= number_format(
+                                        $unitCost,
+                                        4
+                                    ) ?>
+                                </td>
+
+                                <td>
+                                    <span
+                                        class="cost-variance-value <?php
+                                        if (
+                                            $displayCostVariance !==
+                                                null &&
+                                            $displayCostVariance > 0
+                                        ) {
+                                            echo 'text-success';
+                                        } elseif (
+                                            $displayCostVariance !==
+                                                null &&
+                                            $displayCostVariance < 0
+                                        ) {
+                                            echo 'text-danger';
+                                        }
+                                        ?>"
+                                    >
+                                        <?php if (
+                                            $displayCostVariance ===
+                                            null
+                                        ): ?>
+                                            —
+                                        <?php elseif (
+                                            $displayCostVariance > 0
+                                        ): ?>
+                                            +<?= number_format(
+                                                $displayCostVariance,
+                                                4
+                                            ) ?>
+                                        <?php else: ?>
+                                            <?= number_format(
+                                                $displayCostVariance,
+                                                4
+                                            ) ?>
+                                        <?php endif; ?>
+                                    </span>
+
+                                    <?php if (
+                                        $isDraft &&
+                                        $displayCostVariance !== null
+                                    ): ?>
+                                        <div
+                                            class="small text-muted"
+                                        >
+                                            Estimated
+                                        </div>
+                                    <?php endif; ?>
+                                </td>
+                            <?php endif; ?>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -498,7 +692,8 @@ $missingItems =
                     <button
                         type="submit"
                         formaction="/inventory-counts/save"
-                        class="btn btn-primary">
+                        class="btn btn-primary"
+                    >
                         Save Draft
                     </button>
 
@@ -514,7 +709,8 @@ $missingItems =
                                 return confirm(
                                     'Complete this inventory count and adjust stock? This cannot be undone.'
                                 );
-                            ">
+                            "
+                        >
                             Save & Complete
                         </button>
                     <?php endif; ?>
@@ -543,17 +739,20 @@ $missingItems =
                     return confirm(
                         'Cancel this inventory count?'
                     );
-                ">
+                "
+            >
                 <?= \App\Core\Csrf::field() ?>
 
                 <input
                     type="hidden"
                     name="inventory_count_id"
-                    value="<?= (int) $inventoryCount['id'] ?>">
+                    value="<?= (int) $inventoryCount['id'] ?>"
+                >
 
                 <label
                     for="cancellation_reason"
-                    class="form-label">
+                    class="form-label"
+                >
                     Cancellation Reason
                 </label>
 
@@ -563,11 +762,13 @@ $missingItems =
                     class="form-control"
                     rows="3"
                     maxlength="500"
-                    required></textarea>
+                    required
+                ></textarea>
 
                 <button
                     type="submit"
-                    class="btn btn-danger mt-3">
+                    class="btn btn-danger mt-3"
+                >
                     Cancel Inventory Count
                 </button>
             </form>
@@ -579,7 +780,7 @@ $missingItems =
     <script>
         document.addEventListener(
             'DOMContentLoaded',
-            function() {
+            function () {
                 const inputs =
                     document.querySelectorAll(
                         '.counted-quantity'
@@ -593,22 +794,44 @@ $missingItems =
                         return;
                     }
 
-                    const output =
+                    const differenceOutput =
                         row.querySelector(
                             '.difference-value'
                         );
 
-                    if (output === null) {
+                    const costOutput =
+                        row.querySelector(
+                            '.cost-variance-value'
+                        );
+
+                    if (
+                        differenceOutput === null
+                    ) {
                         return;
                     }
 
-                    output.classList.remove(
+                    differenceOutput.classList.remove(
                         'text-success',
                         'text-danger'
                     );
 
-                    if (input.value.trim() === '') {
-                        output.textContent = '—';
+                    if (costOutput !== null) {
+                        costOutput.classList.remove(
+                            'text-success',
+                            'text-danger'
+                        );
+                    }
+
+                    if (
+                        input.value.trim() === ''
+                    ) {
+                        differenceOutput.textContent =
+                            '—';
+
+                        if (costOutput !== null) {
+                            costOutput.textContent =
+                                '—';
+                        }
 
                         return;
                     }
@@ -621,11 +844,22 @@ $missingItems =
                             input.dataset.system
                         );
 
+                    const unitCost =
+                        Number(
+                            row.dataset.unitCost
+                        );
+
                     if (
                         !Number.isFinite(counted) ||
                         !Number.isFinite(system)
                     ) {
-                        output.textContent = '—';
+                        differenceOutput.textContent =
+                            '—';
+
+                        if (costOutput !== null) {
+                            costOutput.textContent =
+                                '—';
+                        }
 
                         return;
                     }
@@ -633,32 +867,61 @@ $missingItems =
                     const difference =
                         counted - system;
 
-                    output.textContent =
+                    differenceOutput.textContent =
                         (
-                            difference > 0 ?
-                            '+' :
-                            ''
+                            difference > 0
+                                ? '+'
+                                : ''
                         ) +
                         difference.toFixed(3);
 
                     if (difference > 0) {
-                        output.classList.add(
+                        differenceOutput.classList.add(
                             'text-success'
                         );
                     }
 
                     if (difference < 0) {
-                        output.classList.add(
+                        differenceOutput.classList.add(
                             'text-danger'
                         );
+                    }
+
+                    if (
+                        costOutput !== null &&
+                        Number.isFinite(unitCost)
+                    ) {
+                        const costVariance =
+                            difference *
+                            unitCost;
+
+                        costOutput.textContent =
+                            (
+                                costVariance > 0
+                                    ? '+'
+                                    : ''
+                            ) +
+                            costVariance.toFixed(2);
+
+                        if (costVariance > 0) {
+                            costOutput.classList.add(
+                                'text-success'
+                            );
+                        }
+
+                        if (costVariance < 0) {
+                            costOutput.classList.add(
+                                'text-danger'
+                            );
+                        }
                     }
                 }
 
                 inputs.forEach(
-                    function(input) {
+                    function (input) {
                         input.addEventListener(
                             'input',
-                            function() {
+                            function () {
                                 updateDifference(
                                     input
                                 );
@@ -672,24 +935,28 @@ $missingItems =
                         'fill-system-quantities'
                     );
 
-                if (fillSystemButton !== null) {
-                    fillSystemButton.addEventListener(
-                        'click',
-                        function() {
-                            inputs.forEach(
-                                function(input) {
-                                    input.value =
-                                        Number(
-                                            input.dataset.system
-                                        ).toFixed(3);
+                if (
+                    fillSystemButton !== null
+                ) {
+                    fillSystemButton
+                        .addEventListener(
+                            'click',
+                            function () {
+                                inputs.forEach(
+                                    function (input) {
+                                        input.value =
+                                            Number(
+                                                input.dataset
+                                                    .system
+                                            ).toFixed(3);
 
-                                    updateDifference(
-                                        input
-                                    );
-                                }
-                            );
-                        }
-                    );
+                                        updateDifference(
+                                            input
+                                        );
+                                    }
+                                );
+                            }
+                        );
                 }
 
                 const fillZeroButton =
@@ -697,27 +964,30 @@ $missingItems =
                         'fill-empty-with-zero'
                     );
 
-                if (fillZeroButton !== null) {
-                    fillZeroButton.addEventListener(
-                        'click',
-                        function() {
-                            inputs.forEach(
-                                function(input) {
-                                    if (
-                                        input.value
-                                        .trim() === ''
-                                    ) {
-                                        input.value =
-                                            '0.000';
+                if (
+                    fillZeroButton !== null
+                ) {
+                    fillZeroButton
+                        .addEventListener(
+                            'click',
+                            function () {
+                                inputs.forEach(
+                                    function (input) {
+                                        if (
+                                            input.value
+                                                .trim() === ''
+                                        ) {
+                                            input.value =
+                                                '0.000';
 
-                                        updateDifference(
-                                            input
-                                        );
+                                            updateDifference(
+                                                input
+                                            );
+                                        }
                                     }
-                                }
-                            );
-                        }
-                    );
+                                );
+                            }
+                        );
                 }
             }
         );

@@ -31,6 +31,9 @@ class PurchaseService
     private WarehouseTransaction
         $warehouseTransactionModel;
 
+    private InventoryCostService
+        $inventoryCostService;
+
     private AuditLogService $auditLogService;
 
     private TaxService $taxService;
@@ -57,6 +60,9 @@ class PurchaseService
 
         $this->warehouseTransactionModel =
             new WarehouseTransaction();
+
+        $this->inventoryCostService =
+            new InventoryCostService();
 
         $this->auditLogService =
             new AuditLogService();
@@ -129,10 +135,14 @@ class PurchaseService
                     'completed',
 
                     'vat_registered' =>
-                    $taxConfiguration['vat_registered'] ? 1 : 0,
+                    $taxConfiguration['vat_registered']
+                        ? 1
+                        : 0,
 
                     'prices_include_vat' =>
-                    $taxConfiguration['prices_include_vat'] ? 1 : 0,
+                    $taxConfiguration['prices_include_vat']
+                        ? 1
+                        : 0,
 
                     'default_vat_rate' =>
                     $taxConfiguration['vat_rate'],
@@ -183,6 +193,12 @@ class PurchaseService
                         'unit_cost' =>
                         $item['unit_cost'],
 
+                        'inventory_unit_cost' =>
+                        $item['inventory_unit_cost'],
+
+                        'inventory_total_cost' =>
+                        $item['inventory_total_cost'],
+
                         'discount_amount' =>
                         $item['discount_amount'],
 
@@ -199,47 +215,71 @@ class PurchaseService
                         $item['total_price'],
                     ]);
 
-                $this->stockLevelModel
-                    ->increase(
+                $costMovement =
+                    $this->inventoryCostService
+                    ->receive(
                         $companyId,
                         (int) $item['product_id'],
                         $warehouseId,
-                        (float) $item['quantity']
+                        (float) $item['quantity'],
+                        (float) $item['inventory_unit_cost']
                     );
 
-                $this->warehouseTransactionModel
-                    ->create([
-                        'company_id' =>
-                        $companyId,
-
-                        'product_id' =>
+                $this->productModel
+                    ->updateLastPurchaseCost(
                         (int) $item['product_id'],
+                        $companyId,
+                        (float) $item['inventory_unit_cost']
+                    );
 
-                        'from_warehouse_id' =>
-                        null,
+                $transactionData = [
+                    'company_id' =>
+                    $companyId,
 
-                        'to_warehouse_id' =>
-                        $warehouseId,
+                    'product_id' =>
+                    (int) $item['product_id'],
 
-                        'user_id' =>
-                        $userId,
+                    'from_warehouse_id' =>
+                    null,
 
-                        'type' =>
-                        'purchase',
+                    'to_warehouse_id' =>
+                    $warehouseId,
 
-                        'quantity' =>
-                        (float) $item['quantity'],
+                    'user_id' =>
+                    $userId,
 
-                        'reference_type' =>
-                        'purchase',
+                    'type' =>
+                    'purchase',
 
-                        'reference_id' =>
-                        $purchaseId,
+                    'quantity' =>
+                    (float) $item['quantity'],
 
-                        'note' =>
-                        'Purchase ' .
-                            $purchaseNumber,
-                    ]);
+                    'reference_type' =>
+                    'purchase',
+
+                    'reference_id' =>
+                    $purchaseId,
+
+                    'note' =>
+                    'Purchase ' .
+                        $purchaseNumber,
+                ];
+
+                $transactionData =
+                    array_merge(
+                        $transactionData,
+                        $this
+                            ->inventoryCostService
+                            ->incomingTransactionFields(
+                                $costMovement
+                            )
+                    );
+
+                $this
+                    ->warehouseTransactionModel
+                    ->create(
+                        $transactionData
+                    );
             }
 
             $this->auditLogService->log(
@@ -256,8 +296,10 @@ class PurchaseService
 
             return [
                 'success' => true,
+
                 'purchase_id' =>
                 $purchaseId,
+
                 'error' => null,
             ];
         } catch (Exception $exception) {
@@ -267,7 +309,9 @@ class PurchaseService
 
             return [
                 'success' => false,
+
                 'purchase_id' => null,
+
                 'error' =>
                 $exception->getMessage(),
             ];
@@ -341,6 +385,10 @@ class PurchaseService
             $warehouseId =
                 (int) $purchase['warehouse_id'];
 
+            /*
+             * Проверяваме всички редове предварително,
+             * преди да започнем да променяме склада.
+             */
             foreach ($items as $item) {
                 $hasEnoughStock =
                     $this->stockLevelModel
@@ -360,55 +408,68 @@ class PurchaseService
             }
 
             foreach ($items as $item) {
-                $decreased =
-                    $this->stockLevelModel
-                    ->decrease(
+                /*
+                 * При анулиране на покупка наличността
+                 * се изписва по текущата среднопретеглена
+                 * себестойност.
+                 */
+                $costMovement =
+                    $this->inventoryCostService
+                    ->issue(
                         $companyId,
                         (int) $item['product_id'],
                         $warehouseId,
                         (float) $item['quantity']
                     );
 
-                if (!$decreased) {
-                    throw new Exception(
-                        'Could not decrease stock for product: ' .
-                            (string) $item['product_name']
+                $transactionData = [
+                    'company_id' =>
+                    $companyId,
+
+                    'product_id' =>
+                    (int) $item['product_id'],
+
+                    'from_warehouse_id' =>
+                    $warehouseId,
+
+                    'to_warehouse_id' =>
+                    null,
+
+                    'user_id' =>
+                    $userId,
+
+                    'type' =>
+                    'purchase_cancel',
+
+                    'quantity' =>
+                    (float) $item['quantity'],
+
+                    'reference_type' =>
+                    'purchase',
+
+                    'reference_id' =>
+                    $purchaseId,
+
+                    'note' =>
+                    'Cancel purchase ' .
+                        (string) $purchase['purchase_number'],
+                ];
+
+                $transactionData =
+                    array_merge(
+                        $transactionData,
+                        $this
+                            ->inventoryCostService
+                            ->outgoingTransactionFields(
+                                $costMovement
+                            )
                     );
-                }
 
-                $this->warehouseTransactionModel
-                    ->create([
-                        'company_id' =>
-                        $companyId,
-
-                        'product_id' =>
-                        (int) $item['product_id'],
-
-                        'from_warehouse_id' =>
-                        $warehouseId,
-
-                        'to_warehouse_id' =>
-                        null,
-
-                        'user_id' =>
-                        $userId,
-
-                        'type' =>
-                        'purchase_cancel',
-
-                        'quantity' =>
-                        (float) $item['quantity'],
-
-                        'reference_type' =>
-                        'purchase',
-
-                        'reference_id' =>
-                        $purchaseId,
-
-                        'note' =>
-                        'Cancel purchase ' .
-                            (string) $purchase['purchase_number'],
-                    ]);
+                $this
+                    ->warehouseTransactionModel
+                    ->create(
+                        $transactionData
+                    );
             }
 
             $cancelled =
@@ -447,6 +508,7 @@ class PurchaseService
 
             return [
                 'success' => false,
+
                 'error' =>
                 $exception->getMessage(),
             ];
@@ -510,6 +572,18 @@ class PurchaseService
                     $taxConfiguration
                 );
 
+            /*
+             * Себестойността се формира от net_amount:
+             * след отстъпката и без приспадаемия ДДС.
+             */
+            $inventoryUnitCost =
+                $quantity > 0
+                ? round(
+                    (float) $taxResult['net_amount'] / $quantity,
+                    4
+                )
+                : 0.0;
+
             $preparedItems[] = [
                 'product_id' =>
                 $productId,
@@ -528,6 +602,16 @@ class PurchaseService
 
                 'unit_cost' =>
                 $unitCost,
+
+                'inventory_unit_cost' =>
+                $inventoryUnitCost,
+
+                'inventory_total_cost' =>
+                round(
+                    $inventoryUnitCost *
+                        $quantity,
+                    4
+                ),
 
                 'discount_amount' =>
                 $taxResult['discount_amount'],

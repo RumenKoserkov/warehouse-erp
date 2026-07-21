@@ -23,13 +23,19 @@ class SalesReturnService
 
     private SalesReturn $salesReturnModel;
 
-    private SalesReturnItem $salesReturnItemModel;
+    private SalesReturnItem
+        $salesReturnItemModel;
 
     private StockLevel $stockLevelModel;
 
-    private WarehouseTransaction $warehouseTransactionModel;
+    private WarehouseTransaction
+        $warehouseTransactionModel;
 
-    private AuditLogService $auditLogService;
+    private InventoryCostService
+        $inventoryCostService;
+
+    private AuditLogService
+        $auditLogService;
 
     public function __construct()
     {
@@ -51,6 +57,9 @@ class SalesReturnService
         $this->warehouseTransactionModel =
             new WarehouseTransaction();
 
+        $this->inventoryCostService =
+            new InventoryCostService();
+
         $this->auditLogService =
             new AuditLogService();
     }
@@ -59,22 +68,22 @@ class SalesReturnService
     {
         return [
             'customer_return' =>
-                'Customer Return',
+            'Customer Return',
 
             'wrong_product' =>
-                'Wrong Product Delivered',
+            'Wrong Product Delivered',
 
             'damaged_product' =>
-                'Damaged Product',
+            'Damaged Product',
 
             'quality_issue' =>
-                'Quality Issue',
+            'Quality Issue',
 
             'warranty' =>
-                'Warranty Return',
+            'Warranty Return',
 
             'other' =>
-                'Other',
+            'Other',
         ];
     }
 
@@ -111,10 +120,10 @@ class SalesReturnService
 
             $sale =
                 $this->saleModel
-                    ->findByIdAndCompany(
-                        $saleId,
-                        $companyId
-                    );
+                ->findByIdAndCompany(
+                    $saleId,
+                    $companyId
+                );
 
             if ($sale === null) {
                 throw new Exception(
@@ -142,10 +151,10 @@ class SalesReturnService
 
             if (
                 $this->salesReturnModel
-                    ->hasDraftForSale(
-                        $saleId,
-                        $companyId
-                    )
+                ->hasDraftForSale(
+                    $saleId,
+                    $companyId
+                )
             ) {
                 throw new Exception(
                     'This sale already has an open sales return draft.'
@@ -163,37 +172,35 @@ class SalesReturnService
 
             $salesReturnId =
                 $this->salesReturnModel
-                    ->create([
-                        'company_id' =>
-                            $companyId,
+                ->create([
+                    'company_id' =>
+                    $companyId,
 
-                        'sale_id' =>
-                            $saleId,
+                    'sale_id' =>
+                    $saleId,
 
-                        'warehouse_id' =>
-                            (int) $sale[
-                                'warehouse_id'
-                            ],
+                    'warehouse_id' =>
+                    (int) $sale['warehouse_id'],
 
-                        'return_date' =>
-                            $returnDate,
+                    'return_date' =>
+                    $returnDate,
 
-                        'reason_type' =>
-                            $reasonType,
+                    'reason_type' =>
+                    $reasonType,
 
-                        'reason_description' =>
-                            trim(
-                                $reasonDescription
-                            ),
+                    'reason_description' =>
+                    trim(
+                        $reasonDescription
+                    ),
 
-                        'notes' =>
-                            $this->nullableString(
-                                $notes
-                            ),
+                    'notes' =>
+                    $this->nullableString(
+                        $notes
+                    ),
 
-                        'created_by_user_id' =>
-                            $userId,
-                    ]);
+                    'created_by_user_id' =>
+                    $userId,
+                ]);
 
             $returnNumber =
                 $this->returnNumber(
@@ -202,11 +209,11 @@ class SalesReturnService
 
             $numberAssigned =
                 $this->salesReturnModel
-                    ->assignNumber(
-                        $salesReturnId,
-                        $companyId,
-                        $returnNumber
-                    );
+                ->assignNumber(
+                    $salesReturnId,
+                    $companyId,
+                    $returnNumber
+                );
 
             if (!$numberAssigned) {
                 throw new Exception(
@@ -239,14 +246,12 @@ class SalesReturnService
                 'sales_return',
                 $salesReturnId,
                 'Created sales return ' .
-                $returnNumber .
-                ' for sale ' .
-                (string) $sale[
-                    'sale_number'
-                ] .
-                '. Items: ' .
-                count($preparedItems) .
-                '.'
+                    $returnNumber .
+                    ' for sale ' .
+                    (string) $sale['sale_number'] .
+                    '. Items: ' .
+                    count($preparedItems) .
+                    '.'
             );
 
             $this->db->commit();
@@ -255,7 +260,7 @@ class SalesReturnService
                 'success' => true,
 
                 'sales_return_id' =>
-                    $salesReturnId,
+                $salesReturnId,
 
                 'error' => null,
             ];
@@ -267,8 +272,9 @@ class SalesReturnService
             return [
                 'success' => false,
                 'sales_return_id' => null,
+
                 'error' =>
-                    $exception->getMessage(),
+                $exception->getMessage(),
             ];
         }
     }
@@ -286,10 +292,10 @@ class SalesReturnService
 
             $salesReturn =
                 $this->salesReturnModel
-                    ->findForUpdate(
-                        $salesReturnId,
-                        $companyId
-                    );
+                ->findForUpdate(
+                    $salesReturnId,
+                    $companyId
+                );
 
             if ($salesReturn === null) {
                 throw new Exception(
@@ -298,9 +304,7 @@ class SalesReturnService
             }
 
             if (
-                (string) $salesReturn[
-                    'status'
-                ] !== 'draft'
+                (string) $salesReturn['status'] !== 'draft'
             ) {
                 throw new Exception(
                     'Only draft sales returns can be edited.'
@@ -309,17 +313,15 @@ class SalesReturnService
 
             $sale =
                 $this->saleModel
-                    ->findByIdAndCompany(
-                        (int) $salesReturn[
-                            'sale_id'
-                        ],
-                        $companyId
-                    );
+                ->findByIdAndCompany(
+                    (int) $salesReturn['sale_id'],
+                    $companyId
+                );
 
             if (
                 $sale === null ||
                 (string) $sale['status'] !==
-                    'completed'
+                'completed'
             ) {
                 throw new Exception(
                     'The original sale is no longer returnable.'
@@ -328,9 +330,7 @@ class SalesReturnService
 
             $preparedItems =
                 $this->prepareItems(
-                    (int) $salesReturn[
-                        'sale_id'
-                    ],
+                    (int) $salesReturn['sale_id'],
                     $companyId,
                     $returnQuantities,
                     $restockQuantities,
@@ -365,12 +365,10 @@ class SalesReturnService
                 'sales_return',
                 $salesReturnId,
                 'Updated sales return ' .
-                (string) $salesReturn[
-                    'return_number'
-                ] .
-                '. Items: ' .
-                count($preparedItems) .
-                '.'
+                    (string) $salesReturn['return_number'] .
+                    '. Items: ' .
+                    count($preparedItems) .
+                    '.'
             );
 
             $this->db->commit();
@@ -386,8 +384,9 @@ class SalesReturnService
 
             return [
                 'success' => false,
+
                 'error' =>
-                    $exception->getMessage(),
+                $exception->getMessage(),
             ];
         }
     }
@@ -402,10 +401,10 @@ class SalesReturnService
 
             $salesReturn =
                 $this->salesReturnModel
-                    ->findForUpdate(
-                        $salesReturnId,
-                        $companyId
-                    );
+                ->findForUpdate(
+                    $salesReturnId,
+                    $companyId
+                );
 
             if ($salesReturn === null) {
                 throw new Exception(
@@ -414,9 +413,7 @@ class SalesReturnService
             }
 
             if (
-                (string) $salesReturn[
-                    'status'
-                ] !== 'draft'
+                (string) $salesReturn['status'] !== 'draft'
             ) {
                 throw new Exception(
                     'Only draft sales returns can be completed.'
@@ -425,17 +422,15 @@ class SalesReturnService
 
             $sale =
                 $this->saleModel
-                    ->findByIdAndCompany(
-                        (int) $salesReturn[
-                            'sale_id'
-                        ],
-                        $companyId
-                    );
+                ->findByIdAndCompany(
+                    (int) $salesReturn['sale_id'],
+                    $companyId
+                );
 
             if (
                 $sale === null ||
                 (string) $sale['status'] !==
-                    'completed'
+                'completed'
             ) {
                 throw new Exception(
                     'The original sale is no longer returnable.'
@@ -444,10 +439,10 @@ class SalesReturnService
 
             $items =
                 $this->salesReturnItemModel
-                    ->allForUpdate(
-                        $salesReturnId,
-                        $companyId
-                    );
+                ->allForUpdate(
+                    $salesReturnId,
+                    $companyId
+                );
 
             if (empty($items)) {
                 throw new Exception(
@@ -457,36 +452,28 @@ class SalesReturnService
 
             $returnableRows =
                 $this->salesReturnItemModel
-                    ->returnableBySale(
-                        (int) $salesReturn[
-                            'sale_id'
-                        ],
-                        $companyId
-                    );
+                ->returnableBySale(
+                    (int) $salesReturn['sale_id'],
+                    $companyId
+                );
 
             $returnableMap = [];
 
             foreach (
                 $returnableRows as $row
             ) {
-                $returnableMap[
-                    (int) $row['id']
-                ] = $row;
+                $returnableMap[(int) $row['id']] = $row;
             }
 
             $restockedProductCount = 0;
 
             foreach ($items as $item) {
                 $saleItemId =
-                    (int) $item[
-                        'sale_item_id'
-                    ];
+                    (int) $item['sale_item_id'];
 
                 if (
                     !isset(
-                        $returnableMap[
-                            $saleItemId
-                        ]
+                        $returnableMap[$saleItemId]
                     )
                 ) {
                     throw new Exception(
@@ -495,16 +482,12 @@ class SalesReturnService
                 }
 
                 $remainingQuantity = round(
-                    (float) $returnableMap[
-                        $saleItemId
-                    ]['remaining_quantity'],
+                    (float) $returnableMap[$saleItemId]['remaining_quantity'],
                     3
                 );
 
                 $returnQuantity = round(
-                    (float) $item[
-                        'return_quantity'
-                    ],
+                    (float) $item['return_quantity'],
                     3
                 );
 
@@ -514,177 +497,174 @@ class SalesReturnService
                 ) {
                     throw new Exception(
                         'Return quantity now exceeds the remaining quantity for product: ' .
-                        (string) $item[
-                            'product_name'
-                        ] .
-                        '.'
+                            (string) $item['product_name'] .
+                            '.'
                     );
                 }
 
                 $productId =
-                    (int) $item[
-                        'product_id'
-                    ];
+                    (int) $item['product_id'];
 
                 $warehouseId =
-                    (int) $salesReturn[
-                        'warehouse_id'
+                    (int) $salesReturn['warehouse_id'];
+
+                $restockQuantity = round(
+                    (float) $item['restock_quantity'],
+                    3
+                );
+
+                $quantityBefore = 0.0;
+                $quantityAfter = 0.0;
+
+                if ($restockQuantity > 0) {
+                    /*
+                     * Връщаме годната стока по
+                     * оригиналната себестойност,
+                     * записана при продажбата.
+                     */
+                    $costMovement =
+                        $this->inventoryCostService
+                        ->receive(
+                            $companyId,
+                            $productId,
+                            $warehouseId,
+                            $restockQuantity,
+                            (float) $item['unit_cost']
+                        );
+
+                    $quantityBefore = round(
+                        (float) $costMovement['quantity_before'],
+                        3
+                    );
+
+                    $quantityAfter = round(
+                        (float) $costMovement['quantity_after'],
+                        3
+                    );
+
+                    $transactionData = [
+                        'company_id' =>
+                        $companyId,
+
+                        'product_id' =>
+                        $productId,
+
+                        'from_warehouse_id' =>
+                        null,
+
+                        'to_warehouse_id' =>
+                        $warehouseId,
+
+                        'user_id' =>
+                        $userId,
+
+                        'type' =>
+                        'sale_return',
+
+                        'quantity' =>
+                        $restockQuantity,
+
+                        'reference_type' =>
+                        'sales_return',
+
+                        'reference_id' =>
+                        $salesReturnId,
+
+                        'note' =>
+                        'Sales return ' .
+                            (string) $salesReturn['return_number'] .
+                            ' for sale ' .
+                            (string) $sale['sale_number'] .
+                            '. Returned: ' .
+                            number_format(
+                                $returnQuantity,
+                                3,
+                                '.',
+                                ''
+                            ) .
+                            ', restocked: ' .
+                            number_format(
+                                $restockQuantity,
+                                3,
+                                '.',
+                                ''
+                            ) .
+                            '.',
                     ];
 
-                $stockLevel =
-                    $this->stockLevelModel
+                    $transactionData =
+                        array_merge(
+                            $transactionData,
+
+                            $this
+                                ->inventoryCostService
+                                ->incomingTransactionFields(
+                                    $costMovement
+                                )
+                        );
+
+                    $transactionCreated =
+                        $this
+                        ->warehouseTransactionModel
+                        ->create(
+                            $transactionData
+                        );
+
+                    if (!$transactionCreated) {
+                        throw new Exception(
+                            'Warehouse transaction could not be created for product: ' .
+                                (string) $item['product_name']
+                        );
+                    }
+
+                    $restockedProductCount++;
+                } else {
+                    /*
+                     * Негодната върната стока не влиза
+                     * обратно в наличността, но пазим
+                     * текущото количество за snapshot.
+                     */
+                    $stockLevel =
+                        $this->stockLevelModel
                         ->lockForUpdate(
                             $companyId,
                             $productId,
                             $warehouseId
                         );
 
-                if ($stockLevel === null) {
-                    throw new Exception(
-                        'Stock level was not found for product: ' .
-                        (string) $item[
-                            'product_name'
-                        ] .
-                        '.'
-                    );
-                }
-
-                $quantityBefore = round(
-                    (float) $stockLevel[
-                        'quantity'
-                    ],
-                    3
-                );
-
-                $quantityAfter =
-                    $quantityBefore;
-
-                $restockQuantity = round(
-                    (float) $item[
-                        'restock_quantity'
-                    ],
-                    3
-                );
-
-                if ($restockQuantity > 0) {
-                    $increased =
-                        $this->stockLevelModel
-                            ->increase(
-                                $companyId,
-                                $productId,
-                                $warehouseId,
-                                $restockQuantity
-                            );
-
-                    if (!$increased) {
-                        throw new Exception(
-                            'Could not return stock for product: ' .
-                            (string) $item[
-                                'product_name'
-                            ]
-                        );
-                    }
-
-                    $quantityAfter = round(
-                        $quantityBefore +
-                        $restockQuantity,
+                    $quantityBefore = round(
+                        (float) $stockLevel['quantity'],
                         3
                     );
 
-                    $transactionCreated =
-                        $this->warehouseTransactionModel
-                            ->create([
-                                'company_id' =>
-                                    $companyId,
-
-                                'product_id' =>
-                                    $productId,
-
-                                'from_warehouse_id' =>
-                                    null,
-
-                                'to_warehouse_id' =>
-                                    $warehouseId,
-
-                                'user_id' =>
-                                    $userId,
-
-                                'type' =>
-                                    'sale_return',
-
-                                'quantity' =>
-                                    $restockQuantity,
-
-                                'reference_type' =>
-                                    'sales_return',
-
-                                'reference_id' =>
-                                    $salesReturnId,
-
-                                'note' =>
-                                    'Sales return ' .
-                                    (string) $salesReturn[
-                                        'return_number'
-                                    ] .
-                                    ' for sale ' .
-                                    (string) $sale[
-                                        'sale_number'
-                                    ] .
-                                    '. Returned: ' .
-                                    number_format(
-                                        $returnQuantity,
-                                        3,
-                                        '.',
-                                        ''
-                                    ) .
-                                    ', restocked: ' .
-                                    number_format(
-                                        $restockQuantity,
-                                        3,
-                                        '.',
-                                        ''
-                                    ) .
-                                    '.',
-                            ]);
-
-                    if (!$transactionCreated) {
-                        throw new Exception(
-                            'Warehouse transaction could not be created for product: ' .
-                            (string) $item[
-                                'product_name'
-                            ]
-                        );
-                    }
-
-                    $restockedProductCount++;
+                    $quantityAfter =
+                        $quantityBefore;
                 }
 
                 $marked =
                     $this->salesReturnItemModel
-                        ->markApplied(
-                            (int) $item['id'],
-                            $companyId,
-                            $quantityBefore,
-                            $quantityAfter
-                        );
+                    ->markApplied(
+                        (int) $item['id'],
+                        $companyId,
+                        $quantityBefore,
+                        $quantityAfter
+                    );
 
                 if (!$marked) {
                     throw new Exception(
                         'Could not save resulting stock for product: ' .
-                        (string) $item[
-                            'product_name'
-                        ]
+                            (string) $item['product_name']
                     );
                 }
             }
 
             $completed =
                 $this->salesReturnModel
-                    ->markCompleted(
-                        $salesReturnId,
-                        $companyId,
-                        $userId
-                    );
+                ->markCompleted(
+                    $salesReturnId,
+                    $companyId,
+                    $userId
+                );
 
             if (!$completed) {
                 throw new Exception(
@@ -699,27 +679,21 @@ class SalesReturnService
                 'sales_return',
                 $salesReturnId,
                 'Completed sales return ' .
-                (string) $salesReturn[
-                    'return_number'
-                ] .
-                ' for sale ' .
-                (string) $sale[
-                    'sale_number'
-                ] .
-                '. Items: ' .
-                count($items) .
-                ', restocked products: ' .
-                $restockedProductCount .
-                ', return total: ' .
-                number_format(
-                    (float) $salesReturn[
-                        'total_amount'
-                    ],
-                    2,
-                    '.',
-                    ''
-                ) .
-                '.'
+                    (string) $salesReturn['return_number'] .
+                    ' for sale ' .
+                    (string) $sale['sale_number'] .
+                    '. Items: ' .
+                    count($items) .
+                    ', restocked products: ' .
+                    $restockedProductCount .
+                    ', return total: ' .
+                    number_format(
+                        (float) $salesReturn['total_amount'],
+                        2,
+                        '.',
+                        ''
+                    ) .
+                    '.'
             );
 
             $this->db->commit();
@@ -728,7 +702,7 @@ class SalesReturnService
                 'success' => true,
 
                 'item_count' =>
-                    count($items),
+                count($items),
 
                 'error' => null,
             ];
@@ -740,8 +714,9 @@ class SalesReturnService
             return [
                 'success' => false,
                 'item_count' => 0,
+
                 'error' =>
-                    $exception->getMessage(),
+                $exception->getMessage(),
             ];
         }
     }
@@ -757,16 +732,18 @@ class SalesReturnService
         if ($reason === '') {
             return [
                 'success' => false,
+
                 'error' =>
-                    'Cancellation reason is required.',
+                'Cancellation reason is required.',
             ];
         }
 
         if (mb_strlen($reason) > 500) {
             return [
                 'success' => false,
+
                 'error' =>
-                    'Cancellation reason must be maximum 500 characters.',
+                'Cancellation reason must be maximum 500 characters.',
             ];
         }
 
@@ -775,10 +752,10 @@ class SalesReturnService
 
             $salesReturn =
                 $this->salesReturnModel
-                    ->findForUpdate(
-                        $salesReturnId,
-                        $companyId
-                    );
+                ->findForUpdate(
+                    $salesReturnId,
+                    $companyId
+                );
 
             if ($salesReturn === null) {
                 throw new Exception(
@@ -787,9 +764,7 @@ class SalesReturnService
             }
 
             if (
-                (string) $salesReturn[
-                    'status'
-                ] !== 'draft'
+                (string) $salesReturn['status'] !== 'draft'
             ) {
                 throw new Exception(
                     'Only draft sales returns can be cancelled.'
@@ -798,12 +773,12 @@ class SalesReturnService
 
             $cancelled =
                 $this->salesReturnModel
-                    ->markCancelled(
-                        $salesReturnId,
-                        $companyId,
-                        $userId,
-                        $reason
-                    );
+                ->markCancelled(
+                    $salesReturnId,
+                    $companyId,
+                    $userId,
+                    $reason
+                );
 
             if (!$cancelled) {
                 throw new Exception(
@@ -818,11 +793,9 @@ class SalesReturnService
                 'sales_return',
                 $salesReturnId,
                 'Cancelled sales return ' .
-                (string) $salesReturn[
-                    'return_number'
-                ] .
-                '. Reason: ' .
-                $reason
+                    (string) $salesReturn['return_number'] .
+                    '. Reason: ' .
+                    $reason
             );
 
             $this->db->commit();
@@ -838,8 +811,9 @@ class SalesReturnService
 
             return [
                 'success' => false,
+
                 'error' =>
-                    $exception->getMessage(),
+                $exception->getMessage(),
             ];
         }
     }
@@ -850,17 +824,17 @@ class SalesReturnService
     ): array {
         $completedSummary =
             $this->salesReturnItemModel
-                ->completedSummaryBySale(
-                    $saleId,
-                    $companyId
-                );
+            ->completedSummaryBySale(
+                $saleId,
+                $companyId
+            );
 
         $returnableItems =
             $this->salesReturnItemModel
-                ->returnableBySale(
-                    $saleId,
-                    $companyId
-                );
+            ->returnableBySale(
+                $saleId,
+                $companyId
+            );
 
         $hasReturnableItems = false;
         $remainingQuantity = 0.0;
@@ -870,9 +844,7 @@ class SalesReturnService
         ) {
             $remaining = max(
                 0,
-                (float) $item[
-                    'remaining_quantity'
-                ]
+                (float) $item['remaining_quantity']
             );
 
             $remainingQuantity +=
@@ -887,20 +859,20 @@ class SalesReturnService
             $completedSummary,
             [
                 'has_returnable_items' =>
-                    $hasReturnableItems,
+                $hasReturnableItems,
 
                 'remaining_quantity' =>
-                    round(
-                        $remainingQuantity,
-                        3
-                    ),
+                round(
+                    $remainingQuantity,
+                    3
+                ),
 
                 'has_draft' =>
-                    $this->salesReturnModel
-                        ->hasDraftForSale(
-                            $saleId,
-                            $companyId
-                        ),
+                $this->salesReturnModel
+                    ->hasDraftForSale(
+                        $saleId,
+                        $companyId
+                    ),
             ]
         );
     }
@@ -914,10 +886,10 @@ class SalesReturnService
     ): array {
         $returnableItems =
             $this->salesReturnItemModel
-                ->returnableBySale(
-                    $saleId,
-                    $companyId
-                );
+            ->returnableBySale(
+                $saleId,
+                $companyId
+            );
 
         $preparedItems = [];
 
@@ -971,17 +943,13 @@ class SalesReturnService
             ) {
                 throw new Exception(
                     'Restock quantity cannot exceed return quantity for product: ' .
-                    (string) $saleItem[
-                        'product_name'
-                    ] .
-                    '.'
+                        (string) $saleItem['product_name'] .
+                        '.'
                 );
             }
 
             $remainingQuantity = round(
-                (float) $saleItem[
-                    'remaining_quantity'
-                ],
+                (float) $saleItem['remaining_quantity'],
                 3
             );
 
@@ -991,17 +959,15 @@ class SalesReturnService
             ) {
                 throw new Exception(
                     'Return quantity cannot exceed the remaining quantity of ' .
-                    number_format(
-                        $remainingQuantity,
-                        3,
-                        '.',
-                        ''
-                    ) .
-                    ' for product: ' .
-                    (string) $saleItem[
-                        'product_name'
-                    ] .
-                    '.'
+                        number_format(
+                            $remainingQuantity,
+                            3,
+                            '.',
+                            ''
+                        ) .
+                        ' for product: ' .
+                        (string) $saleItem['product_name'] .
+                        '.'
                 );
             }
 
@@ -1014,10 +980,8 @@ class SalesReturnService
             if (mb_strlen($itemNote) > 500) {
                 throw new Exception(
                     'Item note must be maximum 500 characters for product: ' .
-                    (string) $saleItem[
-                        'product_name'
-                    ] .
-                    '.'
+                        (string) $saleItem['product_name'] .
+                        '.'
                 );
             }
 
@@ -1027,81 +991,76 @@ class SalesReturnService
                     $returnQuantity
                 );
 
+            $unitCost = round(
+                (float) (
+                    $saleItem['unit_cost'] ?? 0
+                ),
+                4
+            );
+
             $preparedItems[] = [
                 'sale_item_id' =>
-                    $saleItemId,
+                $saleItemId,
 
                 'product_id' =>
-                    (int) $saleItem[
-                        'product_id'
-                    ],
+                (int) $saleItem['product_id'],
 
                 'product_name' =>
-                    (string) $saleItem[
-                        'product_name'
-                    ],
+                (string) $saleItem['product_name'],
 
                 'product_internal_code' =>
-                    (string) $saleItem[
-                        'product_internal_code'
-                    ],
+                (string) $saleItem['product_internal_code'],
 
                 'product_unit' =>
-                    (string) $saleItem['unit'],
+                (string) $saleItem['unit'],
 
                 'sold_quantity' =>
-                    round(
-                        (float) $saleItem[
-                            'quantity'
-                        ],
-                        3
-                    ),
+                round(
+                    (float) $saleItem['quantity'],
+                    3
+                ),
 
                 'return_quantity' =>
-                    $returnQuantity,
+                $returnQuantity,
 
                 'restock_quantity' =>
-                    $restockQuantity,
+                $restockQuantity,
+
+                'unit_cost' =>
+                $unitCost,
+
+                'restocked_cost' =>
+                round(
+                    $restockQuantity *
+                        $unitCost,
+                    4
+                ),
 
                 'unit_price' =>
-                    (float) $saleItem[
-                        'unit_price'
-                    ],
+                (float) $saleItem['unit_price'],
 
                 'subtotal_amount' =>
-                    $amounts[
-                        'subtotal_amount'
-                    ],
+                $amounts['subtotal_amount'],
 
                 'discount_amount' =>
-                    $amounts[
-                        'discount_amount'
-                    ],
+                $amounts['discount_amount'],
 
                 'net_amount' =>
-                    $amounts[
-                        'net_amount'
-                    ],
+                $amounts['net_amount'],
 
                 'vat_rate' =>
-                    (float) $saleItem[
-                        'vat_rate'
-                    ],
+                (float) $saleItem['vat_rate'],
 
                 'tax_amount' =>
-                    $amounts[
-                        'tax_amount'
-                    ],
+                $amounts['tax_amount'],
 
                 'total_amount' =>
-                    $amounts[
-                        'total_amount'
-                    ],
+                $amounts['total_amount'],
 
                 'item_note' =>
-                    $this->nullableString(
-                        $itemNote
-                    ),
+                $this->nullableString(
+                    $itemNote
+                ),
             ];
         }
 
@@ -1130,103 +1089,81 @@ class SalesReturnService
         }
 
         $remainingQuantity = round(
-            (float) $saleItem[
-                'remaining_quantity'
-            ],
+            (float) $saleItem['remaining_quantity'],
             3
         );
 
         $originalSubtotal = round(
             $soldQuantity *
-            (float) $saleItem[
-                'unit_price'
-            ],
+                (float) $saleItem['unit_price'],
             2
         );
 
         $originalAmounts = [
             'subtotal_amount' =>
-                $originalSubtotal,
+            $originalSubtotal,
 
             'discount_amount' =>
-                round(
-                    (float) $saleItem[
-                        'discount_amount'
-                    ],
-                    2
-                ),
+            round(
+                (float) $saleItem['discount_amount'],
+                2
+            ),
 
             'net_amount' =>
-                round(
-                    (float) $saleItem[
-                        'net_amount'
-                    ],
-                    2
-                ),
+            round(
+                (float) $saleItem['net_amount'],
+                2
+            ),
 
             'tax_amount' =>
-                round(
-                    (float) $saleItem[
-                        'tax_amount'
-                    ],
-                    2
-                ),
+            round(
+                (float) $saleItem['tax_amount'],
+                2
+            ),
 
             'total_amount' =>
-                round(
-                    (float) $saleItem[
-                        'total_price'
-                    ],
-                    2
-                ),
+            round(
+                (float) $saleItem['total_price'],
+                2
+            ),
         ];
 
         $alreadyReturned = [
             'subtotal_amount' =>
-                round(
-                    (float) $saleItem[
-                        'returned_subtotal'
-                    ],
-                    2
-                ),
+            round(
+                (float) $saleItem['returned_subtotal'],
+                2
+            ),
 
             'discount_amount' =>
-                round(
-                    (float) $saleItem[
-                        'returned_discount'
-                    ],
-                    2
-                ),
+            round(
+                (float) $saleItem['returned_discount'],
+                2
+            ),
 
             'net_amount' =>
-                round(
-                    (float) $saleItem[
-                        'returned_net'
-                    ],
-                    2
-                ),
+            round(
+                (float) $saleItem['returned_net'],
+                2
+            ),
 
             'tax_amount' =>
-                round(
-                    (float) $saleItem[
-                        'returned_tax'
-                    ],
-                    2
-                ),
+            round(
+                (float) $saleItem['returned_tax'],
+                2
+            ),
 
             'total_amount' =>
-                round(
-                    (float) $saleItem[
-                        'returned_total'
-                    ],
-                    2
-                ),
+            round(
+                (float) $saleItem['returned_total'],
+                2
+            ),
         ];
 
         $isFinalReturn =
             abs(
                 $returnQuantity -
-                $remainingQuantity
+                    $remainingQuantity
             ) <= 0.0005;
 
         $result = [];
@@ -1240,9 +1177,7 @@ class SalesReturnService
                     max(
                         0,
                         $originalAmount -
-                        $alreadyReturned[
-                            $field
-                        ]
+                            $alreadyReturned[$field]
                     ),
                     2
                 );
@@ -1258,7 +1193,7 @@ class SalesReturnService
                 max(
                     0,
                     $originalAmount *
-                    $ratio
+                        $ratio
                 ),
                 2
             );
@@ -1281,10 +1216,10 @@ class SalesReturnService
                         $item,
                         [
                             'sales_return_id' =>
-                                $salesReturnId,
+                            $salesReturnId,
 
                             'company_id' =>
-                                $companyId,
+                            $companyId,
                         ]
                     )
                 );
