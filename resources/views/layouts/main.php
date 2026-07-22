@@ -582,6 +582,7 @@ if (isset($title)) {
                                                                             '/product-movement/report',
                                                                             '/receivables',
                                                                             '/reports/profit',
+                                                                            '/reports/margins',
                                                                         ]
                                                                     ) ?>"
                                     href="#"
@@ -635,6 +636,20 @@ if (isset($title)) {
                                                                         ]
                                                                     ) ?>">
                                             Profit Reports
+                                        </a>
+                                    </li>
+
+
+                                    <li>
+                                        <a
+                                            class="dropdown-item <?= navGroupActive(
+                                                                        $currentPath,
+                                                                        [
+                                                                            '/reports/margins',
+                                                                        ]
+                                                                    ) ?>"
+                                            href="/reports/margins">
+                                            Margin Reports
                                         </a>
                                     </li>
                                 </ul>

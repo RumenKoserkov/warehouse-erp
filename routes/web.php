@@ -23,6 +23,7 @@ use App\Controllers\SalesReturnController;
 use App\Controllers\PurchaseReturnController;
 use App\Controllers\PromotionController;
 use App\Controllers\ProfitReportController;
+use App\Controllers\MarginReportController;
 
 return [
     [
@@ -1002,6 +1003,22 @@ return [
         'uri' => '/reports/profit',
         'action' => [
             ProfitReportController::class,
+            'index',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+
+    // Margin Reports
+
+    [
+        'method' => 'GET',
+        'uri' => '/reports/margins',
+        'action' => [
+            MarginReportController::class,
             'index',
         ],
         'middleware' => [

@@ -271,6 +271,25 @@ class ProfitReport extends Model
                     'Uncategorized'
                 ) AS category_name,
 
+                sale_items.id
+                    AS source_item_id,
+
+                sale_items.unit_price,
+
+                sale_items.unit_cost
+                    AS inventory_unit_cost,
+
+                ROUND(
+                    sale_items.quantity *
+                    sale_items.unit_price,
+                    2
+                ) AS gross_amount,
+
+                ROUND(
+                    sale_items.discount_amount,
+                    2
+                ) AS discount_amount,
+
                 sale_items.quantity
                     AS signed_quantity,
 
@@ -403,6 +422,24 @@ class ProfitReport extends Model
                     categories.name,
                     'Uncategorized'
                 ) AS category_name,
+
+                sales_return_items.id
+                    AS source_item_id,
+
+                sales_return_items.unit_price,
+
+                sales_return_items.unit_cost
+                    AS inventory_unit_cost,
+
+                -ROUND(
+                    sales_return_items.subtotal_amount,
+                    2
+                ) AS gross_amount,
+
+                -ROUND(
+                    sales_return_items.discount_amount,
+                    2
+                ) AS discount_amount,
 
                 -sales_return_items.return_quantity
                     AS signed_quantity,
