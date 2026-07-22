@@ -172,6 +172,16 @@ if (isset($title)) {
                                 </a>
                             </li>
 
+                        <?php endif; ?>
+
+                        <?php if (
+                            $authService->hasAnyRole([
+                                'administrator',
+                                'manager',
+                                'employee',
+                            ])
+                        ): ?>
+
                             <li class="nav-item dropdown">
                                 <a
                                     class="nav-link dropdown-toggle <?= navGroupActive(
@@ -204,17 +214,6 @@ if (isset($title)) {
 
                                     <li>
                                         <a
-                                            href="/categories"
-                                            class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/categories'
-                                                                    ) ?>">
-                                            Categories
-                                        </a>
-                                    </li>
-
-                                    <li>
-                                        <a
                                             href="/clients"
                                             class="dropdown-item <?= navActive(
                                                                         $currentPath,
@@ -224,16 +223,38 @@ if (isset($title)) {
                                         </a>
                                     </li>
 
-                                    <li>
-                                        <a
-                                            href="/suppliers"
-                                            class="dropdown-item <?= navActive(
-                                                                        $currentPath,
-                                                                        '/suppliers'
-                                                                    ) ?>">
-                                            Suppliers
-                                        </a>
-                                    </li>
+                                    <?php if (
+                                        $authService->hasAnyRole([
+                                            'administrator',
+                                            'manager',
+                                        ])
+                                    ): ?>
+                                        <li>
+                                            <hr class="dropdown-divider">
+                                        </li>
+
+                                        <li>
+                                            <a
+                                                href="/categories"
+                                                class="dropdown-item <?= navActive(
+                                                                            $currentPath,
+                                                                            '/categories'
+                                                                        ) ?>">
+                                                Categories
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a
+                                                href="/suppliers"
+                                                class="dropdown-item <?= navActive(
+                                                                            $currentPath,
+                                                                            '/suppliers'
+                                                                        ) ?>">
+                                                Suppliers
+                                            </a>
+                                        </li>
+                                    <?php endif; ?>
                                 </ul>
                             </li>
 

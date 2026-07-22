@@ -13,12 +13,22 @@ $showCosts =
         Stock History
     </h1>
 
-    <a
-        href="/stock"
-        class="btn btn-outline-secondary"
-    >
-        Back to Stock
-    </a>
+    <div class="d-flex flex-wrap gap-2">
+        <?php
+        $csvExportPath =
+            '/exports/warehouse-transactions.csv';
+
+        require __DIR__ .
+            '/../partials/csv_export_button.php';
+        ?>
+
+        <a
+            href="/stock"
+            class="btn btn-outline-secondary"
+        >
+            Back to Stock
+        </a>
+    </div>
 </div>
 
 <div class="card shadow-sm mb-4">

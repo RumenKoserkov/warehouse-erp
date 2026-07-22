@@ -1,3 +1,19 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Services\AuthService;
+
+$authService = new AuthService();
+
+$canManageProducts =
+    $authService->hasAnyRole([
+        'administrator',
+        'manager',
+    ]);
+
+?>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h1 class="mb-1">Products</h1>
@@ -9,9 +25,24 @@
         </div>
     </div>
 
-    <a href="/products/create" class="btn btn-primary">
-        Create Product
-    </a>
+    <div class="d-flex gap-2">
+        <?php
+        $csvExportPath =
+            '/exports/products.csv';
+
+        require __DIR__ .
+            '/../partials/csv_export_button.php';
+        ?>
+
+        <?php if ($canManageProducts): ?>
+            <a
+                href="/products/create"
+                class="btn btn-primary"
+            >
+                Create Product
+            </a>
+        <?php endif; ?>
+    </div>
 </div>
 
 <div class="card shadow-sm mb-4">
@@ -346,15 +377,17 @@
 
                             <th>Unit</th>
 
-                            <th>
-                                <?php
-                                $sortKey = 'purchase_price';
-                                $sortLabel = 'Purchase';
+                            <?php if ($canManageProducts): ?>
+                                <th>
+                                    <?php
+                                    $sortKey = 'purchase_price';
+                                    $sortLabel = 'Purchase';
 
-                                require __DIR__
-                                    . '/../components/sort_link.php';
-                                ?>
-                            </th>
+                                    require __DIR__
+                                        . '/../components/sort_link.php';
+                                    ?>
+                                </th>
+                            <?php endif; ?>
 
                             <th>
                                 <?php
@@ -386,7 +419,9 @@
                                 ?>
                             </th>
 
-                            <th>Actions</th>
+                            <?php if ($canManageProducts): ?>
+                                <th>Actions</th>
+                            <?php endif; ?>
                         </tr>
                     </thead>
 
@@ -472,15 +507,17 @@
                                     ) ?>
                                 </td>
 
-                                <td>
-                                    <?= htmlspecialchars(
-                                        (string) $product[
-                                            'purchase_price'
-                                        ],
-                                        ENT_QUOTES,
-                                        'UTF-8'
-                                    ) ?>
-                                </td>
+                                <?php if ($canManageProducts): ?>
+                                    <td>
+                                        <?= htmlspecialchars(
+                                            (string) $product[
+                                                'purchase_price'
+                                            ],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>
+                                    </td>
+                                <?php endif; ?>
 
                                 <td>
                                     <?= htmlspecialchars(
@@ -522,65 +559,65 @@
                                     <?php endif; ?>
                                 </td>
 
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <a
-                                            href="/products/edit?id=<?= htmlspecialchars(
-                                                (string) $product['id'],
-                                                ENT_QUOTES,
-                                                'UTF-8'
-                                            ) ?>"
-                                            class="
-                                                btn btn-sm
-                                                btn-outline-primary
-                                            "
-                                        >
-                                            Edit
-                                        </a>
-
-                                        <?php if (
-                                            (int) $product[
-                                                'is_active'
-                                            ] === 1
-                                        ): ?>
-                                            <form
-                                                action="
-                                                    /products/deactivate
-                                                "
-                                                method="POST"
-                                                onsubmit="
-                                                    return confirm(
-                                                        'Are you sure you want to deactivate this product?'
-                                                    );
+                                <?php if ($canManageProducts): ?>
+                                    <td>
+                                        <div class="d-flex gap-2">
+                                            <a
+                                                href="/products/edit?id=<?= htmlspecialchars(
+                                                    (string) $product['id'],
+                                                    ENT_QUOTES,
+                                                    'UTF-8'
+                                                ) ?>"
+                                                class="
+                                                    btn btn-sm
+                                                    btn-outline-primary
                                                 "
                                             >
-                                                <?= \App\Core\Csrf::field() ?>
+                                                Edit
+                                            </a>
 
-                                                <input
-                                                    type="hidden"
-                                                    name="id"
-                                                    value="<?= htmlspecialchars(
-                                                        (string) $product[
-                                                            'id'
-                                                        ],
-                                                        ENT_QUOTES,
-                                                        'UTF-8'
-                                                    ) ?>"
-                                                >
-
-                                                <button
-                                                    type="submit"
-                                                    class="
-                                                        btn btn-sm
-                                                        btn-outline-danger
+                                            <?php if (
+                                                (int) $product[
+                                                    'is_active'
+                                                ] === 1
+                                            ): ?>
+                                                <form
+                                                    action="/products/deactivate"
+                                                    method="POST"
+                                                    onsubmit="
+                                                        return confirm(
+                                                            'Are you sure you want to deactivate this product?'
+                                                        );
                                                     "
                                                 >
-                                                    Deactivate
-                                                </button>
-                                            </form>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
+                                                    <?= \App\Core\Csrf::field() ?>
+
+                                                    <input
+                                                        type="hidden"
+                                                        name="id"
+                                                        value="<?= htmlspecialchars(
+                                                            (string) $product[
+                                                                'id'
+                                                            ],
+                                                            ENT_QUOTES,
+                                                            'UTF-8'
+                                                        ) ?>"
+                                                    >
+
+                                                    <button
+                                                        type="submit"
+                                                        class="
+                                                            btn btn-sm
+                                                            btn-outline-danger
+                                                        "
+                                                    >
+                                                        Deactivate
+                                                    </button>
+                                                </form>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
+                                <?php endif; ?>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>

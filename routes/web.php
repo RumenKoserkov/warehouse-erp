@@ -24,6 +24,7 @@ use App\Controllers\PurchaseReturnController;
 use App\Controllers\PromotionController;
 use App\Controllers\ProfitReportController;
 use App\Controllers\MarginReportController;
+use App\Controllers\CsvExportController;
 
 return [
     [
@@ -104,7 +105,10 @@ return [
         'method' => 'GET',
         'uri' => '/clients',
         'action' => [ClientController::class, 'index'],
-        'middleware' => ['auth', 'role:administrator,manager'],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
     ],
     [
         'method' => 'GET',
@@ -258,7 +262,10 @@ return [
         'method' => 'GET',
         'uri' => '/products',
         'action' => [ProductController::class, 'index'],
-        'middleware' => ['auth', 'role:administrator,manager'],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
     ],
     [
         'method' => 'GET',
@@ -1220,6 +1227,112 @@ return [
         'action' => [
             InventoryAdjustmentController::class,
             'cancel',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    // CSV Exports
+
+    [
+        'method' => 'GET',
+        'uri' => '/exports/products.csv',
+        'action' => [
+            CsvExportController::class,
+            'products',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/exports/stock.csv',
+        'action' => [
+            CsvExportController::class,
+            'stock',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/exports/warehouse-transactions.csv',
+        'action' => [
+            CsvExportController::class,
+            'transactions',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/exports/sales.csv',
+        'action' => [
+            CsvExportController::class,
+            'sales',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager,employee',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/exports/purchases.csv',
+        'action' => [
+            CsvExportController::class,
+            'purchases',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/exports/invoices.csv',
+        'action' => [
+            CsvExportController::class,
+            'invoices',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/exports/profit.csv',
+        'action' => [
+            CsvExportController::class,
+            'profit',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/exports/margins.csv',
+        'action' => [
+            CsvExportController::class,
+            'margins',
         ],
         'middleware' => [
             'auth',

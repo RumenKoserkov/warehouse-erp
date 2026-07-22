@@ -1,6 +1,7 @@
 <div
     class="d-flex justify-content-between
-    align-items-center mb-4">
+    align-items-center mb-4"
+>
     <div>
         <h1 class="h3 mb-1">
             Invoices
@@ -11,11 +12,22 @@
         </p>
     </div>
 
-    <a
-        href="/invoices/create"
-        class="btn btn-primary">
-        Create Invoice Draft
-    </a>
+    <div class="d-flex flex-wrap gap-2">
+        <?php
+        $csvExportPath =
+            '/exports/invoices.csv';
+
+        require __DIR__ .
+            '/../partials/csv_export_button.php';
+        ?>
+
+        <a
+            href="/invoices/create"
+            class="btn btn-primary"
+        >
+            Create Invoice Draft
+        </a>
+    </div>
 </div>
 
 <div class="card shadow-sm mb-4">
@@ -23,7 +35,8 @@
         <div
             class="d-flex flex-column
             flex-lg-row justify-content-between
-            align-items-lg-center gap-3">
+            align-items-lg-center gap-3"
+        >
             <div>
                 <h2 class="h5 mb-2">
                     Invoice Number Sequence
@@ -34,7 +47,9 @@
 
                     <strong class="font-monospace">
                         <?= htmlspecialchars(
-                            (string) $sequence['next_invoice_number'],
+                            (string) $sequence[
+                                'next_invoice_number'
+                            ],
                             ENT_QUOTES,
                             'UTF-8'
                         ) ?>
@@ -45,11 +60,15 @@
                     Last issued:
 
                     <?php if (
-                        $sequence['last_invoice_number'] !== null
+                        $sequence[
+                            'last_invoice_number'
+                        ] !== null
                     ): ?>
                         <span class="font-monospace">
                             <?= htmlspecialchars(
-                                (string) $sequence['last_invoice_number'],
+                                (string) $sequence[
+                                    'last_invoice_number'
+                                ],
                                 ENT_QUOTES,
                                 'UTF-8'
                             ) ?>
@@ -67,13 +86,15 @@
                 <form
                     method="POST"
                     action="/invoices/sequence/update"
-                    class="d-flex align-items-end gap-2">
+                    class="d-flex align-items-end gap-2"
+                >
                     <?= \App\Core\Csrf::field() ?>
 
                     <div>
                         <label
                             for="next_number"
-                            class="form-label">
+                            class="form-label"
+                        >
                             Starting number
                         </label>
 
@@ -86,12 +107,16 @@
                             max="9999999999"
                             step="1"
                             required
-                            value="<?= (int) $sequence['next_number'] ?>">
+                            value="<?= (int) $sequence[
+                                'next_number'
+                            ] ?>"
+                        >
                     </div>
 
                     <button
                         type="submit"
-                        class="btn btn-outline-primary">
+                        class="btn btn-outline-primary"
+                    >
                         Save
                     </button>
                 </form>
@@ -123,7 +148,8 @@
 <form
     method="GET"
     action="/invoices"
-    class="row g-2 mb-4">
+    class="row g-2 mb-4"
+>
     <div class="col-lg-7">
         <input
             type="text"
@@ -131,33 +157,43 @@
             class="form-control"
             placeholder="Search by client, EIK, VAT number or invoice number..."
             value="<?= htmlspecialchars(
-                        $search,
-                        ENT_QUOTES,
-                        'UTF-8'
-                    ) ?>">
+                $search,
+                ENT_QUOTES,
+                'UTF-8'
+            ) ?>"
+        >
     </div>
 
     <div class="col-lg-3">
         <select
             name="due_filter"
-            class="form-select">
+            class="form-select"
+        >
             <?php
             $dueFilters = [
-                'all' => 'All Documents',
+                'all' =>
+                    'All Documents',
+
                 'overdue' =>
-                'Overdue Invoices',
+                    'Overdue Invoices',
+
                 'due_today' =>
-                'Due Today',
+                    'Due Today',
+
                 'due_soon' =>
-                'Due Within 7 Days',
+                    'Due Within 7 Days',
+
                 'unpaid' =>
-                'Unpaid',
+                    'Unpaid',
+
                 'partially_paid' =>
-                'Partially Paid',
+                    'Partially Paid',
+
                 'paid' =>
-                'Paid',
+                    'Paid',
+
                 'no_due_date' =>
-                'No Due Date',
+                    'No Due Date',
             ];
             ?>
 
@@ -167,15 +203,16 @@
             ): ?>
                 <option
                     value="<?= htmlspecialchars(
-                                $value,
-                                ENT_QUOTES,
-                                'UTF-8'
-                            ) ?>"
+                        $value,
+                        ENT_QUOTES,
+                        'UTF-8'
+                    ) ?>"
                     <?php if (
                         $dueFilter === $value
                     ): ?>
-                    selected
-                    <?php endif; ?>>
+                        selected
+                    <?php endif; ?>
+                >
                     <?= htmlspecialchars(
                         $label,
                         ENT_QUOTES,
@@ -189,7 +226,8 @@
     <div class="col-lg-2 d-grid">
         <button
             type="submit"
-            class="btn btn-outline-primary">
+            class="btn btn-outline-primary"
+        >
             Filter
         </button>
     </div>
@@ -204,7 +242,8 @@
         <div class="table-responsive">
             <table
                 class="table table-hover
-                align-middle mb-0">
+                align-middle mb-0"
+            >
                 <thead>
                     <tr>
                         <th>Reference</th>
@@ -232,14 +271,20 @@
 
                         if (
                             isset(
-                                $invoice['invoice_number']
+                                $invoice[
+                                    'invoice_number'
+                                ]
                             ) &&
                             trim(
-                                (string) $invoice['invoice_number']
+                                (string) $invoice[
+                                    'invoice_number'
+                                ]
                             ) !== ''
                         ) {
                             $reference =
-                                (string) $invoice['invoice_number'];
+                                (string) $invoice[
+                                    'invoice_number'
+                                ];
                         }
                         ?>
 
@@ -256,17 +301,19 @@
 
                             <td>
                                 <?php if (
-                                    (string) $invoice['document_type'] === 'credit_note'
+                                    (string) $invoice[
+                                        'document_type'
+                                    ] === 'credit_note'
                                 ): ?>
                                     <span
-                                        class="badge
-                                        text-bg-info">
+                                        class="badge text-bg-info"
+                                    >
                                         Credit Note
                                     </span>
                                 <?php else: ?>
                                     <span
-                                        class="badge
-                                        text-bg-primary">
+                                        class="badge text-bg-primary"
+                                    >
                                         Invoice
                                     </span>
                                 <?php endif; ?>
@@ -274,7 +321,9 @@
 
                             <td>
                                 <?= htmlspecialchars(
-                                    (string) $invoice['invoice_date'],
+                                    (string) $invoice[
+                                        'invoice_date'
+                                    ],
                                     ENT_QUOTES,
                                     'UTF-8'
                                 ) ?>
@@ -282,14 +331,20 @@
 
                             <td>
                                 <?php if (
-                                    isset($invoice['due_date']) &&
+                                    isset(
+                                        $invoice['due_date']
+                                    ) &&
                                     $invoice['due_date'] !== null &&
                                     trim(
-                                        (string) $invoice['due_date']
+                                        (string) $invoice[
+                                            'due_date'
+                                        ]
                                     ) !== ''
                                 ): ?>
                                     <?= htmlspecialchars(
-                                        (string) $invoice['due_date'],
+                                        (string) $invoice[
+                                            'due_date'
+                                        ],
                                         ENT_QUOTES,
                                         'UTF-8'
                                     ) ?>
@@ -300,7 +355,9 @@
 
                             <td>
                                 <?= htmlspecialchars(
-                                    (string) $invoice['client_legal_name'],
+                                    (string) $invoice[
+                                        'client_legal_name'
+                                    ],
                                     ENT_QUOTES,
                                     'UTF-8'
                                 ) ?>
@@ -308,27 +365,29 @@
 
                             <td>
                                 <?php if (
-                                    (string) $invoice['status'] ===
-                                    'cancelled'
+                                    (string) $invoice[
+                                        'status'
+                                    ] === 'cancelled'
                                 ): ?>
                                     <span
-                                        class="badge
-                                        text-bg-danger">
+                                        class="badge text-bg-danger"
+                                    >
                                         Cancelled
                                     </span>
                                 <?php elseif (
-                                    (string) $invoice['status'] ===
-                                    'draft'
+                                    (string) $invoice[
+                                        'status'
+                                    ] === 'draft'
                                 ): ?>
                                     <span
-                                        class="badge
-                                        text-bg-warning">
+                                        class="badge text-bg-warning"
+                                    >
                                         Draft
                                     </span>
                                 <?php else: ?>
                                     <span
-                                        class="badge
-                                        text-bg-success">
+                                        class="badge text-bg-success"
+                                    >
                                         Issued
                                     </span>
                                 <?php endif; ?>
@@ -336,16 +395,22 @@
 
                             <td>
                                 <?php if (
-                                    (string) $invoice['document_type'] === 'invoice'
+                                    (string) $invoice[
+                                        'document_type'
+                                    ] === 'invoice'
                                 ): ?>
                                     <strong>
                                         <?= number_format(
-                                            (float) $invoice['balance_due'],
+                                            (float) $invoice[
+                                                'balance_due'
+                                            ],
                                             2
                                         ) ?>
 
                                         <?= htmlspecialchars(
-                                            (string) $invoice['currency'],
+                                            (string) $invoice[
+                                                'currency'
+                                            ],
                                             ENT_QUOTES,
                                             'UTF-8'
                                         ) ?>
@@ -358,46 +423,64 @@
                             <td>
                                 <?php
                                 $dueInformation =
-                                    $invoice['due_information'];
+                                    $invoice[
+                                        'due_information'
+                                    ];
                                 ?>
 
                                 <?php if (
-                                    $dueInformation['status'] ===
-                                    'not_applicable'
+                                    $dueInformation[
+                                        'status'
+                                    ] === 'not_applicable'
                                 ): ?>
                                     —
                                 <?php else: ?>
                                     <span
                                         class="badge <?= htmlspecialchars(
-                                                            (string) $dueInformation['badge_class'],
-                                                            ENT_QUOTES,
-                                                            'UTF-8'
-                                                        ) ?>">
+                                            (string) $dueInformation[
+                                                'badge_class'
+                                            ],
+                                            ENT_QUOTES,
+                                            'UTF-8'
+                                        ) ?>"
+                                    >
                                         <?= htmlspecialchars(
-                                            (string) $dueInformation['label'],
+                                            (string) $dueInformation[
+                                                'label'
+                                            ],
                                             ENT_QUOTES,
                                             'UTF-8'
                                         ) ?>
                                     </span>
 
                                     <?php if (
-                                        $dueInformation['status'] ===
-                                        'overdue'
+                                        $dueInformation[
+                                            'status'
+                                        ] === 'overdue'
                                     ): ?>
                                         <div
-                                            class="small text-danger
-                                            mt-1">
-                                            <?= (int) $dueInformation['days_overdue'] ?>
+                                            class="
+                                                small text-danger mt-1
+                                            "
+                                        >
+                                            <?= (int) $dueInformation[
+                                                'days_overdue'
+                                            ] ?>
                                             day(s) overdue
                                         </div>
                                     <?php elseif (
-                                        $dueInformation['status'] ===
-                                        'due_soon'
+                                        $dueInformation[
+                                            'status'
+                                        ] === 'due_soon'
                                     ): ?>
                                         <div
-                                            class="small text-muted
-                                            mt-1">
-                                            <?= (int) $dueInformation['days_until_due'] ?>
+                                            class="
+                                                small text-muted mt-1
+                                            "
+                                        >
+                                            <?= (int) $dueInformation[
+                                                'days_until_due'
+                                            ] ?>
                                             day(s) remaining
                                         </div>
                                     <?php endif; ?>
@@ -406,12 +489,16 @@
 
                             <td>
                                 <?= number_format(
-                                    (float) $invoice['total_amount'],
+                                    (float) $invoice[
+                                        'total_amount'
+                                    ],
                                     2
                                 ) ?>
 
                                 <?= htmlspecialchars(
-                                    (string) $invoice['currency'],
+                                    (string) $invoice[
+                                        'currency'
+                                    ],
                                     ENT_QUOTES,
                                     'UTF-8'
                                 ) ?>
@@ -419,7 +506,9 @@
 
                             <td>
                                 <?= htmlspecialchars(
-                                    (string) $invoice['created_by_user_name'],
+                                    (string) $invoice[
+                                        'created_by_user_name'
+                                    ],
                                     ENT_QUOTES,
                                     'UTF-8'
                                 ) ?>
@@ -427,29 +516,49 @@
 
                             <td>
                                 <div
-                                    class="d-flex flex-wrap gap-1">
+                                    class="
+                                        d-flex flex-wrap gap-1
+                                    "
+                                >
                                     <a
-                                        href="/invoices/show?id=<?= (int) $invoice['id'] ?>"
-                                        class="btn btn-sm btn-outline-primary">
+                                        href="/invoices/show?id=<?= (int) $invoice[
+                                            'id'
+                                        ] ?>"
+                                        class="
+                                            btn btn-sm
+                                            btn-outline-primary
+                                        "
+                                    >
                                         View
                                     </a>
 
                                     <a
-                                        href="/invoices/print?id=<?= (int) $invoice['id'] ?>"
+                                        href="/invoices/print?id=<?= (int) $invoice[
+                                            'id'
+                                        ] ?>"
                                         target="_blank"
                                         rel="noopener"
-                                        class="btn btn-sm btn-outline-dark">
+                                        class="
+                                            btn btn-sm
+                                            btn-outline-dark
+                                        "
+                                    >
                                         Print
                                     </a>
 
                                     <a
-                                        href="/invoices/pdf?id=<?= (int) $invoice['id'] ?>"
-                                        class="btn btn-sm btn-outline-secondary">
+                                        href="/invoices/pdf?id=<?= (int) $invoice[
+                                            'id'
+                                        ] ?>"
+                                        class="
+                                            btn btn-sm
+                                            btn-outline-secondary
+                                        "
+                                    >
                                         PDF
                                     </a>
                                 </div>
                             </td>
-                        </tr>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>

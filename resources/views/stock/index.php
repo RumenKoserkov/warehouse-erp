@@ -14,6 +14,14 @@ $showCosts =
     </h1>
 
     <div class="d-flex flex-wrap gap-2">
+        <?php
+        $csvExportPath =
+            '/exports/stock.csv';
+
+        require __DIR__ .
+            '/../partials/csv_export_button.php';
+        ?>
+
         <a
             href="/stock/in"
             class="btn btn-success"

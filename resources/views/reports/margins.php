@@ -99,12 +99,25 @@ $hasUncosted =
         </p>
     </div>
 
-    <a
-        href="/reports/profit"
-        class="btn btn-outline-secondary"
-    >
-        Profit Reports
-    </a>
+    <div class="d-flex flex-wrap gap-2">
+        <?php
+        $csvExportPath =
+            '/exports/margins.csv';
+
+        $csvExportLabel =
+            'Export Margin CSV';
+
+        require __DIR__ .
+            '/../partials/csv_export_button.php';
+        ?>
+
+        <a
+            href="/reports/profit"
+            class="btn btn-outline-secondary"
+        >
+            Profit Reports
+        </a>
+    </div>
 </div>
 
 <?php if (!empty($errors)): ?>
