@@ -25,6 +25,7 @@ use App\Controllers\PromotionController;
 use App\Controllers\ProfitReportController;
 use App\Controllers\MarginReportController;
 use App\Controllers\CsvExportController;
+use App\Controllers\CsvImportController;
 
 return [
     [
@@ -1333,6 +1334,60 @@ return [
         'action' => [
             CsvExportController::class,
             'margins',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    // CSV Imports
+
+    [
+        'method' => 'GET',
+        'uri' => '/imports/csv',
+        'action' => [
+            CsvImportController::class,
+            'index',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'POST',
+        'uri' => '/imports/csv/process',
+        'action' => [
+            CsvImportController::class,
+            'process',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/imports/csv/show',
+        'action' => [
+            CsvImportController::class,
+            'show',
+        ],
+        'middleware' => [
+            'auth',
+            'role:administrator,manager',
+        ],
+    ],
+
+    [
+        'method' => 'GET',
+        'uri' => '/imports/csv/template',
+        'action' => [
+            CsvImportController::class,
+            'template',
         ],
         'middleware' => [
             'auth',

@@ -419,6 +419,7 @@ class AuditLogService
             'sales_return',
             'purchase_return',
             'promotion',
+            'csv_import',
         ];
     }
 

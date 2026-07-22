@@ -415,6 +415,7 @@ class WarehouseTransaction extends Model
             'out',
             'transfer',
             'adjustment',
+            'opening_stock',
         ];
     }
 

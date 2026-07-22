@@ -277,6 +277,7 @@ if (isset($title)) {
                                                                             '/stock',
                                                                             '/inventory-counts',
                                                                             '/inventory-adjustments',
+                                                                            '/imports/csv',
                                                                         ]
                                                                     ) ?>"
                                     href="#"
@@ -338,6 +339,19 @@ if (isset($title)) {
                                                                         ) ?>"
                                                 href="/inventory-adjustments">
                                                 Inventory Adjustments
+                                            </a>
+                                        </li>
+
+                                        <li>
+                                            <a
+                                                class="dropdown-item <?= navGroupActive(
+                                                                            $currentPath,
+                                                                            [
+                                                                                '/imports/csv',
+                                                                            ]
+                                                                        ) ?>"
+                                                href="/imports/csv">
+                                                CSV Import
                                             </a>
                                         </li>
                                     <?php endif; ?>
@@ -659,7 +673,6 @@ if (isset($title)) {
                                             Profit Reports
                                         </a>
                                     </li>
-
 
                                     <li>
                                         <a
